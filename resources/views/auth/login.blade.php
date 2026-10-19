@@ -6,7 +6,6 @@
     <title>Sign In — DTC Nexus</title>
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
 
@@ -211,13 +210,6 @@
 
         .input-wrap .toggle-pwd:hover { color: #0F4CDB; }
 
-        /* reCAPTCHA */
-        .recaptcha-wrap {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 18px;
-        }
-
         /* Errors */
         .error-box {
             background: #FEF2F2;
@@ -354,10 +346,10 @@
                 <p>Use your DTC Nexus account</p>
             </div>
 
-            @if ($errors->has('email') || $errors->has('captcha'))
+            @if ($errors->has('email'))
                 <div class="error-box">
                     <i class="fas fa-exclamation-circle"></i>
-                    {{ $errors->first('email') ?: $errors->first('captcha') }}
+                    {{ $errors->first('email') }}
                 </div>
             @endif
 
@@ -413,13 +405,6 @@
                     </div>
                 @endif
 
-                @if ($errors->has('captcha'))
-                    <div class="error-box">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ $errors->first('captcha') }}
-                    </div>
-                @endif
-
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrap">
@@ -434,18 +419,6 @@
                 <label class="remember">
                     <input type="checkbox" name="remember"> Remember me
                 </label>
-
-                {{-- reCAPTCHA --}}
-                <div class="recaptcha-wrap">
-                    <div class="g-recaptcha"
-                         data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
-                </div>
-
-                @if ($errors->has('captcha'))
-                    <p style="color:#DC2626; font-size:12px; margin-bottom:12px;">
-                        {{ $errors->first('captcha') }}
-                    </p>
-                @endif
 
                 <button type="submit" class="btn-signin">
                     <i class="fas fa-sign-in-alt"></i> Sign In
@@ -499,7 +472,7 @@
     });
 
     // If there's a validation error, jump to password step
-    @if($errors->has('email') || $errors->has('captcha'))
+    @if($errors->has('email'))
         const savedEmail = "{{ old('email') }}";
         if (savedEmail) {
             document.getElementById('hidden-email').value = savedEmail;

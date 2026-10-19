@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    // Failed attempts allowed per email + IP, and per email from any IP.
+    const MAX_ATTEMPTS_PER_IP    = 5;
+    const DECAY_SECONDS_PER_IP   = 60;
+    const MAX_ATTEMPTS_PER_EMAIL = 20;
+    const DECAY_SECONDS_PER_EMAIL = 900;
+
     public function showLanding()
     {
         return view('auth.landing');
@@ -25,44 +32,32 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // ── Verify reCAPTCHA (skip on local) ─────────────────────────
-        $recaptcha = $request->input('g-recaptcha-response');
+        // ── Throttle (bot protection is handled at the Cloudflare edge) ──
+        $email    = Str::lower($credentials['email']);
+        $ipKey    = 'login:' . $email . '|' . $request->ip();
+        $emailKey = 'login-email:' . $email;
 
-        if (!$recaptcha) {
-            return back()
-                ->withErrors(['captcha' => 'Please complete the reCAPTCHA verification.'])
-                ->onlyInput('email');
-        }
-
-        // Only verify with Google when NOT on localhost
-        if (!app()->environment('local')) {
-            try {
-                $verify = \Illuminate\Support\Facades\Http::timeout(5)
-                    ->asForm()
-                    ->post('https://www.google.com/recaptcha/api/siteverify', [
-                        'secret'   => config('services.recaptcha.secret_key'),
-                        'response' => $recaptcha,
-                        'remoteip' => $request->ip(),
-                    ]);
-
-                if (!$verify->json('success')) {
-                    return back()
-                        ->withErrors(['captcha' => 'reCAPTCHA verification failed. Please try again.'])
-                        ->onlyInput('email');
-                }
-            } catch (\Exception $e) {
-                // If verification fails due to network, allow login (log the error)
-                \Log::warning('reCAPTCHA verification failed: ' . $e->getMessage());
+        foreach ([$ipKey => self::MAX_ATTEMPTS_PER_IP, $emailKey => self::MAX_ATTEMPTS_PER_EMAIL] as $key => $max) {
+            if (RateLimiter::tooManyAttempts($key, $max)) {
+                $minutes = (int) ceil(RateLimiter::availableIn($key) / 60);
+                return back()
+                    ->withErrors(['email' => "Too many login attempts. Please try again in {$minutes} minute(s)."])
+                    ->onlyInput('email');
             }
         }
 
         // ── Authenticate ──────────────────────────────────────────────
         if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($ipKey, self::DECAY_SECONDS_PER_IP);
+            RateLimiter::hit($emailKey, self::DECAY_SECONDS_PER_EMAIL);
+
             return back()
                 ->withErrors(['email' => 'Invalid email or password.'])
                 ->onlyInput('email');
         }
 
+        RateLimiter::clear($ipKey);
+        RateLimiter::clear($emailKey);
         $request->session()->regenerate();
         $user = Auth::user();
 
