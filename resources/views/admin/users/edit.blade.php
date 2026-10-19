@@ -6,13 +6,11 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h4 class="mb-0 font-weight-bold" style="color:#1E293B;">Edit User</h4>
-            <p class="mb-0" style="color:#64748B; font-size:13px;">
-                Update account details and role
-            </p>
+            <h4 class="mb-0 font-weight-bold u-text">Edit User</h4>
+            <p class="mb-0 u-text-secondary-sm">Update account details and role</p>
         </div>
         <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left mr-1"></i> Back to Users
+            <i data-lucide="arrow-left" class="mr-1"></i> Back to Users
         </a>
     </div>
 @endsection
@@ -40,8 +38,7 @@
                         <div style="font-size:13px; color:rgba(255,255,255,0.75);">
                             {{ $user->email }}
                         </div>
-                        <div style="font-size:12px; color:#FFC72C; margin-top:4px;
-                                    font-weight:600;">
+                        <div style="font-size:12px; color:#FFC72C; margin-top:4px; font-weight:600;">
                             Joined {{ $user->created_at->format('M d, Y') }}
                         </div>
                     </div>
@@ -49,106 +46,209 @@
             </div>
         </div>
 
+        {{-- Tab Card --}}
         <div class="card">
-            <div class="card-header font-weight-bold" style="color:#1E293B;">
-                <i class="fas fa-edit mr-2" style="color:#0F4CDB;"></i>
-                Edit Account
+
+            {{-- Tabs --}}
+            <div class="card-header p-0" style="border-bottom:1px solid var(--dtc-border);">
+                <ul class="nav nav-tabs border-0 px-3 pt-2" id="editUserTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active dtc-edit-tab" id="tab-account" data-toggle="tab"
+                           href="#pane-account" role="tab">
+                            <i data-lucide="pencil" style="width:13px;height:13px;margin-right:5px;vertical-align:-1px;"></i>
+                            Edit Account
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link dtc-edit-tab" id="tab-security" data-toggle="tab"
+                           href="#pane-security" role="tab">
+                            <i data-lucide="lock" style="width:13px;height:13px;margin-right:5px;vertical-align:-1px;"></i>
+                            Security
+                        </a>
+                    </li>
+                </ul>
             </div>
-            <div class="card-body">
 
-                @if ($errors->any())
-                    <div class="alert alert-danger">{{ $errors->first() }}</div>
-                @endif
+            <div class="tab-content">
 
-                <form method="POST" action="{{ route('admin.users.update', $user) }}">
-                    @csrf @method('PUT')
+                {{-- ── Tab 1: Edit Account ── --}}
+                <div class="tab-pane fade show active" id="pane-account" role="tabpanel">
+                    <div class="card-body">
 
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <div style="position:relative;">
-                            <i class="fas fa-user" style="position:absolute; left:14px;
-                               top:50%; transform:translateY(-50%); color:#94A3B8; font-size:13px;"></i>
-                            <input type="text" name="name" class="form-control"
-                                   style="padding-left:38px;"
-                                   value="{{ old('name', $user->name) }}" required>
-                        </div>
-                    </div>
+                        @if ($errors->any())
+                            <div class="alert alert-danger">{{ $errors->first() }}</div>
+                        @endif
 
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <div style="position:relative;">
-                            <i class="fas fa-envelope" style="position:absolute; left:14px;
-                               top:50%; transform:translateY(-50%); color:#94A3B8; font-size:13px;"></i>
-                            <input type="email" name="email" class="form-control"
-                                   style="padding-left:38px;"
-                                   value="{{ old('email', $user->email) }}" required>
-                        </div>
-                    </div>
+                        <form method="POST" action="{{ route('admin.users.update', $user) }}">
+                            @csrf @method('PUT')
 
-                    <div class="form-group">
-                        <label>Role</label>
-                        <select name="role" class="form-control" required>
-                            @foreach($roles as $role)
-                                <option value="{{ $role->name }}"
-                                    {{ $user->hasRole($role->name) ? 'selected' : '' }}>
-                                    {{ ucfirst(str_replace('_',' ', $role->name)) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Account Status</label>
-                        <div class="row">
-                            @foreach(['active','pending','locked'] as $status)
-                            <div class="col-4">
-                                <label style="cursor:pointer; width:100%;">
-                                    <input type="radio" name="status" value="{{ $status }}"
-                                           style="display:none;" class="status-radio"
-                                           {{ old('status', $user->status) === $status ? 'checked' : '' }}>
-                                    <div class="status-option"
-                                         style="border:2px solid #E2E8F0; border-radius:12px;
-                                                padding:12px; text-align:center; transition:all 0.2s;
-                                                background:#F8FAFC;">
-                                        <i class="fas {{ $status === 'active' ? 'fa-check-circle' : ($status === 'locked' ? 'fa-lock' : 'fa-clock') }}"
-                                           style="font-size:18px; display:block; margin-bottom:6px;
-                                                  color:{{ $status === 'active' ? '#22C55E' : ($status === 'locked' ? '#EF4444' : '#F59E0B') }};"></i>
-                                        <div style="font-size:12px; font-weight:600; color:#1E293B;">
-                                            {{ ucfirst($status) }}
-                                        </div>
-                                    </div>
-                                </label>
+                            <div class="form-group">
+                                <label class="dtc-form-label">Full Name</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="user" class="dtc-input-icon"></i>
+                                    <input type="text" name="name"
+                                           class="form-control dtc-input-with-icon"
+                                           value="{{ old('name', $user->name) }}" required>
+                                </div>
                             </div>
-                            @endforeach
-                        </div>
-                    </div>
 
-                    <div class="d-flex" style="gap:10px;">
-                        <button type="submit" class="btn btn-primary flex-fill">
-                            <i class="fas fa-save mr-1"></i> Save Changes
-                        </button>
-                        <a href="{{ route('admin.users.index') }}"
-                           class="btn btn-secondary flex-fill">Cancel</a>
+                            <div class="form-group">
+                                <label class="dtc-form-label">Email Address</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="mail" class="dtc-input-icon"></i>
+                                    <input type="email" name="email"
+                                           class="form-control dtc-input-with-icon"
+                                           value="{{ old('email', $user->email) }}" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="dtc-form-label">Role</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="shield" class="dtc-input-icon"></i>
+                                    <input type="text" class="form-control dtc-input-with-icon"
+                                           value="{{ ucfirst(str_replace('_',' ', $user->roles->first()?->name ?? '—')) }}"
+                                           readonly disabled
+                                           style="background:var(--dtc-surface-soft); color:var(--dtc-text-muted); cursor:not-allowed;">
+                                </div>
+                                <small class="dtc-form-hint">
+                                    Role changes for students, alumni, and applicants go through the Registrar flow.
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="dtc-form-label">Account Status</label>
+                                <div class="d-flex" style="gap:10px;">
+                                    @foreach(['active','pending','locked'] as $status)
+                                    <label class="dtc-status-option-label">
+                                        <input type="radio" name="status" value="{{ $status }}"
+                                               class="edit-status-radio dtc-sr-only"
+                                               {{ old('status', $user->status) === $status ? 'checked' : '' }}>
+                                        <div class="edit-status-option">
+                                            <i data-lucide="{{ $status === 'active' ? 'check-circle' : ($status === 'locked' ? 'lock' : 'clock') }}"
+                                               style="color:{{ $status === 'active' ? 'var(--dtc-success)' : ($status === 'locked' ? 'var(--dtc-danger)' : 'var(--dtc-warning)') }};"></i>
+                                            <div class="dtc-status-label">{{ ucfirst($status) }}</div>
+                                        </div>
+                                    </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="d-flex u-gap-10">
+                                <a href="{{ route('admin.users.index') }}"
+                                   class="btn btn-secondary flex-fill">Cancel</a>
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i data-lucide="save" class="mr-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+
                     </div>
-                </form>
-            </div>
+                </div>
+
+                {{-- ── Tab 2: Security / Reset Password ── --}}
+                <div class="tab-pane fade" id="pane-security" role="tabpanel">
+                    <div class="card-body">
+
+                        @if(session('password_reset_success'))
+                            <div class="alert alert-success">
+                                <i data-lucide="check-circle" class="mr-1"></i>
+                                Password reset successfully. The user will be prompted to change it on next login.
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('admin.users.resetPassword', $user) }}">
+                            @csrf @method('PUT')
+
+                            {{-- Info banner --}}
+                            <div class="dtc-security-info mb-3">
+                                <i data-lucide="info" class="dtc-security-info-icon"></i>
+                                <span>Set a temporary password for this user. They'll be required to change it after their next login. Passwords are always stored hashed.</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="dtc-form-label">New Password</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="lock" class="dtc-input-icon"></i>
+                                    <input type="password" name="password" id="pw-new"
+                                           class="form-control dtc-input-with-icon"
+                                           placeholder="Min. 6 characters" required minlength="6"
+                                           autocomplete="new-password">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="dtc-form-label">Confirm Password</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="lock" class="dtc-input-icon"></i>
+                                    <input type="password" name="password_confirmation" id="pw-confirm"
+                                           class="form-control dtc-input-with-icon"
+                                           placeholder="Re-enter password" required minlength="6"
+                                           autocomplete="new-password">
+                                </div>
+                                <small class="dtc-form-hint dtc-pw-match-hint" id="pw-match-hint"></small>
+                            </div>
+
+                            <div class="d-flex u-gap-10">
+                                <a href="{{ route('admin.users.index') }}"
+                                   class="btn btn-secondary flex-fill">Cancel</a>
+                                <button type="submit" class="btn dtc-btn-reset flex-fill" id="pw-submit-btn">
+                                    <i data-lucide="key" class="mr-1"></i> Reset Password
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>{{-- /.tab-content --}}
         </div>
+
     </div>
 </div>
 @endsection
 
 @section('js')
 <script>
-document.querySelectorAll('.status-radio').forEach(radio => {
+/* -- Status radio highlight -- */
+document.querySelectorAll('.edit-status-radio').forEach(function(radio) {
     radio.addEventListener('change', function () {
-        document.querySelectorAll('.status-option').forEach(opt => {
-            opt.style.borderColor = '#E2E8F0';
-            opt.style.background = '#F8FAFC';
+        document.querySelectorAll('.edit-status-option').forEach(function(opt) {
+            opt.style.borderColor = 'var(--dtc-border)';
+            opt.style.background  = 'var(--dtc-surface-soft)';
         });
-        this.nextElementSibling.style.borderColor = '#0F4CDB';
-        this.nextElementSibling.style.background = '#EEF2FF';
+        this.nextElementSibling.style.borderColor = 'var(--dtc-primary)';
+        this.nextElementSibling.style.background  = 'var(--dtc-primary-soft)';
     });
-    if (this.checked) this.dispatchEvent(new Event('change'));
+    if (radio.checked) radio.dispatchEvent(new Event('change'));
 });
+
+/* -- Password match feedback -- */
+var pwNew     = document.getElementById('pw-new');
+var pwConfirm = document.getElementById('pw-confirm');
+var pwHint    = document.getElementById('pw-match-hint');
+var pwSubmit  = document.getElementById('pw-submit-btn');
+
+function checkPwMatch() {
+    if (!pwConfirm.value) { pwHint.textContent = ''; return; }
+    if (pwNew.value === pwConfirm.value) {
+        pwHint.textContent = '(ok) Passwords match';
+        pwHint.style.color = 'var(--dtc-success)';
+    } else {
+        pwHint.textContent = 'Passwords do not match';
+        pwHint.style.color = 'var(--dtc-danger)';
+    }
+}
+
+pwNew.addEventListener('input', checkPwMatch);
+pwConfirm.addEventListener('input', checkPwMatch);
+
+/* -- Re-open Security tab if there were password errors -- */
+@if($errors->has('password') || $errors->has('password_confirmation') || session('active_tab') === 'security')
+    document.addEventListener('DOMContentLoaded', function () {
+        var secTab = document.getElementById('tab-security');
+        if (secTab) secTab.click();
+    });
+@endif
 </script>
 @endsection

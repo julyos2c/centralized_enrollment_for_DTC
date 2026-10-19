@@ -1,0 +1,93 @@
+/* Shared student/alumni document request flow. Colors follow the site theme tokens. */
+.dtc-document-create .dtc-request-main,
+.dtc-document-create .dtc-request-aside { min-width: 0; }
+.dtc-document-create .dtc-request-aside .card { border-color: var(--dtc-border); }
+.dtc-request-guide { background: var(--dtc-surface); color: var(--dtc-text); }
+.dtc-request-guide .card-body { padding: 20px; }
+.dtc-request-guide-list { margin: 0; padding: 0; list-style: none; }
+.dtc-request-guide-list li { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; color: var(--dtc-text-secondary); font-size: 13px; line-height: 1.5; }
+.dtc-request-guide-list svg { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; color: var(--dtc-primary); }
+.dtc-request-handoff { padding: 12px 14px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface-soft); color: var(--dtc-text-secondary); font-size: 12px; line-height: 1.55; }
+.dtc-request-fee-summary { padding: 14px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface-soft); }
+.dtc-request-fee-summary__title { margin-bottom: 8px; color: var(--dtc-text-muted); font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.dtc-document-create .doc-option { min-height: 112px; display: flex; flex-direction: column; justify-content: center; }
+.dtc-document-create .doc-option:focus-within,
+.dtc-document-create label:focus-within .doc-option { outline: 3px solid var(--dtc-primary-soft); outline-offset: 2px; }
+.dtc-document-create .form-control,
+.dtc-document-create .custom-control-label { min-height: 42px; }
+.dtc-document-create textarea.form-control { min-height: 90px; }
+.dtc-document-create .dtc-request-submit { min-height: 46px; font-weight: 700; }
+.dtc-request-section-heading { display: flex; align-items: center; gap: 12px; margin: 24px 0 16px; padding-top: 18px; border-top: 1px solid var(--dtc-border); }
+.dtc-request-section-heading h6 { font-size: 14px; font-weight: 700; }
+.dtc-request-section-number { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; background: var(--dtc-primary-soft); color: var(--dtc-primary); font-size: 12px; font-weight: 800; }
+.dtc-request-step-number { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 6px; border-radius: 50%; background: var(--dtc-primary-soft); color: var(--dtc-primary); font-size: 10px; vertical-align: middle; }
+.dtc-document-create .dtc-payment-method { min-height: 44px; padding: 11px 14px 11px 38px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface-soft); }
+.dtc-document-create .dtc-payment-method:focus-within { outline: 3px solid var(--dtc-primary-soft); outline-offset: 2px; }
+.dtc-document-create .dtc-payment-method .custom-control-label { min-height: 22px; color: var(--dtc-text); line-height: 1.5; }
+.dtc-document-create .dtc-payment-method:has(.custom-control-input:checked) { border-color: var(--dtc-primary); background: var(--dtc-primary-soft); }
+.dtc-document-request-row { min-width: 0; }
+.dtc-document-request-meta { color: var(--dtc-text-muted); font-size: 11px; line-height: 1.6; }
+.dtc-request-status-note { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--dtc-border); border-radius: 9px; background: var(--dtc-surface-soft); color: var(--dtc-text-secondary); font-size: 12px; line-height: 1.5; }
+.dtc-request-status-note.is-warning { border-left: 3px solid var(--dtc-warning, #d99b18); }
+.dtc-request-status-note.is-success { border-left: 3px solid var(--dtc-success); }
+.dtc-request-resubmit { margin-top: 12px; padding: 14px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface-soft); }
+.dtc-request-resubmit .form-control { min-height: 42px; }
+.dtc-request-resubmit .btn { min-height: 42px; }
+.dtc-staff-request-help { margin: 0; color: var(--dtc-text-secondary); font-size: 12px; line-height: 1.55; }
+.dtc-request-amount { color: var(--dtc-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dtc-document-create .dtc-request-fee-list > div { gap: 12px; }
+.dtc-student-document-create .btn-step-next,
+.dtc-student-document-create .btn-step-back,
+.dtc-student-document-create .dtc-loading-button { min-height: 44px; }
+.dtc-student-document-create .dtc-slot-card:focus-within .dtc-slot-option,
+.dtc-student-document-create .dtc-pay-method-card:focus-within .dtc-pay-option { outline: 3px solid var(--dtc-primary-soft); outline-offset: 2px; }
+.dtc-appointments-page .appt-pay-strip { min-width: 0; flex-wrap: wrap; row-gap: 8px; }
+.dtc-appointments-page .appt-card .btn { min-height: 38px; }
+.dtc-student-document-create .dtc-empty-slot-state p { color: var(--dtc-text); font-weight: 700; }
+.dtc-student-document-create .dtc-empty-slot-state span { color: var(--dtc-text-secondary); line-height: 1.5; }
+
+@media (max-width: 767.98px) {
+    .dtc-document-create .dtc-request-aside { margin-top: 4px; }
+    .dtc-document-create .card-body { padding: 16px; }
+    .dtc-document-create .doc-option { min-height: 102px; padding: 12px 8px; }
+    .dtc-document-create .doc-option div { overflow-wrap: anywhere; }
+    .dtc-document-create .btn-block { min-height: 44px; }
+    .dtc-document-create .form-group { margin-bottom: 18px; }
+    .dtc-request-section-heading { margin-top: 20px; padding-top: 16px; }
+    .dtc-document-create fieldset { min-width: 0; }
+    .dtc-request-resubmit { padding: 12px; }
+    .dtc-student-document-create .dtc-appt-step-label { display: block; max-width: 66px; font-size: 9px; text-align: center; white-space: normal; line-height: 1.2; }
+    .dtc-student-document-create .dtc-appt-step { min-width: 44px; }
+    .dtc-student-document-create .dtc-appt-step-line { min-width: 8px; margin-right: 3px; margin-left: 3px; }
+    .dtc-student-document-create .dtc-slot-option { align-items: flex-start; gap: 10px; padding: 12px; }
+    .dtc-student-document-create .dtc-slot-badge { white-space: normal; text-align: center; padding: 5px 8px; }
+    .dtc-student-document-create .dtc-review-row { align-items: flex-start; padding: 11px 12px; }
+    .dtc-student-document-create .dtc-review-value { max-width: 58%; overflow-wrap: anywhere; }
+    .dtc-student-document-create .dtc-slot-option .dtc-date-chip { flex: 0 0 46px; }
+    .dtc-student-document-create .dtc-loading-button { width: 100%; }
+    .dtc-document-request-row { align-items: flex-start; }
+    .dtc-document-request-row .dtc-document-request-main { width: calc(100% - 48px); }
+    .dtc-document-request-row .dtc-document-request-heading .dtc-status-badge { white-space: normal; text-align: center; }
+    .dtc-appointments-page .dtc-appointment-heading { flex-wrap: wrap; gap: 12px; }
+    .dtc-appointments-page .dtc-appointment-actions { flex-wrap: wrap; gap: 8px; }
+    .dtc-appointments-page .dtc-appointment-actions > * { max-width: 100%; }
+    .dtc-appointments-page .dtc-appointment-actions form { margin-left: auto; }
+}
+
+@media (max-width: 420px) {
+    .dtc-document-create .card-body { padding: 14px 12px; }
+    .dtc-document-create .doc-option { min-height: 108px; }
+    .dtc-document-create .dtc-request-payment-details { margin-left: 0 !important; padding: 12px !important; }
+    .dtc-document-create .dtc-document-page-heading .btn { width: 100%; }
+    .dtc-document-request-row { padding: 14px 12px; }
+    .dtc-document-request-row > [data-doc-status] { width: 34px !important; height: 34px !important; }
+    .dtc-student-document-create .dtc-appt-step-label { max-width: 52px; font-size: 8px; }
+    .dtc-student-document-create .dtc-appt-step-circle { width: 30px; height: 30px; }
+    .dtc-student-document-create .dtc-slot-option { flex-wrap: wrap; }
+    .dtc-student-document-create .dtc-slot-badge { margin-left: 56px; }
+    .dtc-student-document-create .d-flex.justify-content-between > .btn { min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dtc-document-create *, .dtc-request-resubmit * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

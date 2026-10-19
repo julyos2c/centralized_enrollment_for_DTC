@@ -1,0 +1,45 @@
+/* ==========================================================================
+   DTC EMS — Utility classes
+   Phase 1 Group 4: extracted from the most frequently repeated inline
+   style="..." attributes across resources/views (113 files audited).
+   Each class below replaces an inline style that appeared 4+ times
+   verbatim. One-off / dynamic (Blade-variable-driven) inline styles were
+   left in place — see the Group 4 report for the full list.
+   ========================================================================== */
+
+.u-text            { color: var(--dtc-text); }
+.u-text-sm         { font-size: 13px; }
+.u-text-secondary  { color: var(--dtc-text-secondary); }
+.u-text-secondary-sm { color: var(--dtc-text-secondary); font-size: 13px; }
+.u-text-muted      { color: var(--dtc-text-muted); }
+.u-text-sm-bold    { font-size: 13px; font-weight: 600; }
+.u-text-sm-bold-primary { font-size: 13px; font-weight: 600; color: var(--dtc-text); }
+.u-text-sm-secondary-primary { font-size: 13px; color: var(--dtc-text); }
+.u-text-xs-secondary { font-size: 11px; color: var(--dtc-text-secondary); }
+.u-text-xs-muted   { font-size: 11px; color: var(--dtc-text-muted); }
+.u-text-xs-hint    { font-size: 11px; color: var(--dtc-text-muted); margin: -4px 0 6px; }
+.u-text-xxs-secondary { font-size: 12px; color: var(--dtc-text-secondary); margin-top: 2px; }
+.u-text-xxs        { font-size: 12px; }
+.u-text-xxs-secondary-bold { font-size: 12px; color: var(--dtc-text-secondary); font-weight: 500; }
+.u-eyebrow         { font-size: 11px; color: #94A3B8; font-weight: 600; text-transform: uppercase; }
+.u-gray-bold-sm    { font-size: 13px; font-weight: 600; color: #374151; }
+.u-link            { color: #0F4CDB; }
+.u-link-md         { font-size: 14px; color: #0F4CDB; }
+.u-accent          { color: #FFC72C; }
+.u-muted           { color: #94A3B8; }
+.u-border-color    { color: var(--dtc-border); }
+.u-danger-lg       { font-size: 22px; color: var(--dtc-danger); }
+.u-hidden          { display: none; }
+.u-relative        { position: relative; }
+.u-flex-1          { flex: 1; }
+.u-gap-8           { gap: 8px; }
+.u-gap-10          { gap: 10px; }
+.u-gap-15          { gap: 15px; }
+.u-flex-center-gap-10 { display: flex; align-items: center; gap: 10px; }
+.u-flex-center-gap-12 { display: flex; align-items: center; gap: 12px; }
+.u-actions-gap     { display: flex; gap: 6px; }
+.u-pl-38           { padding-left: 38px; }
+.u-pad-card        { padding: 16px 20px; }
+.u-spinner-sm      { width: 26px; height: 26px; border-width: 3px; }
+.u-panel-footer    { background: var(--dtc-surface); border-top: 1px solid var(--dtc-border); }
+.u-primary-gradient-btn { background: linear-gradient(135deg, #0F4CDB, #1a5feb); border: none; color: #fff; }

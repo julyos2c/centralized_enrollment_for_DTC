@@ -2,7 +2,7 @@
 
     {{-- Search toggle button --}}
     <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-        <i class="fas fa-search"></i>
+        <i data-lucide="search"></i>
     </a>
 
     {{-- Search bar --}}
@@ -22,10 +22,10 @@
                 {{-- Search buttons --}}
                 <div class="input-group-append">
                     <button class="btn btn-navbar" type="submit">
-                        <i class="fas fa-search"></i>
+                        <i data-lucide="search"></i>
                     </button>
                     <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                        <i class="fas fa-times"></i>
+                        <i data-lucide="x"></i>
                     </button>
                 </div>
 

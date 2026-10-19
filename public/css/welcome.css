@@ -1,0 +1,2377 @@
+/* ==========================================================================
+   DTC EMS — Landing + Sign In combined stylesheet (v3)
+   Public landing page + sign-in view
+   DTC blue / yellow / white palette
+   ========================================================================== */
+
+
+/* ==========================================================================
+   VARIABLES
+   ========================================================================== */
+
+/* These now alias the centralized tokens in dtc-tokens.css
+   (loaded before this file) instead of redeclaring raw hex,
+   so a color only ever needs to change in one place. Local
+   names are kept as-is to avoid touching every usage below. */
+:root {
+    --blue-900: var(--dtc-blue-900, #0A3399);
+    --blue-800: var(--dtc-primary, #0F4CDB);
+    --blue-700: var(--dtc-blue-700, #1A5FEB);
+
+    --yellow: var(--dtc-accent, #FFC72C);
+    --yellow-dark: var(--dtc-accent-dark, #F0B800);
+
+    --bg: var(--dtc-bg, #F4F8FC);
+    --white: var(--dtc-surface, #FFFFFF);
+
+    --border: var(--dtc-border, #E2E8F0);
+
+    --text-900: var(--dtc-text, #1E293B);
+    --text-700: var(--dtc-text-700, #334155);
+    --text-500: var(--dtc-text-secondary, #64748B);
+    --text-400: var(--dtc-text-muted, #94A3B8);
+}
+
+/* --dtc-text-700 is never defined by dtc-theme.css (only --dtc-text,
+   --dtc-text-secondary, --dtc-text-muted are), so --text-700 was
+   silently stuck on its hardcoded light-mode fallback (#334155) in
+   dark mode too — nearly invisible on the dark background. */
+body.dtc-dark {
+    --text-700: var(--dtc-text, #F8FAFC);
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+.page-view {
+    width: 100%;
+    min-height: 100vh;
+    overflow: visible !important;
+}
+
+.page-view.active {
+    overflow: visible !important;
+}
+
+/* ==========================================================================
+   GLOBAL RESET
+   ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text-900);
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: 'Poppins', sans-serif;
+}
+
+
+/* ==========================================================================
+   VIEW SWITCHING
+   ========================================================================== */
+
+.page-view {
+    display: none;
+}
+
+.page-view.active {
+    display: block;
+}
+
+
+/* ==========================================================================
+   GLOBAL CONTAINER
+   ========================================================================== */
+
+/* welcome.css — single rule, matches navbar at every width */
+.container {
+    width: min(1280px, calc(100% - 160px)) !important;  /* same as navbar */
+    margin: 0 auto;
+    padding: 0 !important;  /* width already accounts for the inset */
+}
+
+/* Remove the breakpoint overrides for .container padding — no longer needed */
+@media (max-width: 1200px) {
+    .container { padding: 0 !important; }
+}
+@media (max-width: 1024px) {
+    .container { padding: 0 !important; }
+}
+
+/* ==========================================================================
+   LANDING NAVBAR — STICKY
+   Base navbar styling (brand, links, sign-in button, mobile toggle) lives in
+   public-navbar.css and is shared with the application pages. This rule only
+   adds sticky behavior, scoped to the landing view (#view-landing) so the
+   shared application-page navbar is left untouched.
+   ========================================================================== */
+
+#view-landing .public-navbar {
+    position: sticky;
+    position: -webkit-sticky;
+    top: 0;
+    overflow-x: clip;
+    z-index: 1000;
+}
+
+
+/* ==========================================================================
+   HERO
+   ========================================================================== */
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 680px;
+    padding: 90px 0 100px;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(244, 248, 252, 1) 0%,
+            rgba(244, 248, 252, 0.99) 22%,
+            rgba(244, 248, 252, 0.95) 38%,
+            rgba(244, 248, 252, 0.76) 55%,
+            rgba(244, 248, 252, 0.38) 72%,
+            rgba(244, 248, 252, 0.08) 88%,
+            rgba(244, 248, 252, 0) 100%
+        ),
+        url('/images/dtc-building.webp') right center / cover no-repeat;
+
+    isolation: isolate;
+}
+
+.hero::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.08) 0%,
+            rgba(255, 255, 255, 0) 50%,
+            rgba(15, 76, 219, 0.03) 100%
+        );
+
+    pointer-events: none;
+
+    z-index: -1;
+}
+
+/* Dark mode: the hero gradient/overlay above are hardcoded to the
+   light surface color, so they need explicit dark equivalents
+   (var(--dtc-bg) dark value is #0F172A / rgb(15,23,42)). */
+body.dtc-dark .hero {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(15, 23, 42, 1) 0%,
+            rgba(15, 23, 42, 0.99) 22%,
+            rgba(15, 23, 42, 0.95) 38%,
+            rgba(15, 23, 42, 0.76) 55%,
+            rgba(15, 23, 42, 0.38) 72%,
+            rgba(15, 23, 42, 0.08) 88%,
+            rgba(15, 23, 42, 0) 100%
+        ),
+        url('/images/dtc-building.webp') right center / cover no-repeat;
+}
+
+body.dtc-dark .hero::after {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(15, 23, 42, 0.15) 0%,
+            rgba(15, 23, 42, 0) 50%,
+            rgba(15, 76, 219, 0.08) 100%
+        );
+}
+
+.hero .container {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.05fr)
+        minmax(360px, 0.95fr);
+    gap: 40px;
+    align-items: center;
+}
+
+
+/* ==========================================================================
+   HERO LEFT CONTENT
+   ========================================================================== */
+
+.hero-left {
+    position: relative;
+    z-index: 3;
+
+    max-width: 620px;
+}
+
+.hero-eyebrow {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue-800);
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.hero-left h1 {
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1.12;
+    color: var(--text-900);
+    margin-bottom: 22px;
+    max-width: 640px;
+}
+
+.hero-left h1 span {
+    color: var(--blue-800);
+}
+
+.hero-left p.hero-desc {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--text-500);
+    max-width: 570px;
+    margin-bottom: 18px;
+}
+
+.hero-left p.hero-support {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-700);
+    max-width: 560px;
+    margin-bottom: 34px;
+}
+
+
+/* ==========================================================================
+   HERO CTA
+   ========================================================================== */
+
+.hero-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 34px;
+}
+
+.btn-primary-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    background: var(--yellow);
+    color: var(--text-900);
+    border: none;
+    padding: 15px 30px;
+    border-radius: 11px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow:
+        0 10px 26px rgba(255, 199, 44, 0.32);
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.btn-primary-cta:hover {
+    background: var(--yellow-dark);
+    color: var(--text-900);
+    transform: translateY(-2px);
+    box-shadow:
+        0 14px 32px rgba(255, 199, 44, 0.42);
+}
+
+.btn-secondary-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--blue-800);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    padding: 15px 28px;
+    border-radius: 11px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow:
+        0 6px 20px rgba(15, 76, 219, 0.06);
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-secondary-cta:hover {
+    color: var(--blue-800);
+
+    border-color: var(--blue-800);
+
+    background: rgba(255, 255, 255, 1);
+
+    transform: translateY(-1px);
+}
+
+body.dtc-dark .btn-secondary-cta {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: var(--dtc-border);
+    color: var(--dtc-text);
+}
+
+body.dtc-dark .btn-secondary-cta:hover {
+    background: rgba(30, 41, 59, 1);
+    border-color: var(--dtc-primary);
+    color: var(--dtc-text);
+}
+
+
+/* ==========================================================================
+   HERO FEATURES
+   ========================================================================== */
+
+.hero-features {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+.feature-pill {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    background: rgba(255, 255, 255, 0.82);
+
+    border: 1px solid rgba(226, 232, 240, 0.90);
+
+    border-radius: 999px;
+
+    padding: 8px 15px;
+
+    font-size: 12px;
+
+    color: var(--text-700);
+
+    font-weight: 500;
+
+    box-shadow:
+        0 4px 14px rgba(15, 76, 219, 0.05);
+
+    backdrop-filter: blur(4px);
+}
+
+.feature-pill i {
+    color: var(--blue-800);
+
+    font-size: 12px;
+}
+
+body.dtc-dark .feature-pill {
+    background: rgba(30, 41, 59, 0.82);
+    border-color: var(--dtc-border);
+    color: var(--dtc-text-secondary);
+}
+
+
+/* ==========================================================================
+   OLD HERO VISUAL
+   Hidden because the DTC building is now the hero background.
+   ========================================================================== */
+
+.hero-right,
+.hero-visual,
+.hero-visual .circle,
+.mockup-card {
+    display: none;
+}
+
+
+/* ==========================================================================
+   SERVICES
+   ========================================================================== */
+
+.services {
+    padding: 80px 0;
+
+    background: var(--white);
+}
+
+.section-heading {
+    text-align: center;
+
+    max-width: 640px;
+
+    margin: 0 auto 48px;
+}
+
+.section-heading .eyebrow {
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: var(--blue-800);
+
+    letter-spacing: 1.2px;
+
+    text-transform: uppercase;
+
+    margin-bottom: 10px;
+}
+
+.section-heading h2 {
+    font-size: 32px;
+
+    font-weight: 700;
+
+    color: var(--text-900);
+
+    margin-bottom: 10px;
+}
+
+.section-heading p {
+    font-size: 15px;
+
+    color: var(--text-500);
+}
+
+.services-carousel {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+}
+
+.carousel-viewport {
+    flex: 1;
+    min-width: 0;
+
+    perspective: 1400px;
+
+    overflow: hidden;
+}
+
+.carousel-viewport:focus-visible {
+    outline: 2px solid var(--blue-800);
+    outline-offset: 4px;
+}
+
+.carousel-track {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 340px;
+
+    transform-style: preserve-3d;
+}
+
+.carousel-arrow {
+    flex-shrink: 0;
+
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 50%;
+
+    background: var(--white);
+    color: var(--blue-800);
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.carousel-arrow:hover {
+    background: var(--blue-800);
+    color: var(--white);
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 8px 20px rgba(15, 76, 219, 0.18);
+}
+
+.carousel-arrow:focus-visible {
+    outline: 2px solid var(--blue-800);
+    outline-offset: 2px;
+}
+
+.carousel-arrow[disabled] {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+    transform: none;
+    box-shadow: none;
+}
+
+.carousel-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 28px;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+
+    background: var(--border);
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        width 0.2s ease;
+}
+
+.carousel-dot.active {
+    width: 22px;
+
+    border-radius: 5px;
+
+    background: var(--blue-800);
+}
+
+.carousel-track .service-card {
+    position: absolute;
+
+    width: min(320px, 78%);
+
+    cursor: grab;
+    user-select: none;
+
+    transition:
+        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.5s ease,
+        box-shadow 0.5s ease;
+
+    will-change: transform, opacity;
+}
+
+.carousel-track .service-card:active {
+    cursor: grabbing;
+}
+
+.carousel-track .service-card.is-center {
+    z-index: 5;
+
+    opacity: 1;
+
+    box-shadow: 0 24px 48px rgba(15, 76, 219, 0.16);
+
+    transform: translateX(0) translateZ(0) rotateY(0deg) scale(1);
+}
+
+.carousel-track .service-card.is-prev {
+    z-index: 3;
+
+    opacity: 0.55;
+
+    transform: translateX(-62%) translateZ(-180px) rotateY(28deg) scale(0.82);
+}
+
+.carousel-track .service-card.is-next {
+    z-index: 3;
+
+    opacity: 0.55;
+
+    transform: translateX(62%) translateZ(-180px) rotateY(-28deg) scale(0.82);
+}
+
+.carousel-track .service-card.is-far {
+    z-index: 1;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transform: translateX(0) translateZ(-320px) scale(0.6);
+}
+
+.carousel-track .service-card.is-far-prev {
+    transform: translateX(-100%) translateZ(-320px) scale(0.6);
+}
+
+.carousel-track .service-card.is-far-next {
+    transform: translateX(100%) translateZ(-320px) scale(0.6);
+}
+
+.service-card {
+    background: var(--bg);
+
+    border: 1px solid var(--border);
+
+    border-radius: 20px;
+
+    padding: 28px 24px;
+
+    transition:
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.service-card:hover {
+    box-shadow:
+        0 12px 32px rgba(15, 76, 219, 0.10);
+
+    transform: translateY(-3px);
+}
+
+.service-card .icon-box {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 12px;
+
+    background: var(--blue-800);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--yellow);
+
+    font-size: 18px;
+
+    margin-bottom: 16px;
+}
+
+.service-card h3 {
+    font-size: 16px;
+
+    font-weight: 600;
+
+    color: var(--text-900);
+
+    margin-bottom: 8px;
+}
+
+.service-card p {
+    font-size: 13px;
+
+    color: var(--text-500);
+
+    line-height: 1.55;
+}
+
+
+/* ==========================================================================
+   PROCESS
+   ========================================================================== */
+
+.process {
+    padding: 80px 0;
+}
+
+.process-steps {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 24px;
+}
+
+.process-step {
+    text-align: center;
+}
+
+.process-step .num {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 50%;
+
+    background: var(--blue-800);
+
+    color: var(--yellow);
+
+    font-weight: 700;
+
+    font-size: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 16px;
+}
+
+.process-step h4 {
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: var(--text-900);
+
+    margin-bottom: 6px;
+}
+
+.process-step p {
+    font-size: 13px;
+
+    color: var(--text-500);
+}
+
+
+/* ==========================================================================
+   FAQ
+   ========================================================================== */
+
+.faqs {
+    padding: 80px 0;
+
+    background: var(--white);
+}
+
+.faq-list {
+    max-width: 760px;
+
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.faq-item {
+    border: 1px solid var(--border);
+
+    border-radius: 14px;
+
+    background: var(--bg);
+
+    overflow: hidden;
+
+    transition:
+        border-color 0.2s ease;
+}
+
+.faq-item.active {
+    border-color: var(--blue-800);
+}
+
+.faq-question {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    background: none;
+
+    border: none;
+
+    cursor: pointer;
+
+    padding: 18px 22px;
+
+    font-family: 'Poppins', sans-serif;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    color: var(--text-900);
+
+    text-align: left;
+}
+
+.faq-question i {
+    color: var(--blue-800);
+
+    font-size: 13px;
+
+    transition:
+        transform 0.25s ease;
+
+    flex-shrink: 0;
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    max-height: 0;
+
+    overflow: hidden;
+
+    transition:
+        max-height 0.3s ease,
+        padding 0.3s ease;
+
+    padding: 0 22px;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 220px;
+
+    padding: 0 22px 20px;
+}
+
+.faq-answer p {
+    font-size: 14px;
+
+    line-height: 1.65;
+
+    color: var(--text-500);
+}
+
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+.site-footer {
+    padding: 28px 0;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    color: var(--text-500);
+
+    border-top: 1px solid var(--border);
+
+    background: var(--white);
+}
+
+
+/* ==========================================================================
+   LOGIN VIEW
+   ========================================================================== */
+
+.login-screen {
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+}
+
+.login-branding {
+    background:
+        linear-gradient(
+            160deg,
+            rgba(10, 51, 153, 0.88),
+            rgba(15, 76, 219, 0.88)
+        ),
+        url('/images/dtc-building.webp')
+        center center / cover no-repeat;
+
+    color: var(--white);
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding: 64px;
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+.login-branding .circle {
+    position: absolute;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.06);
+}
+
+.login-branding .circle.c1 {
+    width: 320px;
+    height: 320px;
+
+    top: -100px;
+    left: -100px;
+}
+
+.login-branding .circle.c2 {
+    width: 220px;
+    height: 220px;
+
+    bottom: -80px;
+    right: -60px;
+
+    background:
+        rgba(255, 199, 44, 0.1);
+}
+
+.login-branding .brand-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    margin-bottom: 48px;
+
+    position: relative;
+
+    z-index: 1;
+
+    cursor: pointer;
+}
+
+.login-branding .brand-row img {
+    width: 48px;
+    height: 48px;
+
+    object-fit: contain;
+}
+
+.login-branding .brand-row h1 {
+    font-size: 20px;
+
+    font-weight: 700;
+}
+
+.login-branding .brand-row p {
+    font-size: 12px;
+
+    color:
+        rgba(255, 255, 255, 0.7);
+}
+
+.login-branding h2 {
+    font-size: 32px;
+
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    max-width: 420px;
+
+    margin-bottom: 16px;
+
+    position: relative;
+
+    z-index: 1;
+}
+
+.login-branding p.tagline {
+    font-size: 15px;
+
+    color:
+        rgba(255, 255, 255, 0.75);
+
+    max-width: 380px;
+
+    line-height: 1.6;
+
+    margin-bottom: 32px;
+
+    position: relative;
+
+    z-index: 1;
+}
+
+.login-branding .role-row {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    position: relative;
+
+    z-index: 1;
+}
+
+.login-branding .role-pill {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    background:
+        rgba(255, 255, 255, 0.1);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.18);
+
+    border-radius: 999px;
+
+    padding: 6px 14px;
+
+    font-size: 12px;
+
+    color:
+        rgba(255, 255, 255, 0.85);
+}
+
+.login-branding .role-pill i {
+    color: var(--yellow);
+
+    font-size: 11px;
+}
+
+.login-panel {
+    background: var(--white);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 40px;
+}
+
+.login-card {
+    width: 100%;
+
+    max-width: 400px;
+}
+
+
+/* ==========================================================================
+   LOGIN STEPS
+   ========================================================================== */
+
+.step {
+    display: none;
+}
+
+.step.active {
+    display: block;
+}
+
+.card-header-logo {
+    margin-bottom: 28px;
+}
+
+.card-header-logo h2 {
+    font-size: 24px;
+
+    font-weight: 700;
+
+    color: var(--text-900);
+
+    margin-bottom: 4px;
+}
+
+.card-header-logo p {
+    font-size: 13px;
+
+    color: var(--text-500);
+}
+
+.card-header-logo .user-email {
+    font-size: 13px;
+
+    color: var(--text-900);
+
+    font-weight: 600;
+
+    background: var(--bg);
+
+    border-radius: 20px;
+
+    padding: 7px 14px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 10px;
+
+    cursor: pointer;
+}
+
+.card-header-logo .user-email i {
+    color: var(--text-400);
+
+    font-size: 11px;
+}
+
+
+/* ==========================================================================
+   LOGIN FORMS
+   ========================================================================== */
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: var(--text-700);
+
+    margin-bottom: 8px;
+}
+
+.input-wrap {
+    position: relative;
+}
+
+.input-wrap i.icon {
+    position: absolute;
+
+    left: 14px;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: var(--text-400);
+
+    font-size: 14px;
+}
+
+.input-wrap input {
+    width: 100%;
+
+    height: 52px;
+
+    padding: 0 14px 0 40px;
+
+    border:
+        1.5px solid var(--border);
+
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    color: var(--text-900);
+
+    background: var(--bg);
+
+    outline: none;
+
+    transition:
+        all 0.2s;
+
+    font-family: 'Poppins', sans-serif;
+}
+
+.input-wrap input:focus {
+    border-color: var(--blue-800);
+
+    background: var(--white);
+
+    box-shadow:
+        0 0 0 3px rgba(15, 76, 219, 0.1);
+}
+
+.input-wrap .toggle-pwd {
+    position: absolute;
+
+    right: 14px;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: var(--text-400);
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    transition:
+        color 0.2s;
+}
+
+.input-wrap .toggle-pwd:hover {
+    color: var(--blue-800);
+}
+
+/* ==========================================================================
+   LOGIN ERROR
+   ========================================================================== */
+
+.error-box {
+    background: #FEF2F2;
+
+    border:
+        1px solid #FECACA;
+
+    border-left:
+        4px solid #EF4444;
+
+    border-radius: 10px;
+
+    padding: 10px 14px;
+
+    font-size: 13px;
+
+    color: #DC2626;
+
+    margin-bottom: 16px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+/* ==========================================================================
+   REMEMBER ME
+   ========================================================================== */
+
+.remember {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    font-size: 13px;
+
+    color: var(--text-500);
+
+    margin-bottom: 6px;
+
+    cursor: pointer;
+}
+
+.remember-left {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.remember input {
+    accent-color: var(--blue-800);
+
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ==========================================================================
+   LOGIN BUTTONS
+   ========================================================================== */
+
+.btn-next,
+.btn-signin {
+    width: 100%;
+
+    height: 52px;
+
+    background: var(--yellow);
+
+    color: var(--text-900);
+
+    border: none;
+
+    border-radius: 10px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        all 0.2s;
+
+    font-family: 'Poppins', sans-serif;
+
+    box-shadow:
+        0 8px 20px rgba(255, 199, 44, 0.35);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 22px;
+}
+
+.btn-next:hover,
+.btn-signin:hover {
+    background: var(--yellow-dark);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 28px rgba(255, 199, 44, 0.45);
+}
+
+.btn-back {
+    width: 100%;
+
+    height: 44px;
+
+    background: var(--bg);
+
+    color: var(--text-500);
+
+    border: none;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    margin-top: 10px;
+
+    font-family: 'Poppins', sans-serif;
+
+    transition:
+        all 0.2s;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+}
+
+.btn-back:hover {
+    background: var(--border);
+
+    color: var(--text-900);
+}
+
+
+/* ==========================================================================
+   LOGIN UTILITIES
+   ========================================================================== */
+
+.divider {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin: 24px 0;
+}
+
+.divider hr {
+    flex: 1;
+
+    border: none;
+
+    border-top:
+        1px solid var(--border);
+}
+
+.divider span {
+    font-size: 11px;
+
+    color: var(--text-400);
+
+    font-weight: 500;
+}
+
+.role-row {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+}
+
+.role-pill {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    background: var(--bg);
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 20px;
+
+    padding: 4px 10px;
+
+    font-size: 11px;
+
+    color: var(--text-500);
+
+    font-weight: 500;
+}
+
+.role-pill i {
+    font-size: 10px;
+
+    color: var(--blue-800);
+}
+
+.card-footer-text {
+    margin-top: 24px;
+
+    font-size: 11px;
+
+    color: var(--text-400);
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — TABLET
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+
+    .container {
+        padding: 0 48px;
+    }
+
+    .hero {
+        min-height: 640px;
+
+        background:
+            linear-gradient(
+                90deg,
+                rgba(244, 248, 252, 1) 0%,
+                rgba(244, 248, 252, 0.98) 28%,
+                rgba(244, 248, 252, 0.90) 46%,
+                rgba(244, 248, 252, 0.60) 65%,
+                rgba(244, 248, 252, 0.18) 84%,
+                rgba(244, 248, 252, 0) 100%
+            ),
+            url('/images/dtc-building.webp')
+            right center / cover no-repeat;
+    }
+
+    body.dtc-dark .hero {
+        background:
+            linear-gradient(
+                90deg,
+                rgba(15, 23, 42, 1) 0%,
+                rgba(15, 23, 42, 0.98) 28%,
+                rgba(15, 23, 42, 0.90) 46%,
+                rgba(15, 23, 42, 0.60) 65%,
+                rgba(15, 23, 42, 0.18) 84%,
+                rgba(15, 23, 42, 0) 100%
+            ),
+            url('/images/dtc-building.webp')
+            right center / cover no-repeat;
+    }
+
+    .hero .container {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(300px, 0.72fr);
+
+        gap: 30px;
+    }
+
+    .hero-left h1 {
+        font-size: 46px;
+    }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — TABLET / SMALL LAPTOP
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+
+    .container {
+        padding: 0 32px;
+    }
+
+    .hero {
+        min-height: 680px;
+
+        background:
+            linear-gradient(
+                180deg,
+                rgba(244, 248, 252, 0.98) 0%,
+                rgba(244, 248, 252, 0.94) 44%,
+                rgba(244, 248, 252, 0.70) 72%,
+                rgba(244, 248, 252, 0.30) 100%
+            ),
+            url('/images/dtc-building.webp')
+            center bottom / cover no-repeat;
+    }
+
+    body.dtc-dark .hero {
+        background:
+            linear-gradient(
+                180deg,
+                rgba(15, 23, 42, 0.98) 0%,
+                rgba(15, 23, 42, 0.94) 44%,
+                rgba(15, 23, 42, 0.70) 72%,
+                rgba(15, 23, 42, 0.30) 100%
+            ),
+            url('/images/dtc-building.webp')
+            center bottom / cover no-repeat;
+    }
+
+    .hero .container {
+        display: block;
+    }
+
+    .hero-left {
+        max-width: 650px;
+    }
+
+    .hero-left h1 {
+        font-size: 44px;
+    }
+
+    .process-steps {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .login-screen {
+        grid-template-columns: 1fr;
+    }
+
+    .login-branding {
+        padding: 48px 32px;
+
+        min-height: 260px;
+    }
+
+    .login-branding h2 {
+        font-size: 26px;
+    }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — SERVICES CAROUSEL (TABLET)
+   ========================================================================== */
+
+@media (max-width: 991.98px) {
+
+    .carousel-track {
+        height: 300px;
+    }
+
+    .carousel-track .service-card.is-prev {
+        transform: translateX(-58%) translateZ(-140px) rotateY(22deg) scale(0.8);
+    }
+
+    .carousel-track .service-card.is-next {
+        transform: translateX(58%) translateZ(-140px) rotateY(-22deg) scale(0.8);
+    }
+}
+
+
+/* ==========================================================================
+   RESPONSIVE — MOBILE
+   ========================================================================== */
+
+@media (max-width: 640px) {
+
+
+    /* Match the navbar's mobile container: calc(100% - 40px) = 20px each side */
+    .container {
+        width: calc(100% - 40px) !important;
+        padding: 0 !important;
+    }
+
+    .carousel-track .service-card.is-prev {
+    transform: translateX(-38%) translateZ(-120px) rotateY(22deg) scale(0.78);
+    opacity: 0.5;
+    }
+
+    .carousel-track .service-card.is-next {
+        transform: translateX(38%) translateZ(-120px) rotateY(-22deg) scale(0.78);
+        opacity: 0.5;
+    }
+
+    .carousel-viewport {
+        perspective: 700px;
+    }
+
+    .carousel-track {
+        height: auto;
+        min-height: 280px;
+        transform-style: flat;
+    }
+
+   .carousel-track .service-card {
+    width: min(240px, 72%);
+    }
+    
+    .carousel-track .service-card.is-center {
+        transform: none;
+        position: relative;   
+        margin: 0 auto;
+    }
+
+    .services-carousel {
+        flex-direction: column;
+    }
+
+    .carousel-arrow {
+        /* hide side arrows; dots alone handle navigation */
+        display: none;
+    }
+
+    .back-to-top {
+        right: 16px;
+        bottom: 16px;
+
+        width: 44px;
+        height: 44px;
+    }
+
+    .hero {
+        min-height: 720px;
+
+        padding: 52px 0 80px;
+
+        background:
+            linear-gradient(
+                180deg,
+                rgba(244, 248, 252, 1) 0%,
+                rgba(244, 248, 252, 0.97) 48%,
+                rgba(244, 248, 252, 0.76) 70%,
+                rgba(244, 248, 252, 0.20) 100%
+            ),
+            url('/images/dtc-building.webp')
+            center bottom / auto 55% no-repeat;
+    }
+
+    body.dtc-dark .hero {
+        background:
+            linear-gradient(
+                180deg,
+                rgba(15, 23, 42, 1) 0%,
+                rgba(15, 23, 42, 0.97) 48%,
+                rgba(15, 23, 42, 0.76) 70%,
+                rgba(15, 23, 42, 0.20) 100%
+            ),
+            url('/images/dtc-building.webp')
+            center bottom / auto 55% no-repeat;
+    }
+
+    .hero-left {
+        max-width: 100%;
+    }
+
+    .hero-left h1 {
+        font-size: 34px;
+
+        line-height: 1.15;
+    }
+
+    .hero-left p.hero-desc {
+        font-size: 15px;
+
+        line-height: 1.6;
+    }
+
+    .hero-left p.hero-support {
+        font-size: 13px;
+    }
+
+    .hero-cta-group {
+        flex-direction: column;
+    }
+
+    .hero-cta-group button,
+    .hero-cta-group a {
+        width: 100%;
+
+        justify-content: center;
+    }
+
+    .hero-features {
+        gap: 8px;
+    }
+
+    .feature-pill {
+        font-size: 11px;
+
+        padding: 7px 12px;
+    }
+
+    .process-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .login-panel {
+        padding: 28px 20px;
+    }
+}
+
+
+/* ==========================================================================
+   HERO — ENTRANCE ANIMATION
+   ========================================================================== */
+
+.hero-eyebrow,
+.hero-left h1,
+.hero-left p.hero-desc,
+.hero-left p.hero-support,
+.hero-cta-group,
+.hero-explore-link {
+    opacity: 0;
+    transform: translateY(24px);
+    animation: heroEnter 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.hero-eyebrow           { animation-delay: 0.05s; }
+.hero-left h1            { animation-delay: 0.15s; }
+.hero-left p.hero-desc   { animation-delay: 0.25s; }
+.hero-left p.hero-support { animation-delay: 0.33s; }
+.hero-cta-group          { animation-delay: 0.41s; }
+.hero-explore-link       { animation-delay: 0.49s; }
+
+@keyframes heroEnter {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero {
+    will-change: background-position;
+}
+
+
+/* ==========================================================================
+   SCROLL REVEAL
+   ========================================================================== */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(28px);
+
+    transition:
+        opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.reveal-left  { transform: translateX(-28px); }
+.reveal.reveal-right { transform: translateX(28px); }
+.reveal.reveal-scale { transform: scale(0.94); }
+
+.reveal.revealed {
+    opacity: 1;
+    transform: none;
+}
+
+
+/* ==========================================================================
+   BACK TO TOP BUTTON
+   ========================================================================== */
+
+.back-to-top {
+    position: fixed;
+
+    right: 24px;
+    bottom: 24px;
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--blue-800);
+    color: var(--white);
+
+    border: none;
+    border-radius: 50%;
+
+    font-size: 16px;
+
+    cursor: pointer;
+
+    box-shadow: 0 10px 24px rgba(15, 76, 219, 0.28);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease,
+        visibility 0.25s ease,
+        background 0.2s ease;
+
+    z-index: 900;
+}
+
+.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.back-to-top:hover {
+    background: var(--yellow);
+    color: var(--text-900);
+
+    transform: translateY(-3px);
+}
+
+.back-to-top:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 3px;
+}
+
+
+/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .hero-eyebrow,
+    .hero-left h1,
+    .hero-left p.hero-desc,
+    .hero-left p.hero-support,
+    .hero-cta-group,
+    .hero-explore-link {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .reveal {
+        transition: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .carousel-track .service-card {
+        transition: opacity 0.2s ease;
+    }
+
+    .back-to-top {
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+}
+
+/* ==========================================================================
+   SERVICE CARD MODAL (dtc-svc-*)
+   Triggered when clicking the center carousel card.
+   Follows the same overlay/box/animation pattern as signin-modal.css.
+   ========================================================================== */
+
+/* ── Overlay ── */
+.dtc-svc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    box-sizing: border-box;
+}
+
+.dtc-svc-overlay[hidden] {
+    display: none !important;
+}
+
+/* ── Backdrop ── */
+.dtc-svc-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 22, 50, 0.65);
+    cursor: pointer;
+    animation: dtcSvcBackdropIn 0.22s ease forwards;
+}
+
+@keyframes dtcSvcBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Box ── */
+.dtc-svc-box {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 540px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: var(--white);
+    border-radius: 22px;
+    padding: 32px 28px;
+    box-shadow: 0 28px 72px rgba(10, 22, 50, 0.30);
+    animation: dtcSvcBoxIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+body.dtc-dark .dtc-svc-box {
+    background: #1E293B;
+    color: var(--dtc-text);
+}
+
+@keyframes dtcSvcBoxIn {
+    from {
+        opacity: 0;
+        transform: translateY(22px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dtc-svc-box.is-closing {
+    animation: dtcSvcBoxOut 0.22s ease forwards;
+}
+
+@keyframes dtcSvcBoxOut {
+    to {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+}
+
+/* ── Close button ── */
+.dtc-svc-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text-500);
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.dtc-svc-close:hover {
+    background: var(--blue-800);
+    color: var(--white);
+    border-color: var(--blue-800);
+    transform: rotate(90deg);
+}
+
+body.dtc-dark .dtc-svc-close {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--dtc-border);
+    color: var(--dtc-text-secondary);
+}
+
+/* ── Header row ── */
+.dtc-svc-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding-right: 40px;
+}
+
+.dtc-svc-icon-wrap {
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: var(--blue-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yellow);
+    font-size: 22px;
+}
+
+.dtc-svc-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--blue-800);
+    background: rgba(15, 76, 219, 0.08);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-bottom: 6px;
+}
+
+body.dtc-dark .dtc-svc-badge {
+    background: rgba(15, 76, 219, 0.22);
+    color: #93BBFD;
+}
+
+.dtc-svc-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-900);
+    margin: 0 0 4px;
+    line-height: 1.2;
+}
+
+body.dtc-dark .dtc-svc-title {
+    color: var(--dtc-text);
+}
+
+.dtc-svc-tagline {
+    font-size: 13px;
+    color: var(--text-500);
+    margin: 0;
+    font-style: italic;
+}
+
+/* ── Description ── */
+.dtc-svc-desc {
+    font-size: 14px;
+    line-height: 1.68;
+    color: var(--text-700);
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+body.dtc-dark .dtc-svc-desc {
+    color: var(--dtc-text-secondary);
+    border-color: var(--dtc-border);
+}
+
+/* ── Key features label ── */
+.dtc-svc-highlights-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--blue-800);
+    margin-bottom: 14px;
+}
+
+body.dtc-dark .dtc-svc-highlights-label {
+    color: #93BBFD;
+}
+
+/* ── Highlights list ── */
+.dtc-svc-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dtc-svc-highlight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--text-700);
+    line-height: 1.5;
+}
+
+body.dtc-dark .dtc-svc-highlight-item {
+    color: var(--dtc-text-secondary);
+}
+
+.dtc-svc-hi-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(15, 76, 219, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue-800);
+    font-size: 13px;
+    margin-top: 1px;
+}
+
+body.dtc-dark .dtc-svc-hi-icon {
+    background: rgba(15, 76, 219, 0.22);
+    color: #93BBFD;
+}
+
+/* ── Who is this for ── */
+.dtc-svc-who {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-500);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+body.dtc-dark .dtc-svc-who {
+    background: rgba(255,255,255,0.04);
+    border-color: var(--dtc-border);
+    color: var(--dtc-text-muted);
+}
+
+.dtc-svc-who i {
+    color: var(--blue-800);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+body.dtc-dark .dtc-svc-who i {
+    color: #93BBFD;
+}
+
+/* ── Carousel card: clickable center card indicator ── */
+.carousel-track .service-card.is-center {
+    cursor: pointer;
+}
+
+.carousel-track .service-card.is-center::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease;
+    pointer-events: none;
+}
+
+.carousel-track .service-card.is-center:hover::after {
+    border-color: var(--blue-800);
+}
+
+/* "Click to learn more" hint chip on center card */
+.service-card .card-hint {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue-800);
+    letter-spacing: 0.4px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-track .service-card.is-center .card-hint {
+    display: flex;
+}
+
+.carousel-track .service-card.is-center:hover .card-hint,
+.carousel-track .service-card.is-center:focus-visible .card-hint {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card-hint i {
+    font-size: 11px;
+}
+
+body.dtc-dark .service-card .card-hint {
+    color: #93BBFD;
+}
+
+/* Focus ring for keyboard nav */
+.service-card:focus-visible {
+    outline: 2px solid var(--blue-800);
+    outline-offset: 3px;
+}
+
+
+/* ==========================================================================
+   ENRICHED FAQ BULLETS (dtc-faq-*)
+   ========================================================================== */
+
+.dtc-faq-intro {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-500);
+    margin-bottom: 14px;
+}
+
+body.dtc-dark .dtc-faq-intro {
+    color: var(--dtc-text-secondary);
+}
+
+.dtc-faq-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.dtc-faq-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--text-700);
+    line-height: 1.55;
+}
+
+body.dtc-dark .dtc-faq-bullet {
+    color: var(--dtc-text-secondary);
+}
+
+.dtc-faq-bullet-icon {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(15, 76, 219, 0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue-800);
+    font-size: 12px;
+    margin-top: 1px;
+}
+
+body.dtc-dark .dtc-faq-bullet-icon {
+    background: rgba(15, 76, 219, 0.20);
+    color: #93BBFD;
+}
+
+.dtc-faq-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--text-400);
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.dtc-faq-note i {
+    flex-shrink: 0;
+    color: var(--blue-800);
+    font-size: 13px;
+    margin-top: 1px;
+}
+
+body.dtc-dark .dtc-faq-note {
+    color: var(--dtc-text-muted);
+}
+
+/* Allow richer FAQ answers to expand fully */
+.faq-item.active .faq-answer {
+    max-height: 600px !important; /* override the 220px cap for bullet lists */
+}
+
+
+/* ==========================================================================
+   MODAL — RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 640px) {
+    .dtc-svc-box {
+        padding: 24px 18px;
+        border-radius: 18px;
+        max-height: 92vh;
+    }
+
+    .dtc-svc-title {
+        font-size: 17px;
+    }
+
+    .dtc-svc-header {
+        gap: 14px;
+    }
+
+    .dtc-svc-icon-wrap {
+        width: 46px;
+        height: 46px;
+        font-size: 18px;
+    }
+}

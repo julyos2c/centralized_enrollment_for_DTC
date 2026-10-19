@@ -1,0 +1,286 @@
+/* appointments/create.blade.php — extracted styles */
+
+/* ── Step indicator ─────────────────────────────────────────────── */
+.dtc-appt-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.dtc-appt-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.dtc-appt-step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--dtc-border);
+    background: var(--dtc-surface);
+    color: var(--dtc-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s;
+}
+.dtc-appt-step-circle svg { width: 16px; height: 16px; }
+.dtc-appt-step-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dtc-text-muted);
+    white-space: nowrap;
+    transition: color 0.25s;
+}
+.dtc-appt-step.is-active .dtc-appt-step-circle {
+    border-color: var(--dtc-primary);
+    background: var(--dtc-primary);
+    color: #fff;
+    box-shadow: 0 0 0 4px var(--dtc-primary-soft);
+}
+.dtc-appt-step.is-active .dtc-appt-step-label { color: var(--dtc-primary); }
+.dtc-appt-step.is-done .dtc-appt-step-circle {
+    border-color: var(--dtc-success);
+    background: var(--dtc-success);
+    color: #fff;
+}
+.dtc-appt-step.is-done .dtc-appt-step-label { color: var(--dtc-success); }
+.dtc-appt-step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--dtc-border);
+    margin: 0 6px;
+    margin-bottom: 22px;
+    transition: background 0.25s;
+    min-width: 16px;
+}
+.dtc-appt-step-line.is-done { background: var(--dtc-success); }
+
+/* ── Document type cards ─────────────────────────────────────────── */
+.dtc-doc-option {
+    border: 2px solid var(--dtc-border);
+    border-radius: 12px;
+    padding: 16px 10px 12px;
+    text-align: center;
+    background: var(--dtc-surface-soft);
+    transition: all 0.2s;
+    height: 100%;
+}
+.dtc-doc-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--dtc-surface);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 10px;
+    color: var(--dtc-text-muted);
+    transition: all 0.2s;
+}
+.dtc-doc-icon svg { width: 18px; height: 18px; }
+.dtc-doc-label {
+    font-size: 12px; font-weight: 700;
+    color: var(--dtc-text-secondary);
+    line-height: 1.3;
+    transition: color 0.2s;
+}
+.dtc-doc-desc {
+    font-size: 10px;
+    color: var(--dtc-text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+.dtc-doc-card:has(input:checked) .dtc-doc-option {
+    border-color: var(--dtc-primary);
+    background: var(--dtc-primary-soft);
+}
+.dtc-doc-card:has(input:checked) .dtc-doc-icon {
+    background: var(--dtc-primary);
+    color: #fff;
+}
+.dtc-doc-card:has(input:checked) .dtc-doc-label { color: var(--dtc-primary); font-weight: 800; }
+
+/* ── Slot cards ──────────────────────────────────────────────────── */
+.dtc-slot-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 2px solid var(--dtc-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    background: var(--dtc-surface-soft);
+    transition: all 0.2s;
+}
+.dtc-slot-card:has(input:checked) .dtc-slot-option {
+    border-color: var(--dtc-primary);
+    background: var(--dtc-primary-soft);
+}
+.dtc-slot-info { flex: 1; min-width: 0; }
+.dtc-slot-date { font-size: 13px; font-weight: 700; color: var(--dtc-text); }
+.dtc-slot-time {
+    font-size: 11px; color: var(--dtc-text-muted);
+    display: flex; align-items: center; gap: 4px; margin-top: 2px;
+}
+.dtc-slot-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 4px;
+    flex-shrink: 0; white-space: nowrap;
+}
+.dtc-slot-badge.is-ok { color: var(--dtc-success); background: #DCFCE7; }
+.dtc-slot-badge.is-warning { color: #B45309; background: #FEF3C7; }
+body.dtc-dark .dtc-slot-badge.is-ok    { color:#86EFAC; background:rgba(22,163,74,0.18); }
+body.dtc-dark .dtc-slot-badge.is-warning { color:#FCD34D; background:rgba(217,119,6,0.18); }
+
+.dtc-empty-slot-state {
+    text-align: center;
+    border: 2px dashed var(--dtc-border);
+    border-radius: 12px;
+    padding: 32px 24px;
+    color: var(--dtc-text-muted);
+    font-size: 13px;
+}
+.dtc-empty-slot-state svg { width: 32px; height: 32px; margin-bottom: 10px; }
+
+/* ── Payment method cards ────────────────────────────────────────── */
+.dtc-pay-option {
+    border: 2px solid var(--dtc-border);
+    border-radius: 12px;
+    padding: 20px 12px 16px;
+    text-align: center;
+    background: var(--dtc-surface-soft);
+    transition: all 0.2s;
+}
+.dtc-pay-method-card:has(input:checked) .dtc-pay-option {
+    border-color: var(--dtc-primary);
+    background: var(--dtc-primary-soft);
+}
+.dtc-pay-detail-panel {
+    background: var(--dtc-surface-soft);
+    border: 1px solid var(--dtc-border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* ── Review summary ──────────────────────────────────────────────── */
+.dtc-review-summary {
+    background: var(--dtc-surface-soft);
+    border: 1px solid var(--dtc-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.dtc-review-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--dtc-border);
+    gap: 12px;
+}
+.dtc-review-row:last-child { border-bottom: none; }
+.dtc-review-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dtc-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.dtc-review-label svg { width: 13px; height: 13px; }
+.dtc-review-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dtc-text);
+    text-align: right;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────── */
+body.dtc-dark .dtc-doc-option,
+body.dtc-dark .dtc-slot-option,
+body.dtc-dark .dtc-pay-option,
+body.dtc-dark .dtc-pay-detail-panel,
+body.dtc-dark .dtc-review-summary { background: rgba(255,255,255,0.04); }
+
+body.dtc-dark .dtc-doc-card:has(input:checked) .dtc-doc-option,
+body.dtc-dark .dtc-slot-card:has(input:checked) .dtc-slot-option,
+body.dtc-dark .dtc-pay-method-card:has(input:checked) .dtc-pay-option {
+    background: rgba(99,130,245,0.15);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 576px) {
+    .dtc-appt-step-label { display: none; }
+    .dtc-appt-step-circle { width: 32px; height: 32px; }
+    .dtc-appt-step-circle svg { width: 13px; height: 13px; }
+    .dtc-appt-step-line { margin-bottom: 6px; }
+}
+
+/* ── Custom file upload zone ─────────────────────────────────── */
+.dtc-file-upload {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px dashed var(--dtc-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    background: var(--dtc-surface-soft, #f8fafc);
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+.dtc-file-upload:hover {
+    border-color: var(--dtc-primary, #3b82f6);
+    background: var(--dtc-primary-soft, #eff6ff);
+}
+.dtc-file-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.dtc-file-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--dtc-primary, #3b82f6);
+}
+.dtc-file-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+.dtc-file-btn {
+    flex-shrink: 0;
+    background: var(--dtc-primary, #3b82f6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.dtc-file-name {
+    font-size: 12px;
+    color: var(--dtc-text-muted, #94a3b8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dtc-file-name.has-file {
+    color: var(--dtc-text, #1e293b);
+    font-weight: 500;
+}
+body.dtc-dark .dtc-file-upload {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.12);
+}
+body.dtc-dark .dtc-file-upload:hover {
+    border-color: var(--dtc-primary);
+    background: rgba(99,130,245,0.10);
+}
+body.dtc-dark .dtc-file-name { color: rgba(255,255,255,0.4); }
+body.dtc-dark .dtc-file-name.has-file { color: rgba(255,255,255,0.9); }

@@ -39,20 +39,28 @@
             @include('adminlte::partials.cwrapper.cwrapper-iframe')
         @endempty
 
-        {{-- Footer --}}
-        @hasSection('footer')
-            @include('adminlte::partials.footer.footer')
-        @endif
+        {{-- Footer — always rendered. The stock AdminLTE gate here was
+             @hasSection('footer'), which only includes the footer partial
+             if some view explicitly declares @section('footer', ...).
+             Nothing in this app ever did, so the footer never rendered on
+             any page, on any dashboard, regardless of the
+             layout_fixed_footer config (that only controls stickiness
+             once the footer exists — it doesn't make it render). This app
+             always wants the footer, so the include is unconditional. --}}
+        @include('adminlte::partials.footer.footer')
 
         {{-- Right Control Sidebar --}}
         @if($layoutHelper->isRightSidebarEnabled())
             @include('adminlte::partials.sidebar.right-sidebar')
         @endif
-
     </div>
 @stop
 
 @section('adminlte_js')
+    {{-- DTC: toast container + flash bridge --}}
+    <x-dtc.toast />
+    {{-- DTC: confirmation modal --}}
+    <x-dtc.confirm-modal />
     @stack('js')
     @yield('js')
 @stop

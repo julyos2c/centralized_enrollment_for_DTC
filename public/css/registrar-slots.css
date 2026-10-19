@@ -1,0 +1,39 @@
+/* Keep appointment slot data, badges, and controls in separate grid tracks. */
+.dtc-slot-row {
+    grid-template-columns: minmax(130px, 1fr) minmax(180px, 1.25fr) minmax(145px, 1fr) max-content 132px;
+    gap: 14px;
+}
+
+.dtc-slot-row > * { min-width: 0; }
+.dtc-slot-status-block { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.dtc-slot-actions-block { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 132px; }
+.dtc-slot-actions-block form { margin: 0; }
+.dtc-slot-actions-block .dtc-icon-btn { flex: 0 0 36px; }
+
+@media (max-width: 1200px) {
+    .dtc-slot-row {
+        grid-template-columns: minmax(120px, 1fr) minmax(170px, 1.2fr) minmax(140px, 1fr) minmax(160px, max-content);
+        gap: 12px;
+    }
+    .dtc-slot-actions-block { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+@media (max-width: 768px) {
+    .dtc-slot-row {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 10px 12px;
+    }
+    .dtc-slot-date-block { grid-column: 1 / 2; }
+    .dtc-slot-status-block { grid-column: 2 / 3; justify-content: flex-end; }
+    .dtc-slot-time-block,
+    .dtc-slot-capacity-block,
+    .dtc-slot-actions-block { grid-column: 1 / -1; }
+    .dtc-slot-actions-block { justify-content: flex-start; min-width: 0; }
+    .dtc-slot-status-block .dtc-status-badge { white-space: normal; }
+}
+
+@media (max-width: 420px) {
+    .dtc-slot-row { padding: 12px; }
+    .dtc-slot-status-block { gap: 4px; }
+    .dtc-slot-actions-block { gap: 8px; }
+}

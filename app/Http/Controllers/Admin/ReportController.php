@@ -21,12 +21,13 @@ class ReportController extends Controller
 
     public function paymentReport()
     {
-        $payments = Payment::with('enrollment.user', 'enrollment.program', 'cashier')
-            ->latest()->get();
-        $totalRevenue = $payments->sum('amount');
-        $pdf = Pdf::loadView('admin.reports.payment', compact('payments', 'totalRevenue'))
+       $payments = Payment::with('enrollment.user', 'enrollment.program', 'cashier', 'verifier')
+        ->latest()
+        ->get();
+        $totalRevenue = $payments->where('status', 'verified')->sum('amount');
+        $verifiedCount = $payments->where('status', 'verified')->count();
+        $pdf = Pdf::loadView('admin.reports.payment', compact('payments', 'totalRevenue', 'verifiedCount'))
             ->setPaper('a4', 'landscape');
-
         return $pdf->download('DTC_Payment_Report_' . date('Ymd') . '.pdf');
     }
 }

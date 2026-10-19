@@ -9,7 +9,19 @@ class DocumentRequest extends Model
     protected $fillable = [
         'user_id', 'appointment_id', 'document_type',
         'copies', 'purpose', 'status', 'fee', 'is_paid',
-        'receipt_no', 'remarks'
+        'receipt_no', 'remarks', 'payment_method', 'payment_status',
+        'amount_received', 'reference_number', 'proof_of_payment',
+        'verified_by', 'verified_at', 'payment_submitted_at', 'payment_rejection_reason',
+        'rejected_by', 'rejected_at',
+    ];
+
+    protected $casts = [
+        'is_paid' => 'boolean',
+        'fee' => 'decimal:2',
+        'amount_received' => 'decimal:2',
+        'verified_at' => 'datetime',
+        'payment_submitted_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function user()
@@ -20,6 +32,16 @@ class DocumentRequest extends Model
     public function appointment()
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function rejecter()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function getDocumentLabelAttribute(): string

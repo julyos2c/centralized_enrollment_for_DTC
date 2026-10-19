@@ -1,104 +1,189 @@
 @section('content_top_nav_left')
-    <li class="nav-item" style="margin-left:8px;">
-        <div style="position:relative;">
-            <i class="fas fa-search" style="position:absolute; left:12px; top:50%;
-               transform:translateY(-50%); color:#94A3B8; font-size:12px; z-index:1;"></i>
-            <input type="text" placeholder="Search anything..."
-                style="padding:8px 16px 8px 36px; border-radius:10px;
-                       border:1.5px solid #E2E8F0; font-family:'Poppins',sans-serif;
-                       font-size:13px; color:#1E293B; background:#F8FAFC;
-                       outline:none; width:280px;">
-        </div>
-    </li>
 @endsection
 
+
 @section('content_top_nav_right')
-    @php
-        //Compute once — avoids N+1 and ensures $unread is always available
-        $unread = auth()->check() ? auth()->user()->unreadNotificationsCount() : 0;
-    @endphp
+@php
+    $unread = \App\Models\UserNotification::where('user_id', auth()->id())
+        ->whereNull('read_at')->count();
+    $recentNotifs = \App\Models\UserNotification::where('user_id', auth()->id())
+        ->latest()->take(5)->get();
+@endphp
+<li class="nav-item navbar-search-item">
+    <div class="navbar-search-wrapper">
 
-    {{-- Notification Bell --}}
-    <li class="nav-item mr-2">
-        <a href="{{ route('notifications.index') }}"
-           style="position:relative; display:flex; align-items:center;
-                  padding:8px 10px; text-decoration:none;">
-            <i class="fas fa-bell" style="font-size:18px; color:#64748B;"></i>
-            @if($unread > 0)
-                <span style="position:absolute; top:4px; right:6px;
-                             background:#EF4444; color:#fff; font-size:9px;
-                             font-weight:700; border-radius:50%; width:16px; height:16px;
-                             display:flex; align-items:center; justify-content:center;
-                             font-family:'Poppins',sans-serif;">
-                    {{ $unread }}
-                </span>
-            @endif
-        </a>
-    </li>
+        {{-- Icon --}}
+        <i data-lucide="search" class="navbar-search-icon"></i>
 
-    {{-- User Profile Dropdown --}}
-    <li class="nav-item dropdown mr-2">
-        <a href="#" class="nav-link dropdown-toggle d-flex align-items-center"
-           data-toggle="dropdown" style="gap:10px; padding:4px 8px;">
-            <div style="width:36px; height:36px; border-radius:50%;
-                        background:linear-gradient(135deg,#0F4CDB,#1a5feb);
-                        display:flex; align-items:center; justify-content:center;
-                        color:#fff; font-weight:700; font-size:14px;
-                        font-family:'Poppins',sans-serif; flex-shrink:0;">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-            <div style="line-height:1.2;">
-                <div style="font-size:13px; font-weight:600; color:#1E293B;">
-                    {{ auth()->user()->name }}
-                </div>
-                <div style="font-size:11px; color:#64748B;">
-                    {{ ucfirst(str_replace('_', ' ', auth()->user()->getRoleNames()->first() ?? '')) }}
-                </div>
-            </div>
-        </a>
-        <div class="dropdown-menu dropdown-menu-right"
-             style="border:none; border-radius:14px;
-                    box-shadow:0 8px 30px rgba(0,0,0,0.12);
-                    padding:8px; min-width:200px; margin-top:8px;">
+        {{-- Input --}}
+        <input type="text"
+               id="global-search"
+               placeholder="Search anything..."
+               class="navbar-search-input"
+               autocomplete="off">
 
-            {{-- Profile info header --}}
-            <div style="padding:10px 14px 12px; border-bottom:1px solid #F1F5F9; margin-bottom:6px;">
-                <div style="font-size:13px; font-weight:600; color:#1E293B;">
-                    {{ auth()->user()->name }}
-                </div>
-                <div style="font-size:11px; color:#64748B;">
-                    {{ auth()->user()->email }}
-                </div>
-            </div>
-
-            <a class="dropdown-item" href="{{ route('notifications.index') }}"
-               style="border-radius:8px; font-size:13px; padding:10px 14px;
-                      font-family:'Poppins',sans-serif; color:#1E293B;">
-                <i class="fas fa-bell mr-2" style="color:#0F4CDB; width:16px;"></i>
-                Notifications
-                @if($unread > 0)
-                    <span class="float-right"
-                          style="background:#EF4444; color:#fff; font-size:9px;
-                                 font-weight:700; border-radius:50%; width:18px; height:18px;
-                                 display:inline-flex; align-items:center; justify-content:center;">
-                        {{ $unread }}
-                    </span>
-                @endif
-            </a>
-
-            <div style="border-top:1px solid #F1F5F9; margin:6px 0;"></div>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="dropdown-item"
-                        style="border-radius:8px; font-size:13px; padding:10px 14px;
-                               font-family:'Poppins',sans-serif; color:#EF4444;
-                               background:none; border:none; width:100%;
-                               text-align:left; cursor:pointer;">
-                    <i class="fas fa-sign-out-alt mr-2" style="width:16px;"></i>
-                    Logout
-                </button>
-            </form>
+        {{-- Ctrl+K badge --}}
+        <div class="search-kbd" id="search-kbd">
+            <span class="search-kbd-key">Ctrl</span>
+            <span class="search-kbd-key">K</span>
         </div>
-    </li>
+
+        {{-- Clear button --}}
+        <button class="search-clear-btn" id="search-clear" onclick="clearSearch()">
+            <i data-lucide="x"></i>
+        </button>
+
+    </div>
+
+    {{-- Dropdown --}}
+    <div class="search-dropdown" id="search-dropdown">
+
+        {{-- Default: Suggestions + Recent --}}
+        <div id="search-default">
+            <div class="search-section">
+                <div class="search-section-label">Suggestions</div>
+                <div id="suggestions-list"></div>
+            </div>
+
+            <div class="search-section-footer">
+                <span class="search-section-label" style="margin:0;">Recent Searches</span>
+                <button class="search-clear-recent" onclick="clearRecent()">Clear</button>
+            </div>
+            <div class="search-section" style="padding-top:10px;">
+                <div class="search-recent-chips" id="recent-list"></div>
+                <div class="search-no-recent u-hidden" id="no-recent" >
+                    No recent searches yet.
+                </div>
+            </div>
+        </div>
+
+        {{-- Loading --}}
+        <div class="search-loading u-hidden" id="search-loading" >
+            <i data-lucide="loader" class="lucide-spin"></i>
+        </div>
+
+        {{-- Results --}}
+        <div id="search-results"  class="u-hidden">
+            <div class="search-section">
+                <div class="search-section-label">Results</div>
+                <div id="results-list"></div>
+            </div>
+        </div>
+
+        {{-- Empty --}}
+        <div class="search-empty u-hidden" id="search-empty" >
+            <i data-lucide="search"></i>
+            <div class="search-empty-title">No results found</div>
+            <div class="search-empty-sub" id="empty-query"></div>
+        </div>
+
+    </div>
+</li>
+
+{{-- Dark Mode Toggle --}}
+<li class="nav-item navbar-theme-toggle">
+    <button
+        type="button"
+        id="darkModeToggle"
+        class="theme-toggle-btn"
+        aria-label="Enable dark mode"
+        aria-pressed="false"
+        title="Enable dark mode">
+        <i data-lucide="moon" id="darkModeIcon" aria-hidden="true"></i>
+    </button>
+</li>
+
+<!-- Notification Bell Dropdown -->
+<li class="nav-item dropdown navbar-notification-item" id="notif-dropdown">
+    <a href="#" class="nav-link dropdown-toggle navbar-icon-link"
+       data-toggle="dropdown" id="notifBell" aria-label="Open notifications"
+       aria-haspopup="true" aria-expanded="false">
+        <i data-lucide="bell" class="navbar-icon" aria-hidden="true"></i>
+        @if($unread > 0)
+            <span id="notif-badge" class="navbar-notification-badge">
+                {{ $unread }}
+            </span>
+        @endif
+    </a>
+
+    {{-- Dropdown Panel --}}
+    <div class="dropdown-menu dropdown-menu-right p-0 notify-dropdown">
+
+        {{-- Header --}}
+        <div class="notify-header">
+            <div>
+                <div class="notify-header-title">
+                    Notifications
+                </div>
+                <div class="notify-header-subtitle">
+                    @if($unread > 0)
+                        {{ $unread }} unread notification{{ $unread > 1 ? 's' : '' }}
+                    @else
+                        All caught up!
+                    @endif
+                </div>
+            </div>
+            @if($unread > 0)
+            <a href="{{ route('notifications.index') }}" class="notify-mark-read">
+                Mark all read
+            </a>
+            @endif
+        </div>
+
+        {{-- Notification List --}}
+        <div class="notify-list">
+            @forelse($recentNotifs as $notif)
+            <a href="{{ route('notifications.read', $notif) }}"
+               class="notif-item {{ $notif->isRead() ? 'is-read' : 'is-unread' }}">
+
+                {{-- Icon --}}
+                <div class="notif-icon notif-icon-{{ $notif->type }}">
+                    <i data-lucide="{{ $notif->type === 'success' ? 'check-circle' :
+                                    ($notif->type === 'danger'   ? 'x-circle' :
+                                    ($notif->type === 'warning'  ? 'alert-circle' : 'info')) }}"></i>
+                </div>
+
+                {{-- Content --}}
+                <div class="notif-body">
+                    <div class="notif-row">
+                        <div class="notif-title {{ $notif->isRead() ? 'is-read' : 'is-unread' }}">
+                            {{ $notif->title }}
+                        </div>
+                        @if(!$notif->isRead())
+                            <div class="notif-dot" aria-label="Unread notification"></div>
+                        @endif
+                    </div>
+                    <div class="notif-message">
+                        {{ Str::limit($notif->message, 60) }}
+                    </div>
+                    <div class="notif-time">
+                        <i data-lucide="clock" aria-hidden="true"></i>
+                        {{ $notif->created_at->diffForHumans() }}
+                    </div>
+                </div>
+            </a>
+            @empty
+            <div class="notify-empty">
+                <i data-lucide="bell-off" class="notify-empty-icon" aria-hidden="true"></i>
+                <div class="notify-empty-title">
+                    No notifications yet
+                </div>
+                <div class="notify-empty-subtitle">
+                    You're all caught up!
+                </div>
+            </div>
+            @endforelse
+        </div>
+
+        {{-- Footer --}}
+        @if($recentNotifs->isNotEmpty())
+        <div class="notify-footer">
+            <a href="{{ route('notifications.index') }}" class="notify-view-all">
+                View all notifications →
+            </a>
+        </div>
+        @endif
+    </div>
+</li>
+
 @endsection

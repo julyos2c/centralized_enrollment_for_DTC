@@ -1,0 +1,300 @@
+/* ============================================================
+   DTC EMS — Shared Auth Page Styles
+   (forgot-password, reset-password, set-password)
+   Include this via @push('styles') or a shared link tag.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background:
+        linear-gradient(
+            160deg,
+            rgba(39, 99, 238, 0.97) 0%,
+            rgba(6, 42, 126, 0.92) 55%
+        ),
+        url('/images/dtc-building.webp') center center / cover no-repeat fixed;
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(10, 22, 50, 0.14);
+}
+
+/* ── Header — same as sign-in modal ─────────────────────── */
+.auth-card-header {
+    padding: 24px 24px 28px;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(15, 76, 219, 0.97) 0%,
+            rgba(15, 76, 219, 0.92) 55%,
+            rgba(15, 76, 219, 0.72) 100%
+        ),
+        url('/images/dtc-building.webp') center center / cover no-repeat;
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.auth-brand img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.auth-brand-name {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.auth-brand-sub {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 10.5px;
+    margin: 2px 0 0;
+}
+
+.auth-card-tagline {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.auth-card-tagline span {
+    color: #FFC72C;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+.auth-card-body {
+    padding: 28px 28px 8px;
+}
+
+/* ── Icon badge ──────────────────────────────────────────── */
+.auth-icon-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #EEF2FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.auth-icon-badge i {
+    color: #0F4CDB;
+    font-size: 20px;
+}
+
+.auth-icon-badge--warning {
+    background: #FEF3C7;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+}
+
+.auth-icon-badge--warning i {
+    color: #B8860B;
+    font-size: 22px;
+}
+
+.auth-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0 0 4px;
+}
+
+.auth-card-subtitle {
+    font-size: 13px;
+    color: #64748B;
+    margin: 0 0 22px;
+    line-height: 1.5;
+}
+
+/* ── Alert boxes ─────────────────────────────────────────── */
+.auth-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.auth-alert--error {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-left: 4px solid #EF4444;
+    color: #DC2626;
+}
+
+.auth-alert--success {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-left: 4px solid #22C55E;
+    color: #166534;
+}
+
+.auth-alert i { margin-top: 1px; flex-shrink: 0; }
+
+/* ── Form fields ─────────────────────────────────────────── */
+.auth-field {
+    margin-bottom: 16px;
+}
+
+.auth-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.auth-input-wrap {
+    position: relative;
+}
+
+.auth-input-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.auth-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 42px 0 38px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    background: #F8FAFC;
+    font-size: 13.5px;
+    font-family: 'Poppins', sans-serif;
+    color: #1E293B;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.auth-input::placeholder { color: #94A3B8; }
+
+.auth-input:focus {
+    border-color: #0F4CDB;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(15, 76, 219, 0.1);
+}
+
+.auth-input:disabled {
+    background: #F1F5F9;
+    color: #64748B;
+    cursor: not-allowed;
+}
+
+.auth-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    color: #94A3B8;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.auth-eye:hover { color: #0F4CDB; }
+
+/* ── Submit button ───────────────────────────────────────── */
+.auth-btn {
+    width: 100%;
+    height: 46px;
+    background: #0F4CDB;
+    color: #ffffff;
+    border: none;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 6px 18px rgba(15, 76, 219, 0.28);
+    margin-bottom: 18px;
+}
+
+.auth-btn:hover {
+    background: #0B43C1;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(15, 76, 219, 0.36);
+}
+
+.auth-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Back link ───────────────────────────────────────────── */
+.auth-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: #64748B;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.auth-back:hover { color: #0F4CDB; }
+
+.auth-back i { font-size: 11px; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.auth-card-footer {
+    text-align: center;
+    padding: 16px 28px 20px;
+    border-top: 1px solid #F1F5F9;
+}
+
+.auth-card-copyright {
+    font-size: 10.5px;
+    color: #94A3B8;
+    margin: 0;
+}

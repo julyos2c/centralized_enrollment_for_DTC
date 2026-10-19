@@ -1,0 +1,29 @@
+/* ==========================================================================
+   DTC EMS — Responsive fixes
+   Phase 1, Group 6/7 (partial — see Group 6/7 report). This file holds
+   only the low-risk, mechanical mobile fixes verified safe by static
+   analysis. The larger per-table "card vs scroll vs column-hide" redesign
+   called for in the original brief still needs a dedicated, visually
+   verified pass and is intentionally NOT included here.
+   ========================================================================== */
+
+/* Touch UX: icon-only action buttons (table row actions, dropdown
+   triggers, modal close buttons) must meet a comfortable tap target on
+   touch devices, per the brief's Touch UX section. */
+@media (max-width: 576px) {
+    .dtc-icon-btn,
+    .dtc-review-close,
+    .navbar-icon-link,
+    td .btn-sm[class*="dtc-"] {
+        min-width: 38px;
+        min-height: 38px;
+    }
+
+    /* .table-responsive keeps the existing horizontal-scroll fallback for
+       tables that haven't been redesigned into a card layout yet — this
+       just guarantees text stays legible instead of shrinking below a
+       readable size, per "do not make text extremely small". */
+    .table-responsive .table {
+        font-size: 13px;
+    }
+}

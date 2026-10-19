@@ -34,7 +34,8 @@
     &nbsp;&nbsp;|&nbsp;&nbsp;
     <strong>Total Transactions:</strong> {{ $payments->count() }}
     &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>Per Transaction:</strong> ₱500.00 (fixed)
+    <strong>Avg. per Verified Transaction:</strong>
+    ₱{{ $verifiedCount > 0 ? number_format($totalRevenue / $verifiedCount, 2) : '0.00' }}
 </div>
 
 <table>

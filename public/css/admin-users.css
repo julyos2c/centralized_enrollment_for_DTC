@@ -1,0 +1,859 @@
+.add-user-btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .add-user-btn {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .add-user-btn .add-user-text {
+        display: none;
+    }
+
+    .add-user-btn i {
+        margin: 0 !important;
+        font-size: 14px;
+    }
+}
+
+.card-gradient {
+    background: none !important;
+}
+
+/* =========================================================
+   MOVED FROM index.blade.php @section('css')
+   ========================================================= */
+/* =========================================================
+   CREATE / EDIT USER MODALS — BASE STRUCTURE
+   =========================================================
+   NOTE: dtc-theme.css defines a global rule:
+       .form-control { padding: 10px 14px !important; ... }
+   Because it uses !important, any inline padding-left set on
+   an icon-prefixed input was being silently overridden, which
+   pushed input text/placeholders underneath the icon. The
+   `.dtc-input-icon-group` + `.dtc-input-with-icon` pair below
+   uses a more specific selector so the icon offset always wins.
+   ========================================================= */
+
+.dtc-modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.dtc-modal-header {
+    background: linear-gradient(135deg, #0F4CDB, #1a5feb);
+    padding: 22px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.dtc-modal-header-icon,
+.dtc-modal-header-avatar {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.dtc-modal-header-icon {
+    border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #FFC72C;
+}
+
+.dtc-modal-header-avatar {
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-weight: 800;
+}
+
+.dtc-modal-header-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.dtc-modal-header-text h5 {
+    color: #fff;
+    font-weight: 700;
+    margin: 0 0 2px;
+    font-size: 16.5px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dtc-modal-header-text p {
+    color: rgba(255,255,255,0.72);
+    font-size: 12px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dtc-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    padding: 0;
+}
+
+.dtc-modal-close:hover,
+.dtc-modal-close:focus {
+    background: rgba(255,255,255,0.28);
+    color: #fff;
+}
+
+.dtc-modal-body {
+    padding: 26px 28px;
+}
+
+.dtc-modal-footer {
+    padding: 16px 28px;
+    border-top: 1px solid var(--dtc-border-soft);
+    gap: 10px;
+}
+
+.dtc-form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dtc-text);
+    margin-bottom: 6px;
+}
+
+.dtc-form-label-block {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.dtc-form-hint {
+    color: var(--dtc-text-muted);
+    font-size: 11px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* ---- Icon-prefixed inputs ---- */
+.dtc-input-icon-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.dtc-input-icon-group .dtc-input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    text-align: center;
+    color: var(--dtc-text-muted);
+    font-size: 13px;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.dtc-input-icon-group .form-control.dtc-input-with-icon {
+    padding-left: 42px !important;
+}
+
+/* ---- Role selection cards (create modal) ---- */
+.dtc-role-option-label {
+    cursor: pointer;
+    width: 100%;
+    margin: 0;
+    display: block;
+}
+
+.create-role-option {
+    border: 2px solid var(--dtc-border);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    background: var(--dtc-surface-soft);
+}
+
+.dtc-role-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.dtc-role-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dtc-text);
+    text-transform: capitalize;
+    line-height: 1.3;
+}
+
+/* ---- Status selection cards (edit modal) ---- */
+.dtc-status-option-label {
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+}
+
+.edit-status-option {
+    border: 2px solid var(--dtc-border);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: var(--dtc-surface-soft);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.edit-status-option i {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.dtc-status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dtc-text);
+    line-height: 1.2;
+}
+
+.dtc-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+
+/* =========================================================
+   MANAGE USERS — DARK MODE
+   ========================================================= */
+
+body.dtc-dark {
+    --users-bg: #0f172a;
+    --users-surface: #111827;
+    --users-surface-2: #172033;
+    --users-border: #334155;
+    --users-border-soft: #263449;
+    --users-text: #f1f5f9;
+    --users-text-muted: var(--dtc-text-muted);
+}
+
+
+/* =========================================================
+   PAGE BACKGROUND
+   ========================================================= */
+
+body.dtc-dark .content-wrapper {
+    background: var(--users-bg) !important;
+}
+
+body.dtc-dark .content-header h4 {
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .content-header p {
+    color: var(--users-text-muted) !important;
+}
+
+
+/* =========================================================
+   ALL CARDS
+   ========================================================= */
+
+body.dtc-dark .card {
+    background: var(--users-surface) !important;
+    color: var(--users-text) !important;
+
+    border: 1px solid var(--users-border) !important;
+    box-shadow: none !important;
+}
+
+
+/* =========================================================
+   STAT CARDS
+   ========================================================= */
+
+body.dtc-dark .row .card {
+    background: var(--users-surface) !important;
+    border: 1px solid var(--users-border) !important;
+}
+
+body.dtc-dark .row .card div {
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .row .card div:last-child {
+    color: var(--users-text-muted) !important;
+}
+
+
+/* =========================================================
+   USERS TABLE CARD
+   ========================================================= */
+
+body.dtc-dark .card-header {
+    background: var(--users-surface) !important;
+    border-bottom: 1px solid var(--users-border) !important;
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .card-header span {
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .card-header span:last-child {
+    color: var(--users-text-muted) !important;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+body.dtc-dark .table {
+    color: var(--users-text) !important;
+    background: var(--users-surface) !important;
+}
+
+body.dtc-dark .table thead {
+    background: var(--users-surface-2) !important;
+}
+
+body.dtc-dark .table thead th {
+    color: var(--users-text-muted) !important;
+    background: var(--users-surface-2) !important;
+    border-color: var(--users-border) !important;
+}
+
+body.dtc-dark .table tbody {
+    background: var(--users-surface) !important;
+}
+
+body.dtc-dark .table tbody tr {
+    background: var(--users-surface) !important;
+}
+
+body.dtc-dark .table tbody tr:hover {
+    background: #1a2638 !important;
+}
+
+body.dtc-dark .table td {
+    color: var(--users-text) !important;
+    border-color: var(--users-border-soft) !important;
+}
+
+
+/* User name */
+body.dtc-dark .table td div[style*="font-weight:600"] {
+    color: var(--users-text) !important;
+}
+
+
+/* Email */
+body.dtc-dark .table td[style*="color:var(--dtc-text-secondary)"] {
+    color: var(--users-text-muted) !important;
+}
+
+
+/* Joined date */
+body.dtc-dark .table td[style*="color:var(--dtc-text-muted)"] {
+    color: var(--users-text-muted) !important;
+}
+
+
+/* =========================================================
+   CARD FOOTER / PAGINATION
+   ========================================================= */
+
+body.dtc-dark .card-footer {
+    background: var(--users-surface) !important;
+    border-top: 1px solid var(--users-border) !important;
+    color: var(--users-text-muted) !important;
+}
+
+body.dtc-dark .card-footer small {
+    color: var(--users-text-muted) !important;
+}
+
+body.dtc-dark .card-footer strong {
+    color: var(--users-text) !important;
+}
+
+
+/* Bootstrap pagination */
+body.dtc-dark .user-pagination .page-link {
+    background: var(--users-surface-2) !important;
+    color: var(--users-text-muted) !important;
+    border-color: var(--users-border) !important;
+}
+
+body.dtc-dark .user-pagination .page-item.active .page-link {
+    background: #0F4CDB !important;
+    color: #fff !important;
+    border-color: #0F4CDB !important;
+}
+
+body.dtc-dark .user-pagination .page-item.disabled .page-link {
+    background: #0b1220 !important;
+    color: #475569 !important;
+    border-color: var(--users-border) !important;
+}
+
+
+/* =========================================================
+   EDIT / DELETE ACTION BUTTONS — light + dark + hover
+   ========================================================= */
+
+/* ── Edit button — light mode ── */
+.btn-edit-user {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1.5px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.btn-edit-user:hover,
+.btn-edit-user:focus {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.30);
+    outline: none;
+}
+
+.btn-edit-user i,
+.btn-edit-user svg {
+    width: 15px;
+    height: 15px;
+    pointer-events: none;
+}
+
+/* ── Delete button — light mode ── */
+td form .dtc-icon-btn.danger,
+.dtc-icon-btn.danger {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 1.5px solid #fecaca;
+    background: #fff1f2;
+    color: #dc2626;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+td form .dtc-icon-btn.danger:hover,
+td form .dtc-icon-btn.danger:focus,
+.dtc-icon-btn.danger:hover,
+.dtc-icon-btn.danger:focus {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.30);
+    outline: none;
+}
+
+/* ── Edit button — dark mode ── */
+body.dtc-dark .btn-edit-user {
+    background: #172554;
+    border-color: #1e40af;
+    color: #60a5fa;
+}
+
+body.dtc-dark .btn-edit-user:hover,
+body.dtc-dark .btn-edit-user:focus {
+    background: #1d4ed8;
+    border-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+/* ── Delete button — dark mode ── */
+body.dtc-dark td form .dtc-icon-btn.danger,
+body.dtc-dark .dtc-icon-btn.danger {
+    background: #3f1d25;
+    border-color: #7f1d1d;
+    color: #f87171;
+}
+
+body.dtc-dark td form .dtc-icon-btn.danger:hover,
+body.dtc-dark td form .dtc-icon-btn.danger:focus,
+body.dtc-dark .dtc-icon-btn.danger:hover,
+body.dtc-dark .dtc-icon-btn.danger:focus {
+    background: #dc2626;
+    border-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.40);
+}
+
+body.dtc-dark td form button:hover {
+    background: #581c24 !important;
+}
+
+
+/* =========================================================
+   CREATE / EDIT MODALS
+   ========================================================= */
+
+body.dtc-dark .modal-content {
+    background: var(--users-surface) !important;
+    color: var(--users-text) !important;
+    border: 1px solid var(--users-border) !important;
+}
+
+body.dtc-dark .modal-body {
+    background: var(--users-surface) !important;
+}
+
+body.dtc-dark .modal-footer {
+    background: var(--users-surface) !important;
+    border-top: 1px solid var(--users-border) !important;
+}
+
+
+/* Modal labels */
+body.dtc-dark .modal label {
+    color: var(--users-text) !important;
+}
+
+
+/* Modal inputs */
+body.dtc-dark .modal .form-control,
+body.dtc-dark .modal select,
+body.dtc-dark .modal input {
+    background: #0f172a !important;
+    color: var(--users-text) !important;
+    border: 1px solid var(--users-border) !important;
+}
+
+body.dtc-dark .modal .form-control::placeholder {
+    color: var(--dtc-text-secondary) !important;
+}
+
+body.dtc-dark .modal .form-control:focus,
+body.dtc-dark .modal select:focus {
+    background: #111827 !important;
+    color: #fff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59,130,246,.15) !important;
+}
+
+
+/* =========================================================
+   CREATE ROLE OPTIONS
+   ========================================================= */
+
+body.dtc-dark .create-role-option {
+    background: #111827 !important;
+    border-color: var(--users-border) !important;
+}
+
+body.dtc-dark .create-role-option span {
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .create-role-option:hover {
+    background: #172033 !important;
+    border-color: #475569 !important;
+}
+
+
+/* =========================================================
+   EDIT STATUS OPTIONS
+   ========================================================= */
+
+body.dtc-dark .edit-status-option {
+    background: #111827 !important;
+    border-color: var(--users-border) !important;
+}
+
+body.dtc-dark .edit-status-option div {
+    color: var(--users-text) !important;
+}
+
+body.dtc-dark .edit-status-option:hover {
+    background: #172033 !important;
+    border-color: #475569 !important;
+}
+
+
+/* =========================================================
+   ROLE BADGES / ROLE ICONS
+   ========================================================= */
+
+body.dtc-dark [data-role="registrar"] {
+    background: rgba(21,128,61,0.18) !important;
+    color: #4ade80 !important;
+}
+
+body.dtc-dark [data-role="cashier"] {
+    background: rgba(161,98,7,0.18) !important;
+    color: #facc15 !important;
+}
+
+body.dtc-dark [data-role="student"] {
+    background: rgba(124,58,237,0.18) !important;
+    color: #c4b5fd !important;
+}
+
+body.dtc-dark [data-role="alumni"] {
+    background: rgba(220,38,38,0.18) !important;
+    color: #fca5a5 !important;
+}
+
+body.dtc-dark [data-role="new_applicant"] {
+    background: rgba(29,78,216,0.18) !important;
+    color: #93c5fd !important;
+}
+
+body.dtc-dark [data-role] i {
+    color: inherit !important;
+}
+
+
+/* =========================================================
+   CREATE / EDIT — SELECTED OPTION HIGHLIGHT
+   (the base .create-role-option / .edit-status-option rules
+   above are a catch-all, so the checked option needs a more
+   specific selector to stay visible in dark mode)
+   ========================================================= */
+
+body.dtc-dark .create-role-radio:checked + .create-role-option,
+body.dtc-dark .edit-status-radio:checked + .edit-status-option {
+    background: rgba(15,76,219,0.16) !important;
+    border-color: var(--dtc-primary) !important;
+}
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+body.dtc-dark .alert-success {
+    background: #052e1b !important;
+    color: #86efac !important;
+    border: 1px solid #166534 !important;
+}
+
+body.dtc-dark .alert-danger {
+    background: #3f0d16 !important;
+    color: #fca5a5 !important;
+    border: 1px solid #991b1b !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767.98px) {
+
+    body.dtc-dark .table-responsive {
+        border: 1px solid var(--users-border);
+        border-radius: 10px;
+    }
+
+    body.dtc-dark .card {
+        border-radius: 14px !important;
+    }
+
+    body.dtc-dark .card-header {
+        padding: 14px !important;
+    }
+
+}
+
+/* =========================================================
+   EDIT USER — TABBED LAYOUT
+   ========================================================= */
+
+.dtc-edit-tab {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dtc-text-muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 14px;
+    border-radius: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.dtc-edit-tab:hover {
+    color: var(--dtc-text);
+    border-color: var(--dtc-border);
+    background: transparent;
+}
+
+.dtc-edit-tab.active {
+    color: var(--dtc-primary);
+    border-bottom-color: var(--dtc-primary);
+    background: transparent;
+}
+
+/* Security info banner */
+.dtc-security-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--dtc-primary-soft, rgba(15,76,219,0.07));
+    border: 1px solid var(--dtc-primary-border, rgba(15,76,219,0.18));
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 12px;
+    color: var(--dtc-text-secondary);
+    line-height: 1.55;
+}
+
+.dtc-security-info-icon {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    margin-top: 1px;
+    color: var(--dtc-primary);
+}
+
+/* Reset Password button */
+.dtc-btn-reset {
+    background: #d97706;
+    color: #fff;
+    border: none;
+    font-weight: 700;
+}
+
+.dtc-btn-reset:hover,
+.dtc-btn-reset:focus {
+    background: #b45309;
+    color: #fff;
+}
+
+.dtc-btn-reset:disabled {
+    background: #92400e;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Password match hint colours already inline via JS; this keeps the element stable */
+.dtc-pw-match-hint {
+    display: block;
+    min-height: 16px;
+    font-size: 11px;
+    margin-top: 5px;
+    transition: color 0.15s;
+}
+
+/* =========================================================
+   DARK MODE — TAB + SECURITY PANEL
+   ========================================================= */
+
+body.dtc-dark .dtc-edit-tab {
+    color: #94a3b8;
+}
+
+body.dtc-dark .dtc-edit-tab:hover {
+    color: #e2e8f0;
+    border-color: #334155;
+    background: transparent;
+}
+
+body.dtc-dark .dtc-edit-tab.active {
+    color: #60a5fa;
+    border-bottom-color: #3b82f6;
+    background: transparent;
+}
+
+body.dtc-dark .dtc-security-info {
+    background: rgba(59,130,246,0.08);
+    border-color: rgba(59,130,246,0.2);
+    color: #94a3b8;
+}
+
+body.dtc-dark .dtc-security-info-icon {
+    color: #60a5fa;
+}
+
+body.dtc-dark .card-header ul.nav-tabs {
+    border-bottom: none !important;
+}
+
+/* =========================================================
+   TABLE — NAME CELL MOBILE FIX
+   Prevents the name from wrapping by truncating with ellipsis.
+   min-width:0 on the flex child allows it to shrink below
+   its content size so the avatar never gets squeezed out.
+   ========================================================= */
+
+.u-flex-center-gap-12 {
+    min-width: 0;        /* allow the flex child to shrink */
+}
+
+.u-flex-center-gap-12 .u-text-sm-bold-primary {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* Keep the avatar circle from shrinking */
+.u-flex-center-gap-12 > div:first-child {
+    flex-shrink: 0;
+}

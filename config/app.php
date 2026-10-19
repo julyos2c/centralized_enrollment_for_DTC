@@ -58,6 +58,12 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    // Comma-separated exact hostnames allowed by TrustHosts middleware.
+    'trusted_hosts' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('APP_TRUSTED_HOSTS', ''))
+    ))),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -69,7 +75,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Manila',
 
     /*
     |--------------------------------------------------------------------------

@@ -12,7 +12,7 @@
             {{-- Search button --}}
             <div class="input-group-append">
                 <button class="btn btn-sidebar">
-                    <i class="fas fa-fw fa-search"></i>
+                    <i data-lucide="search" style="width:1.25em;height:1.25em;flex-shrink:0"></i>
                 </button>
             </div>
 

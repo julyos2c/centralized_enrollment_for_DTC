@@ -79,20 +79,10 @@
             <td>{{ $enrollment->year_level }}</td>
             <td>{{ $enrollment->semester }}</td>
             <td>
-                @if($enrollment->status === 'approved')
-                    <span class="badge badge-success">Approved</span>
-                @elseif($enrollment->status === 'pending')
-                    <span class="badge badge-info">Pending</span>
-                @else
-                    <span class="badge badge-danger">Rejected</span>
-                @endif
+                <x-dtc.status-badge :status="$enrollment->status" />
             </td>
             <td>
-                @if($enrollment->is_paid)
-                    <span class="badge badge-success">Paid</span>
-                @else
-                    <span class="badge badge-warning">Unpaid</span>
-                @endif
+                <x-dtc.status-badge :status="$enrollment->is_paid ? 'Paid' : 'Unpaid'" />
             </td>
             <td>{{ $enrollment->created_at->format('M d, Y') }}</td>
         </tr>

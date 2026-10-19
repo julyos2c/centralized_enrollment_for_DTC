@@ -1,0 +1,629 @@
+@extends('adminlte::page')
+@include('partials.navbar')
+
+@section('plugins.adminUsers', true)
+
+@section('title', 'Manage Users')
+
+@section('content_header')
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 font-weight-bold u-text" >Manage Users</h4>
+            <p class="mb-0 u-text-secondary-sm" >
+                Create and manage system user accounts
+            </p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm add-user-btn" data-toggle="modal" data-target="#createUserModal">
+            <i data-lucide="user-plus" class="mr-1"></i> 
+            <span class="add-user-text">Add New User</span>
+        </button>
+    </div>
+@endsection
+
+@section('content')
+
+
+@if ($errors->any())
+    <div class="alert alert-danger">{{ $errors->first() }}</div>
+@endif
+
+{{-- Stats Row --}}
+<div class="row mb-2">
+    @php
+        $roleStatConfig = [
+            'admin'         => ['icon' => 'user-check',    'color' => 'primary'],
+            'registrar'     => ['icon' => 'id-card',        'color' => 'success'],
+            'cashier'       => ['icon' => 'receipt',  'color' => 'warning'],
+            'student'       => ['icon' => 'graduation-cap',  'color' => 'info'],
+            'alumni'        => ['icon' => 'award',          'color' => 'danger'],
+            'new_applicant' => ['icon' => 'user-plus',      'color' => 'neutral'],
+        ];
+    @endphp
+    @foreach($roleStatConfig as $role => $cfg)
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <x-dtc.stat-card
+            icon="{{ $cfg['icon'] }}" color="{{ $cfg['color'] }}"
+            label="{{ ucwords(str_replace('_',' ', $role)) }}"
+            value="{{ $roleCounts[$role] ?? 0 }}" />
+    </div>
+    @endforeach
+</div>
+
+{{-- Search & Filter --}}
+<div class="card mb-3">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ route('admin.users.index') }}" id="users-filter-form">
+            <div class="row" style="gap:0; align-items:flex-end;">
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <div class="dtc-input-icon-group">
+                        <i data-lucide="search" class="dtc-input-icon"></i>
+                        <input type="text" name="search" class="form-control dtc-input-with-icon"
+                               placeholder="Search name or email…"
+                               value="{{ request('search') }}">
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select name="role" class="form-control" style="font-size:13px;">
+                        <option value="">All Roles</option>
+                        @foreach(['admin','registrar','cashier','student','alumni','new_applicant'] as $r)
+                            <option value="{{ $r }}" {{ request('role') === $r ? 'selected' : '' }}>
+                                {{ ucwords(str_replace('_',' ', $r)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <select name="status" class="form-control" style="font-size:13px;">
+                        <option value="">All Statuses</option>
+                        @foreach(['active','pending','locked'] as $s)
+                            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
+                                {{ ucfirst($s) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex" style="gap:6px;">
+                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                        <i data-lucide="filter" style="width:13px;height:13px;margin-right:3px;"></i>Filter
+                    </button>
+                    @if(request()->hasAny(['search','role','status']))
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm">
+                            <i data-lucide="x" style="width:13px;height:13px;"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Users Table --}}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold u-text">All Users</span>
+        <span class="u-text-secondary-sm">{{ $users->total() }} total</span>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+        <table class="table table-bordered mb-0">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @forelse ($users as $user)
+                <tr>
+                    <td>
+                        <div  class="u-flex-center-gap-12">
+                            <div style="width:38px; height:38px; border-radius:50%;
+                                        background:linear-gradient(135deg,var(--dtc-primary),#1a5feb);
+                                        display:flex; align-items:center; justify-content:center;
+                                        color:#fff; font-weight:700; font-size:14px; flex-shrink:0;">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                            </div>
+
+                            <div  class="u-text-sm-bold-primary">
+                                {{ $user->name }}
+                            </div>
+                        </div>
+                    </td>
+
+                    <td  class="u-text-secondary-sm">
+                        {{ $user->email }}
+                    </td>
+
+                    <td>
+                        @foreach($user->roles as $role)
+                            @php
+                                $rc = [
+                                    'admin'         => ['tone'=>'primary'],
+                                    'registrar'     => ['tone'=>'success'],
+                                    'cashier'       => ['tone'=>'warning'],
+                                    'student'       => ['tone'=>'purple'],
+                                    'alumni'        => ['tone'=>'danger'],
+                                    'new_applicant' => ['tone'=>'info'],
+                                ][$role->name] ?? ['tone'=>'neutral'];
+                            @endphp
+
+                            <span class="dtc-status-badge is-{{ $rc['tone'] ?? 'neutral' }}"
+                                  style="font-weight:700;">
+                                {{ ucwords(str_replace('_',' ', $role->name)) }}
+                            </span>
+                        @endforeach
+                    </td>
+
+                    <td>
+                        @php
+                            $statusVariant = ['active' => 'success', 'locked' => 'danger', 'pending' => 'warning'][$user->status] ?? 'neutral';
+                        @endphp
+                        <x-dtc.status-badge :status="$user->status" :variant="$statusVariant" />
+                    </td>
+
+                    <td style="font-size:12px; color:var(--dtc-text-muted);">
+                        {{ $user->created_at->format('M d, Y') }}
+                    </td>
+
+                    <td>
+                        <div  class="u-actions-gap">
+                            <button type="button"
+                                    class="btn-edit-user"
+                                    data-id="{{ $user->id }}"
+                                    data-url="{{ route('admin.users.edit', $user) }}"
+                                    style="background:var(--dtc-primary-soft);
+                                           color:var(--dtc-primary);
+                                           border:none;
+                                           width:34px;
+                                           height:34px;
+                                           display:flex;
+                                           align-items:center;
+                                           justify-content:center;
+                                           padding:0;
+                                           border-radius:8px;
+                                           font-size:11px;
+                                           font-weight:600;
+                                           cursor:pointer;">
+                                <i data-lucide="pencil"></i>
+                            </button>
+
+                            @if($user->id !== auth()->id())
+                            <form id="del-user-{{ $user->id }}"
+                                  method="POST"
+                                  action="{{ route('admin.users.destroy', $user) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button"
+                                        class="dtc-icon-btn danger"
+                                        title="Delete user"
+                                        data-dtc-confirm
+                                        data-dtc-confirm-title="Delete User?"
+                                        data-dtc-confirm-message="Are you sure you want to delete this user account? This action cannot be undone."
+                                        data-dtc-confirm-ok="Delete User"
+                                        data-dtc-confirm-form="#del-user-{{ $user->id }}">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </form>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+
+                @empty
+                <tr>
+                    <td colspan="6"
+                        class="text-center py-5 u-text-muted"
+                        >
+                        No users found.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    {{-- Pagination --}}
+        <div class="card-footer u-panel-footer"
+            >
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap u-gap-15"
+                >
+
+                <small  class="u-text-secondary">
+                    Showing
+                    <strong>{{ $users->firstItem() ?? 0 }}</strong>
+                    to
+                    <strong>{{ $users->lastItem() ?? 0 }}</strong>
+                    of
+                    <strong>{{ $users->total() }}</strong>
+                    users
+                </small>
+
+                <div class="user-pagination">
+                    {{ $users->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-4') }}
+                </div>
+
+            </div>
+        </div>
+</div>
+
+<!-- CREATE USER MODAL -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content dtc-modal-content">
+
+            {{-- Header --}}
+            <div class="dtc-modal-header">
+                <div class="dtc-modal-header-icon">
+                    <i data-lucide="user-plus"></i>
+                </div>
+                <div class="dtc-modal-header-text">
+                    <h5>Add New User</h5>
+                    <p>Create an account and assign a role</p>
+                </div>
+                <button type="button" class="dtc-modal-close" data-dismiss="modal" aria-label="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ route('admin.users.store') }}">
+                @csrf
+                <div class="modal-body dtc-modal-body">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="dtc-form-label">Full Name</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="user" class="dtc-input-icon"></i>
+                                    <input type="text" name="name" class="form-control dtc-input-with-icon"
+                                           value="{{ old('name') }}"
+                                           placeholder="Enter full name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="dtc-form-label">Email Address</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="mail" class="dtc-input-icon"></i>
+                                    <input type="email" name="email" class="form-control dtc-input-with-icon"
+                                           value="{{ old('email') }}"
+                                           placeholder="Enter email address" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="dtc-form-label">Temporary Password</label>
+                        <div class="dtc-input-icon-group">
+                            <i data-lucide="lock" class="dtc-input-icon"></i>
+                            <input type="password" name="password" class="form-control dtc-input-with-icon"
+                                   placeholder="Min. 6 characters" autocomplete="new-password" required>
+                        </div>
+                        <small class="dtc-form-hint">
+                            The user should change this after first login.
+                        </small>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="dtc-form-label dtc-form-label-block">Assign Role</label>
+                        <div class="row">
+                            @php
+                                // Only staff roles may be manually created.
+                                // Students enter via Pre-Enrollment or Import.
+                                // Alumni are transitioned from existing student accounts.
+                                $staffRoles = ['admin','registrar','cashier'];
+                                $staffRoleConfig = [
+                                    'admin'     => ['tone'=>'primary', 'icon'=>'user-check'],
+                                    'registrar' => ['tone'=>'success', 'icon'=>'id-card'],
+                                    'cashier'   => ['tone'=>'warning', 'icon'=>'receipt'],
+                                ];
+                            @endphp
+                            @foreach($roles->whereIn('name', $staffRoles) as $role)
+                            @php $rc = $staffRoleConfig[$role->name] ?? ['tone'=>'neutral','icon'=>'user']; @endphp
+                            <div class="col-6 col-md-4 mb-2">
+                                <label class="dtc-role-option-label">
+                                    <input type="radio" name="role" value="{{ $role->name }}"
+                                           class="create-role-radio dtc-sr-only">
+                                    <div class="create-role-option">
+                                        <div class="dtc-icon-swatch is-{{ $rc['tone'] }} dtc-role-icon" data-role="{{ $role->name }}">
+                                            <i data-lucide="{{ $rc['icon'] }}"></i>
+                                        </div>
+                                        <span class="dtc-role-name">
+                                            {{ ucfirst($role->name) }}
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                            @endforeach
+                        </div>
+                        <small class="dtc-form-hint mt-2 d-block">
+                            <i data-lucide="info" style="width:12px;height:12px;display:inline;"></i>
+                            Students enter through Pre-Enrollment or Bulk Import. Alumni are transitioned from student accounts. Only staff accounts are manually created here.
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer dtc-modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="user-plus" class="mr-1"></i> Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content dtc-modal-content">
+
+            {{-- Header --}}
+            <div class="dtc-modal-header">
+                <div class="dtc-modal-header-avatar" id="edit-avatar">U</div>
+                <div class="dtc-modal-header-text">
+                    <h5 id="edit-modal-name">Edit User</h5>
+                    <p id="edit-modal-email">user@dtc.edu.ph</p>
+                </div>
+                <button type="button" class="dtc-modal-close" data-dismiss="modal" aria-label="Close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <form method="POST" id="edit-user-form" action="">
+                @csrf @method('PUT')
+                <div class="modal-body dtc-modal-body">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="dtc-form-label">Full Name</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="user" class="dtc-input-icon"></i>
+                                    <input type="text" name="name" id="edit-name"
+                                           class="form-control dtc-input-with-icon" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="dtc-form-label">Email Address</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="mail" class="dtc-input-icon"></i>
+                                    <input type="email" name="email" id="edit-email"
+                                           class="form-control dtc-input-with-icon" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="dtc-form-label">Role</label>
+
+                                {{-- Staff accounts: editable dropdown (admin/registrar/cashier only) --}}
+                                <div class="dtc-input-icon-group" id="edit-role-select-wrap">
+                                    <i data-lucide="user-check" class="dtc-input-icon"></i>
+                                    <select name="role" id="edit-role"
+                                            class="form-control dtc-input-with-icon">
+                                        @foreach($roles->whereIn('name', ['admin','registrar','cashier']) as $role)
+                                            <option value="{{ $role->name }}">
+                                                {{ ucfirst($role->name) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Non-staff accounts: read-only badge + hidden input --}}
+                                <div id="edit-role-readonly-wrap" style="display:none;">
+                                    <input type="hidden" name="role" id="edit-role-hidden">
+                                    <div style="display:flex; align-items:center; gap:8px;
+                                                padding:9px 14px; border-radius:10px;
+                                                background:var(--dtc-surface-soft);
+                                                border:1px solid var(--dtc-border);
+                                                font-size:13px; color:var(--dtc-text-muted);">
+                                        <i data-lucide="lock" style="width:14px;height:14px;flex-shrink:0;"></i>
+                                        <span id="edit-role-readonly-label">—</span>
+                                        <span style="margin-left:auto; font-size:11px;">Managed by system</span>
+                                    </div>
+                                    <small class="dtc-form-hint">
+                                        Role changes for students, alumni, and applicants go through the Registrar flow.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-0">
+                                <label class="dtc-form-label dtc-form-label-block">Account Status</label>
+                                <div style="display:flex; gap:8px;">
+                                    @foreach(['active','pending','locked'] as $status)
+                                    <label class="dtc-status-option-label">
+                                        <input type="radio" name="status" value="{{ $status }}"
+                                               class="edit-status-radio dtc-sr-only">
+                                        <div class="edit-status-option">
+                                            <i data-lucide="{{ $status === 'active' ? 'check-circle' : ($status === 'locked' ? 'lock' : 'clock') }}" style="color:{{ $status === 'active' ? 'var(--dtc-success)' : ($status === 'locked' ? 'var(--dtc-danger)' : 'var(--dtc-warning)') }};"></i>
+                                            <div class="dtc-status-label">{{ ucfirst($status) }}</div>
+                                        </div>
+                                    </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer dtc-modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save" class="mr-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+
+            {{-- Separate password-reset form (never mixed with account info) --}}
+            <div style="border-top:1px solid var(--dtc-border-soft); padding:18px 28px 22px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                    <i data-lucide="lock" style="width:15px;height:15px;color:var(--dtc-text-muted);"></i>
+                    <span style="font-size:12px; font-weight:700; text-transform:uppercase;
+                                 letter-spacing:0.5px; color:var(--dtc-text-muted);">Security — Reset Password</span>
+                </div>
+                <form method="POST" id="reset-password-form" action="">
+                    @csrf @method('PATCH')
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-0">
+                                <label class="dtc-form-label">New Password</label>
+                                <div class="dtc-input-icon-group">
+                                    <i data-lucide="lock" class="dtc-input-icon"></i>
+                                    <input type="password" name="new_password"
+                                           id="reset-new-password"
+                                           class="form-control dtc-input-with-icon"
+                                           placeholder="Min. 6 characters"
+                                           autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning btn-sm"
+                                    style="font-size:12px; font-weight:600;">
+                                <i data-lucide="key" style="width:13px;height:13px;margin-right:4px;"></i>
+                                Reset Password
+                            </button>
+                        </div>
+                    </div>
+                    <small class="dtc-form-hint mt-2 d-block">
+                        The user should change this after their next login. Password is always stored hashed.
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
+{{-- Styles live in public/css/admin-users.css (loaded via plugins.adminUsers) --}}
+
+@section('js')
+<script>
+// ── Create User — role radio styling ────────────────────────────────────
+document.querySelectorAll('.create-role-radio').forEach(radio => {
+    radio.addEventListener('change', function () {
+        document.querySelectorAll('.create-role-option').forEach(opt => {
+            opt.style.borderColor = 'var(--dtc-border)';
+            opt.style.background  = 'var(--dtc-surface-soft)';
+        });
+        this.nextElementSibling.style.borderColor = 'var(--dtc-primary)';
+        this.nextElementSibling.style.background  = 'var(--dtc-primary-soft)';
+    });
+});
+
+// ── Edit User — load data into modal via AJAX ────────────────────────────
+document.querySelectorAll('.btn-edit-user').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const url = this.dataset.url;
+        const id  = this.dataset.id;
+
+        // Use server-generated route — never reconstruct URLs in JS
+        const editUrl = this.dataset.url.replace('/edit', '');
+        document.getElementById('edit-user-form').action  = editUrl;
+        document.getElementById('reset-password-form').action = editUrl + '/reset-password';
+
+        // Show loading state
+        document.getElementById('edit-modal-name').textContent  = 'Loading...';
+        document.getElementById('edit-modal-email').textContent = '';
+
+        // Open modal
+        $('#editUserModal').modal('show');
+
+        // Fetch user data
+        fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(user => {
+            // Fill header
+            document.getElementById('edit-avatar').textContent     = user.name.charAt(0).toUpperCase();
+            document.getElementById('edit-modal-name').textContent  = user.name;
+            document.getElementById('edit-modal-email').textContent = user.email;
+
+            // Fill fields
+            document.getElementById('edit-name').value  = user.name;
+            document.getElementById('edit-email').value = user.email;
+
+            // Role: editable for staff, read-only badge for everyone else
+            const staffRoles      = ['admin', 'registrar', 'cashier'];
+            const isStaff         = staffRoles.includes(user.role);
+            const selectWrap      = document.getElementById('edit-role-select-wrap');
+            const readonlyWrap    = document.getElementById('edit-role-readonly-wrap');
+            const roleSelect      = document.getElementById('edit-role');
+            const roleHidden      = document.getElementById('edit-role-hidden');
+            const roleReadonlyLbl = document.getElementById('edit-role-readonly-label');
+
+            if (isStaff) {
+                selectWrap.style.display   = '';
+                readonlyWrap.style.display = 'none';
+                roleSelect.required        = true;
+                roleSelect.value           = user.role;
+            } else {
+                selectWrap.style.display   = 'none';
+                readonlyWrap.style.display = '';
+                roleSelect.required        = false;
+                roleHidden.value           = user.role;
+                roleReadonlyLbl.textContent = user.role.replace('_', ' ')
+                    .replace(/\w/g, c => c.toUpperCase());
+            }
+
+            // Set status radio
+            document.querySelectorAll('.edit-status-radio').forEach(r => {
+                r.checked = (r.value === user.status);
+                const opt = r.nextElementSibling;
+                if (r.value === user.status) {
+                    opt.style.borderColor = 'var(--dtc-primary)';
+                    opt.style.background  = 'var(--dtc-primary-soft)';
+                } else {
+                    opt.style.borderColor = 'var(--dtc-border)';
+                    opt.style.background  = 'var(--dtc-surface-soft)';
+                }
+            });
+        })
+        .catch(() => {
+            document.getElementById('edit-modal-name').textContent = 'Error loading user';
+            if (window.dtcToast) dtcToast.error('Unable to load user details. Please try again.');
+        });
+    });
+});
+
+// ── Edit status radio styling ────────────────────────────────────────────
+document.querySelectorAll('.edit-status-radio').forEach(radio => {
+    radio.addEventListener('change', function () {
+        document.querySelectorAll('.edit-status-option').forEach(opt => {
+            opt.style.borderColor = 'var(--dtc-border)';
+            opt.style.background  = 'var(--dtc-surface-soft)';
+        });
+        this.nextElementSibling.style.borderColor = 'var(--dtc-primary)';
+        this.nextElementSibling.style.background  = 'var(--dtc-primary-soft)';
+    });
+});
+
+// ── Auto-open create modal if validation errors ──────────────────────────
+@if($errors->any() && old('name'))
+    $(document).ready(function() {
+        $('#createUserModal').modal('show');
+    });
+@endif
+</script>
+@endsection

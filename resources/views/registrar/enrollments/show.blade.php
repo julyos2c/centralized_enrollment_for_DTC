@@ -3,70 +3,45 @@
 @section('title', 'Review Enrollment')
 
 @section('content_header')
-    <h1>Review Enrollment</h1>
+    <div class="d-flex justify-content-between align-items-center flex-wrap u-gap-10" >
+        <div>
+            <h4 class="mb-0 font-weight-bold u-text" >Review Enrollment</h4>
+            <p class="mb-0 u-text-secondary-sm" >
+                Review the applicant's details and selected subjects before making a decision.
+            </p>
+        </div>
+        <a href="{{ route('registrar.enrollments.index') }}" class="btn btn-secondary btn-sm">
+            <i data-lucide="arrow-left"></i> Back to List
+        </a>
+    </div>
 @endsection
 
 @section('content')
-<div class="card">
-    <div class="card-body">
 
-        <h5>Applicant Information</h5>
-        <p><strong>Name:</strong> {{ $enrollment->user->name }}</p>
-        <p><strong>Email:</strong> {{ $enrollment->user->email }}</p>
 
-        <hr>
 
-        <h5>Enrollment Details</h5>
-        <p><strong>Program:</strong> {{ $enrollment->program->name }}</p>
-        <p><strong>Year Level:</strong> {{ $enrollment->year_level }}</p>
-        <p><strong>Semester:</strong> {{ $enrollment->semester }}</p>
-
-        <h5>Selected Subjects</h5>
-        <ul>
-            @foreach ($subjects as $subject)
-                <li>{{ $subject->subject_code }} - {{ $subject->subject_name }}</li>
-            @endforeach
-        </ul>
-
-        <hr>
-
-        <div class="d-flex gap-2">
-            <form method="POST" action="{{ route('registrar.enrollments.approve', $enrollment) }}">
-                @csrf
-                <button type="submit" class="btn btn-success" onclick="return confirm('Approve this enrollment?')">
-                    Approve
-                </button>
-            </form>
-
-            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal">
-                Reject
-            </button>
-        </div>
-
-        <a href="{{ route('registrar.enrollments.index') }}" class="btn btn-secondary mt-2">← Back to List</a>
-    </div>
+<div class="dtc-card dtc-review-standalone">
+    @include('registrar.enrollments._review-content', ['enrollment' => $enrollment, 'subjects' => $subjects])
 </div>
 
-<!-- Reject Modal -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('registrar.enrollments.reject', $enrollment) }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Reject Enrollment</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <label>Reason / Remarks</label>
-                    <textarea name="remarks" class="form-control" rows="3" required></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Confirm Reject</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@push('js')
+<script>
+$(document).on('click', '.dtc-review-reject-trigger', function () {
+    var targetId = $(this).data('target');
+    $('#' + targetId).addClass('is-open').slideDown(160);
+
+    var $footer = $(this).closest('.dtc-review-footer');
+    $footer.find('.dtc-review-footer-default').hide();
+    $footer.find('.dtc-review-footer-reject').fadeIn(160);
+});
+
+$(document).on('click', '.dtc-review-reject-cancel', function () {
+    $('.dtc-review-reject-panel').slideUp(160).removeClass('is-open');
+
+    var $footer = $(this).closest('.dtc-review-footer');
+    $footer.find('.dtc-review-footer-reject').hide();
+    $footer.find('.dtc-review-footer-default').fadeIn(160);
+});
+</script>
+@endpush
 @endsection

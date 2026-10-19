@@ -17,112 +17,153 @@ class ViewServiceProvider extends ServiceProvider
 
             $user = Auth::user();
 
-            // ← compute ONCE, reuse below
             $unreadCount = $user->unreadNotificationsCount();
 
             $notifItem = [
                 'text'        => 'Notifications',
                 'url'         => route('notifications.index'),
-                'icon'        => 'fas fa-fw fa-bell',
+                'icon'        => 'bell',
                 'label'       => $unreadCount ?: null,
                 'label_color' => 'danger',
             ];
 
-            $menu = [];
+            $sidebar = [];
 
+            // ── ADMIN ─────────────────────────────────────────────────────────
             if ($user->hasRole('admin')) {
-                $menu = [
-                    ['header' => 'ADMIN PANEL'],
-                    ['text' => 'Dashboard',    'url' => route('admin.dashboard'),    'icon' => 'fas fa-fw fa-tachometer-alt'],
-                    ['text' => 'Manage Users', 'url' => route('admin.users.index'),  'icon' => 'fas fa-fw fa-users'],
-                    ['text' => 'Reports', 'icon' => 'fas fa-fw fa-chart-bar', 'submenu' => [
-                    ['text' => 'Enrollment Report', 'url' => route('admin.reports.enrollment'), 'icon' => 'fas fa-fw fa-file-pdf'],
-                    ['text' => 'Payment Report',    'url' => route('admin.reports.payment'),    'icon' => 'fas fa-fw fa-file-pdf'],
-                    ]],
-                    
-                    ['header' => 'ACADEMIC'],
-                    [
-                    'text' => 'Programs & Subjects',
-                    'url'  => route('admin.programs.index'),
-                    'icon' => 'fas fa-fw fa-graduation-cap',
-                    ],
 
-                    ['header' => 'REGISTRAR'],
-                    ['text' => 'Registrar Dashboard',  'url' => route('registrar.dashboard'),           'icon' => 'fas fa-fw fa-tachometer-alt'],
-                    ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),   'icon' => 'fas fa-fw fa-file-alt'],
-                    ['text' => 'Appointment Requests', 'url' => route('registrar.appointments.index'),  'icon' => 'fas fa-fw fa-calendar-check'],
-                    ['text' => 'Manage Slots',         'url' => route('registrar.appointments.slots'),  'icon' => 'fas fa-fw fa-clock'],
-                    ['text' => 'Document Requests', 'url' => route('registrar.documents.index'), 'icon' => 'fas fa-fw fa-folder-open'],
-                    
-                    ['header' => 'CASHIER'],
-                    ['text' => 'Cashier Dashboard', 'url' => route('cashier.dashboard'),      'icon' => 'fas fa-fw fa-tachometer-alt'],
-                    ['text' => 'Process Payments',  'url' => route('cashier.payments.index'), 'icon' => 'fas fa-fw fa-money-bill-wave'],
+                // If we're anywhere inside Settings, swap the whole sidebar for a
+                // dedicated "Settings" panel (ngrok-style context switch) instead
+                // of the normal admin navigation.
+                if (request()->routeIs('admin.settings.*')) {
+                    $sidebar = [
+                        [
+                            'text'    => 'Settings',
+                            'url'     => route('admin.dashboard'),
+                            'icon'    => 'arrow-left',
+                            'classes' => 'sidebar-context-back',
+                        ],
 
-                    ['header' => 'SYSTEM'],
-                    $notifItem,
-                ];
+                        ['header' => 'ACCOUNT'],
+                        ['text' => 'General',          'url' => route('admin.settings.index'),         'icon' => 'settings'],
+                        ['text' => 'Academic',         'url' => route('admin.settings.academic'),       'icon' => 'graduation-cap'],
+                        ['text' => 'Payment',          'url' => route('admin.settings.payment'),        'icon' => 'credit-card'],
+                        ['text' => 'Notifications',    'url' => route('admin.settings.notifications'),  'icon' => 'bell'],
+
+                        ['header' => 'SYSTEM'],
+                        ['text' => 'Security',         'url' => route('admin.settings.security'),       'icon' => 'shield'],
+                        ['text' => 'Backup & Restore', 'url' => route('admin.settings.backup'),         'icon' => 'cloud-upload'],
+                        ['text' => 'Audit Logs',       'url' => route('admin.settings.audit'),          'icon' => 'file-text'],
+                    ];
+                } else {
+                    $sidebar = [
+                        ['header' => 'ADMIN PANEL'],
+                        ['text' => 'Dashboard',    'url' => route('admin.dashboard'),   'icon' => 'gauge'],
+                        ['text' => 'Manage Users', 'url' => route('admin.users.index'), 'icon' => 'users'],
+                        ['text' => 'Reports', 'icon' => 'chart-bar', 'submenu' => [
+                            ['text' => 'Enrollment Report', 'url' => route('admin.reports.enrollment'), 'icon' => 'file-type'],
+                            ['text' => 'Payment Report',    'url' => route('admin.reports.payment'),    'icon' => 'file-type'],
+                        ]],
+
+                        ['header' => 'ACADEMIC'],
+                        ['text' => 'Programs & Subjects', 'url' => route('admin.programs.index'), 'icon' => 'graduation-cap'],
+
+                        ['header' => 'REGISTRAR'],
+                        ['text' => 'Registrar Dashboard',  'url' => route('registrar.dashboard'),          'icon' => 'gauge'],
+                        ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
+                        ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'file-text'],
+                        ['text' => 'Appointment Requests', 'url' => route('registrar.appointments.index'), 'icon' => 'calendar-check'],
+                        ['text' => 'Manage Slots',         'url' => route('registrar.appointments.slots'), 'icon' => 'clock'],
+                        ['text' => 'Document Requests',    'url' => route('registrar.documents.index'),    'icon' => 'folder-open'],
+
+                        ['header' => 'CASHIER'],
+                        ['text' => 'Cashier Dashboard', 'url' => route('cashier.dashboard'),      'icon' => 'gauge'],
+                        ['text' => 'Process Payments',  'url' => route('cashier.payments.index'), 'icon' => 'banknote'],
+                        ['text' => 'Document Fees',    'url' => route('cashier.document-payments.index'), 'icon' => 'file-check'],
+
+                        ['header' => 'SYSTEM'],
+                        $notifItem,
+                        ['text' => 'Settings', 'url' => route('admin.settings.index'), 'icon' => 'settings'],
+                    ];
+                }
             }
 
+            // ── REGISTRAR ─────────────────────────────────────────────────────
             elseif ($user->hasRole('registrar')) {
-                $menu = [
+                $sidebar = [
                     ['header' => 'REGISTRAR PANEL'],
-                    ['text' => 'Dashboard',            'url' => route('registrar.dashboard'),          'icon' => 'fas fa-fw fa-tachometer-alt'],
-                    ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'fas fa-fw fa-file-alt'],
-                    ['text' => 'Appointment Requests', 'url' => route('registrar.appointments.index'), 'icon' => 'fas fa-fw fa-calendar-check'],
-                    ['text' => 'Manage Slots',         'url' => route('registrar.appointments.slots'), 'icon' => 'fas fa-fw fa-clock'],
-                    ['text' => 'Document Requests', 'url' => route('registrar.documents.index'), 'icon' => 'fas fa-fw fa-folder-open'],
+                    ['text' => 'Dashboard',            'url' => route('registrar.dashboard'),          'icon' => 'gauge'],
+                    ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
+                    ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'file-text'],
+                    ['text' => 'Appointment Requests', 'url' => route('registrar.appointments.index'), 'icon' => 'calendar-check'],
+                    ['text' => 'Manage Slots',         'url' => route('registrar.appointments.slots'), 'icon' => 'clock'],
+                    ['text' => 'Document Requests',    'url' => route('registrar.documents.index'),    'icon' => 'folder-open'],
                     ['header' => 'SYSTEM'],
                     $notifItem,
                 ];
             }
 
+            // ── CASHIER ───────────────────────────────────────────────────────
             elseif ($user->hasRole('cashier')) {
-                $menu = [
+                $sidebar = [
                     ['header' => 'CASHIER PANEL'],
-                    ['text' => 'Dashboard',        'url' => route('cashier.dashboard'),      'icon' => 'fas fa-fw fa-tachometer-alt'],
-                    ['text' => 'Process Payments', 'url' => route('cashier.payments.index'), 'icon' => 'fas fa-fw fa-money-bill-wave'],
-
+                    ['text' => 'Dashboard',       'url' => route('cashier.dashboard'),      'icon' => 'gauge'],
+                    ['text' => 'Process Payments','url' => route('cashier.payments.index'), 'icon' => 'banknote'],
+                    ['text' => 'Document Fees',  'url' => route('cashier.document-payments.index'), 'icon' => 'file-check'],
                     ['header' => 'SYSTEM'],
                     $notifItem,
                 ];
             }
 
-        elseif ($user->hasAnyRole(['student', 'alumni', 'new_applicant'])) {
-            $menu = [
-                ['header' => 'MY PORTAL'],
-                ['text' => 'Dashboard', 'url' => route('portal.dashboard'), 'icon' => 'fas fa-fw fa-tachometer-alt'],
-                [
-                    'text' => 'Enrollment',
-                    'icon' => 'fas fa-fw fa-file-alt',
-                    'submenu' => [
-                        ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'fas fa-fw fa-plus'],
-                        ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'fas fa-fw fa-list'],
-                    ],
-                ],
-                [
-                    'text' => 'Appointments',
-                    'icon' => 'fas fa-fw fa-calendar',
-                    'submenu' => [
-                        ['text' => 'Book Appointment', 'url' => route('portal.appointments.create'), 'icon' => 'fas fa-fw fa-plus'],
-                        ['text' => 'My Appointments',  'url' => route('portal.appointments.index'),  'icon' => 'fas fa-fw fa-list'],
-                    ],
-                ],
+            // ── STUDENT — full portal access ──────────────────────────────────
+            elseif ($user->hasRole('student')) {
+                $sidebar = [
+                    ['header' => 'MY PORTAL'],
+                    ['text' => 'Dashboard', 'url' => route('portal.dashboard'), 'icon' => 'gauge'],
+                    ['text' => 'Enrollment', 'icon' => 'file-text', 'submenu' => [
+                        ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'plus'],
+                        ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'list'],
+                    ]],
+                    ['text' => 'Appointments', 'icon' => 'calendar', 'submenu' => [
+                        ['text' => 'Book Appointment', 'url' => route('portal.appointments.create'), 'icon' => 'plus'],
+                        ['text' => 'My Appointments',  'url' => route('portal.appointments.index'),  'icon' => 'list'],
+                    ]],
+                    ['text' => 'Certificate of Registration', 'url' => route('portal.cor.show'), 'icon' => 'file-badge'],
+                    ['header' => 'SYSTEM'],
+                    $notifItem,
+                ];
+            }
 
-                // ── Alumni only ──────────────────────────────
-                ...($user->hasRole('alumni') ? [[
-                    'text' => 'Document Requests',
-                    'icon' => 'fas fa-fw fa-folder-open',
-                    'submenu' => [
-                        ['text' => 'Request Document', 'url' => route('portal.documents.create'), 'icon' => 'fas fa-fw fa-plus'],
-                        ['text' => 'My Requests',      'url' => route('portal.documents.index'),  'icon' => 'fas fa-fw fa-list'],
-                    ],
-                ]] : []),
+            // ── NEW APPLICANT — enrollment only ───────────────────────────────
+            elseif ($user->hasRole('new_applicant')) {
+                $sidebar = [
+                    ['header' => 'MY PORTAL'],
+                    ['text' => 'Dashboard',      'url' => route('portal.dashboard'),          'icon' => 'gauge'],
+                    ['text' => 'My Application', 'url' => route('portal.application.show'),   'icon' => 'file-text'],
+                    ['text' => 'Enrollment', 'icon' => 'file-text', 'submenu' => [
+                        ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'plus'],
+                        ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'list'],
+                    ]],
+                    ['header' => 'SYSTEM'],
+                    $notifItem,
+                ];
+            }
 
-                ['header' => 'SYSTEM'],
-                $notifItem,
-            ];
-        }
-            config(['adminlte.menu' => $menu]);
+            // ── ALUMNI — document requests only ───────────────────────────────
+            elseif ($user->hasRole('alumni')) {
+                $sidebar = [
+                    ['header' => 'MY PORTAL'],
+                    ['text' => 'Dashboard', 'url' => route('portal.dashboard'), 'icon' => 'gauge'],
+                    ['text' => 'Document Requests', 'icon' => 'folder-open', 'submenu' => [
+                        ['text' => 'Request Document', 'url' => route('portal.documents.create'), 'icon' => 'plus'],
+                        ['text' => 'My Requests',      'url' => route('portal.documents.index'),  'icon' => 'list'],
+                    ]],
+                    ['header' => 'SYSTEM'],
+                    $notifItem,
+                ];
+            }
+
+            config(['adminlte.menu' => $sidebar]);
         });
     }
 }

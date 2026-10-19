@@ -21,8 +21,21 @@
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Tests run against a real MySQL database, not SQLite: this
+             app's migrations (see 2026_08_16_224500_..._gcash_fields.php)
+             use dropForeign()/dropColumn(), which SQLite can't do without
+             a full table rebuild Laravel doesn't perform automatically.
+             Create an empty database named below before running tests —
+             migrations will build the schema fresh each run via
+             RefreshDatabase. Adjust host/username/password if your local
+             MySQL setup differs (defaults below match a typical XAMPP/
+             Laragon install). -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_DATABASE" value="dtc_testing"/>
+        <env name="DB_USERNAME" value="root"/>
+        <env name="DB_PASSWORD" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

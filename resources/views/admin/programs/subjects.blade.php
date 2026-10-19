@@ -6,31 +6,28 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h4 class="mb-0 font-weight-bold" style="color:#1E293B;">
+            <h4 class="mb-0 font-weight-bold u-text" >
                 Subjects — {{ $program->name }}
             </h4>
-            <p class="mb-0" style="color:#64748B; font-size:13px;">
+            <p class="mb-0 u-text-secondary-sm" >
                 Manage subjects for {{ $program->code }}
             </p>
         </div>
         <a href="{{ route('admin.programs.index') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left mr-1"></i> Back to Programs
+            <i data-lucide="arrow-left" class="mr-1"></i> Back to Programs
         </a>
     </div>
 @endsection
 
 @section('content')
 
-@if (session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
 
 <div class="row">
     {{-- Add Subject Form --}}
     <div class="col-lg-4 mb-3">
         <div class="card">
-            <div class="card-header font-weight-bold" style="color:#1E293B;">
-                <i class="fas fa-plus-circle mr-2" style="color:#0F4CDB;"></i> Add Subject
+            <div class="card-header font-weight-bold u-text" >
+                <i data-lucide="plus-circle" class="mr-2 u-link"></i> Add Subject
             </div>
             <div class="card-body">
                 <form method="POST"
@@ -71,7 +68,7 @@
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-plus mr-1"></i> Add Subject
+                        <i data-lucide="plus" class="mr-1"></i> Add Subject
                     </button>
                 </form>
             </div>
@@ -88,8 +85,8 @@
                 @if($filtered->isNotEmpty())
                 <div class="card mb-3">
                     <div class="card-header"
-                         style="background:#F8FAFC; font-size:12px; font-weight:700;
-                                color:#64748B; text-transform:uppercase; letter-spacing:0.5px;">
+                         style="background:var(--dtc-surface-soft); font-size:12px; font-weight:700;
+                                color:var(--dtc-text-secondary); text-transform:uppercase; letter-spacing:0.5px;">
                         Year {{ $year }} — Semester {{ $sem }}
                         <span style="float:right; color:#0F4CDB;">
                             {{ $filtered->count() }} subjects
@@ -114,20 +111,22 @@
                                             {{ $subject->subject_code }}
                                         </span>
                                     </td>
-                                    <td style="font-size:13px; color:#1E293B;">
+                                    <td  class="u-text-sm-secondary-primary">
                                         {{ $subject->subject_name }}
                                     </td>
                                     <td>
-                                        <form method="POST"
+                                        <form id="del-subject-{{ $subject->id }}"
+                                              method="POST"
                                               action="{{ route('admin.programs.subjects.destroy', $subject) }}">
                                             @csrf @method('DELETE')
-                                            <button type="submit"
-                                                    style="background:#FEE2E2; color:#DC2626;
-                                                           border:none; padding:4px 10px;
-                                                           border-radius:8px; font-size:11px;
-                                                           font-weight:600; cursor:pointer;"
-                                                    onclick="return confirm('Remove this subject?')">
-                                                <i class="fas fa-trash"></i>
+                                            <button type="button"
+                                                    class="dtc-icon-btn danger"
+                                                    data-dtc-confirm
+                                                    data-dtc-confirm-title="Remove Subject?"
+                                                    data-dtc-confirm-message="Are you sure you want to remove this subject from the program?"
+                                                    data-dtc-confirm-ok="Remove Subject"
+                                                    data-dtc-confirm-form="#del-subject-{{ $subject->id }}">
+                                                <i data-lucide="trash-2"></i>
                                             </button>
                                         </form>
                                     </td>
@@ -143,8 +142,8 @@
 
         @if($subjects->isEmpty())
         <div class="card">
-            <div class="card-body text-center py-5" style="color:#94A3B8;">
-                <i class="fas fa-book fa-3x mb-3"></i>
+            <div class="card-body text-center py-5 u-text-muted" >
+                <i data-lucide="book" class="mb-3" style="width:3em;height:3em"></i>
                 <p>No subjects added yet. Add subjects using the form.</p>
             </div>
         </div>

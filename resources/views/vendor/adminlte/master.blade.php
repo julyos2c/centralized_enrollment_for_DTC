@@ -48,7 +48,8 @@
             @break
 
             @default
-                <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
+                {{-- Lucide Icons (replaces Font Awesome) --}}
+                <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
                 <link rel="stylesheet" href="{{ asset('vendor/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
                 <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
 
@@ -96,6 +97,18 @@
         <meta name="msapplication-TileImage" content="{{ asset('favicons/ms-icon-144x144.png') }}">
     @endif
 
+    {{-- DTC Nexus theme preload: prevents light-mode flash on saved dark theme --}}
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('dtc-ems-theme') === 'dark') {
+                    document.documentElement.classList.add('dtc-dark-preload');
+                    document.documentElement.classList.add('dtc-dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
 </head>
 
 <body class="@yield('classes_body')" @yield('body_data')>
@@ -136,8 +149,58 @@
         @endif
     @endif
 
+    {{-- DTC Feedback system (toast + confirm modal) --}}
+    <script src="{{ asset('js/dtc-feedback.js') }}" defer></script>
+
     {{-- Custom Scripts --}}
     @yield('adminlte_js')
+
+    {{-- Lucide icon initialisation --}}
+    <script>
+        (function () {
+            function initLucide() {
+                if (window.lucide) lucide.createIcons();
+            }
+            // Run immediately (scripts are at end of body, DOM is ready)
+            initLucide();
+            // Also on DOMContentLoaded in case this script somehow runs early
+            document.addEventListener('DOMContentLoaded', initLucide);
+            // Re-run ONLY when nodes containing [data-lucide] are actually added.
+            //
+            // The old version fired on EVERY body mutation (childList + subtree:true
+            // with no filter). Any classList toggle, style change or attribute set on
+            // any element triggered createIcons() after 50 ms. lucide.createIcons()
+            // replaces each <i data-lucide="…"> with a brand-new <svg> node, which
+            // destroys event listeners that were attached to — or bubble through —
+            // that element. Buttons whose only child was a Lucide <i> (hamburger,
+            // modal X, action icons) lost their Bootstrap data-toggle / data-widget
+            // listeners on the next repaint, so the first click fired correctly but
+            // was immediately followed by createIcons() rebuilding the icon, leaving
+            // the button unresponsive until the user clicked again.
+            if (window.MutationObserver) {
+                var _lucideObserver = new MutationObserver(function (mutations) {
+                    for (var i = 0; i < mutations.length; i++) {
+                        var added = mutations[i].addedNodes;
+                        for (var j = 0; j < added.length; j++) {
+                            var node = added[j];
+                            if (node.nodeType !== 1) continue;
+                            if (node.hasAttribute('data-lucide') ||
+                                node.querySelector('[data-lucide]')) {
+                                // Disconnect BEFORE calling createIcons() so the
+                                // SVG nodes it injects don't re-trigger this observer
+                                // (which would cause an infinite loop and freeze the page).
+                                _lucideObserver.disconnect();
+                                initLucide();
+                                _lucideObserver.observe(document.body, { childList: true, subtree: true });
+                                return;
+                            }
+                        }
+                    }
+                });
+                _lucideObserver.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+    </script>
 
 </body>
 

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\DocumentRequest;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class DocumentRequestController extends Controller
 {
@@ -14,7 +13,7 @@ class DocumentRequestController extends Controller
     {
         $requests = DocumentRequest::with('user')
             ->latest()
-            ->get();
+            ->paginate(10);
 
         return view('registrar.documents.index', compact('requests'));
     }
@@ -26,6 +25,13 @@ class DocumentRequestController extends Controller
             'remarks' => ['nullable', 'string', 'max:500'],
         ]);
 
+        if ($validated['status'] === 'released'
+            && (! $documentRequest->is_paid || $documentRequest->payment_status !== 'verified')) {
+            return back()->withErrors([
+                'status' => 'This document cannot be released until the Cashier has verified its payment.',
+            ]);
+        }
+
         $documentRequest->update([
             'status'  => $validated['status'],
             'remarks' => $validated['remarks'] ?? $documentRequest->remarks,
@@ -34,16 +40,21 @@ class DocumentRequestController extends Controller
         // Notify student/alumni
         $messages = [
             'processing' => 'Your document request is now being processed.',
-            'ready'      => 'Your document is ready for pickup! Please proceed to the Registrar\'s Office.',
             'released'   => 'Your document has been released. Thank you!',
         ];
+
+        if ($validated['status'] === 'ready') {
+            $messages['ready'] = $documentRequest->is_paid && $documentRequest->payment_status === 'verified'
+                ? 'Your document is ready for pickup. Please proceed to the Registrar\'s Office.'
+                : 'Your document is prepared, but it cannot be released until the Cashier verifies your payment. Check My Requests for your payment status.';
+        }
 
         if (isset($messages[$validated['status']])) {
             NotificationService::send(
                 $documentRequest->user,
                 'Document Request Update',
                 $messages[$validated['status']],
-                $validated['status'] === 'ready' ? 'success' : 'info',
+                $validated['status'] === 'ready' && $documentRequest->is_paid && $documentRequest->payment_status === 'verified' ? 'success' : 'info',
                 route('portal.documents.index')
             );
         }

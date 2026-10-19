@@ -64,8 +64,8 @@ return [
     */
 
     'logo' => '<b>DTC</b> Nexus',
-    'logo_img' => 'vendor/adminlte/dist/img/DTC-LOGO.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img' => 'vendor/adminlte/dist/img/DTC-LOGO.webp',
+    'logo_img_class' => 'brand-image',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
     'logo_img_alt' => 'Admin Logo',
@@ -86,7 +86,7 @@ return [
     'auth_logo' => [
         'enabled' => false,
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/DTC-LOGO.png',
+            'path' => 'vendor/adminlte/dist/img/DTC-LOGO.webp',
             'alt' => 'Auth Logo',
             'class' => '',
             'width' => 50,
@@ -113,7 +113,7 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/DTC-LOGO.png',
+            'path' => 'vendor/adminlte/dist/img/DTC-LOGO.webp',
             'alt' => 'AdminLTE Preloader Image',
             'effect' => 'animation__shake',
             'width' => 60,
@@ -159,7 +159,7 @@ return [
     'layout_fixed_navbar' => true,
     'layout_fixed_footer' => true,
     'layout_dark_mode' => null,
-
+    
     /*
     |--------------------------------------------------------------------------
     | Authentication Views Classes
@@ -191,7 +191,7 @@ return [
     |
     */
 
-    'classes_body' => '',
+    'classes_body' => 'layout-footer-fixed',
     'classes_brand' => '',
     'classes_brand_text' => '',
     'classes_content_wrapper' => '',
@@ -224,7 +224,7 @@ return [
     'sidebar_scrollbar_auto_hide' => 'l',
     'sidebar_nav_accordion' => true,
     'sidebar_nav_animation_speed' => 300,
-
+    
     /*
     |--------------------------------------------------------------------------
     | Control Sidebar (Right Sidebar)
@@ -414,19 +414,51 @@ return [
                 'asset'    => true,
                 'location' => 'css/dtc-theme.css',
             ],
+            [
+                'type'     => 'css',
+                'asset'    => true,
+                'location' => 'css/dtc-dark-global.css',
+            ],
+            [
+                'type'=>'css',
+                'asset'=>true, 
+                'location'=>'css/dtc-search.css'
+            ],
+            [
+                'type'     => 'css',
+                'asset'    => true,
+                'location' => 'css/utilities.css',
+            ],
+            [
+                'type'     => 'css',
+                'asset'    => true,
+                'location' => 'css/responsive.css',
+            ],
+            [
+                'type'     => 'js',
+                'asset'    => true,
+                'location' => 'js/dtc-app.js',
+            ],
         ],
     ],
-
-        // 'CustomCSS' => [
-        //     'active' => true,
-        //     'files' => [
-        //         [
-        //             'type' => 'css',
-        //             'asset' => true,
-        //             'location' => 'css/dtc-theme.css',
-        //         ],
-        //     ],
-        // ],
+        // Scoped to admin/users/index and admin/settings/backup only,
+        // via @section('plugins.adminUsers', true) in those views.
+        // Not needed globally — see DTC Nexus Phase 1 CSS-scope audit.
+        'adminUsers' => [
+        'active' => false,
+        'files' => [
+            [
+                'type'     => 'css',
+                'asset'    => true,
+                'location' => 'css/admin-users.css',
+            ],
+        ],
+    ],
+        // welcomeCSS plugin removed (Phase 1 CSS-scope audit): welcome.css
+        // is only used by auth/welcome.blade.php, auth/set-password.blade.php,
+        // and layouts/public.blade.php, all of which already <link> it
+        // directly. Loading it globally through this plugin duplicated it
+        // on every AdminLTE dashboard page for no reason.
      ],
 
     /*

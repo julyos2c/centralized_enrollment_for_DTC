@@ -54,7 +54,7 @@
 
                     <div class="input-group-append">
                         <button type="submit" class="btn">
-                            <i class="fas fa-arrow-right text-muted"></i>
+                            <i data-lucide="arrow-right" class="text-muted"></i>
                         </button>
                     </div>
                 </div>

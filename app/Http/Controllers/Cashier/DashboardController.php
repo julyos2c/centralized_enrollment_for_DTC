@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $totalTransactions = Payment::count();
 
         $recentPayments = Payment::with('enrollment.user', 'enrollment.program')
-            ->latest()->take(5)->get();
+            ->latest()->paginate(5, ['*'], 'recent_page');
 
         return view('cashier.dashboard', compact(
             'todayCollection',
