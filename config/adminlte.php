@@ -14,9 +14,9 @@ return [
     |
     */
 
-'title' => 'DTC EMS',
+'title' => 'DTC Nexus',
 'title_prefix' => '',
-'title_postfix' => ' | DTC EMS',
+'title_postfix' => ' | DTC Nexus',
 
     /*
     |--------------------------------------------------------------------------
@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>DTC</b> EMS',
+    'logo' => '<b>DTC</b> Nexus',
     'logo_img' => 'vendor/adminlte/dist/img/DTC-LOGO.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,

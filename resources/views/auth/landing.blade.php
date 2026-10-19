@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTC EMS — Welcome</title>
+    <title>DTC Nexus — Admissions &amp; Enrollment System</title>
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -202,7 +202,7 @@
             <img src="{{ asset('images/DTC-LOGO.png') }}" alt="DTC Logo">
 
             <div class="brand-text">
-                <h1>DTC EMS</h1>
+                <h1>DTC Nexus</h1>
                 <p>Danao Technological College</p>
             </div>
         </div>
@@ -214,6 +214,7 @@
         <h1>Web-Based Integrated Certificate Appointment and Payment System with Centralized Enrollment for</h1>
         <div class="school-name">Danao Technological College</div>
         <p>
+            <strong>Connecting Students to Their Future.</strong><br>
             Streamlining enrollment, certificate requests, appointment scheduling,
             and payment services through one secure and convenient online platform.
         </p>
@@ -231,7 +232,7 @@
     </div>
 
     <div class="footer">
-        © {{ date('Y') }} Danao Technological College — Enrollment Management System. All rights reserved.
+        © {{ date('Y') }} Danao Technological College — DTC Nexus: Admissions &amp; Enrollment System. All rights reserved.
     </div>
 
 </body>

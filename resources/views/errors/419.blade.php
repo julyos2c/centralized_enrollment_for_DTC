@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>419 — Page Expired | DTC EMS</title>
+    <title>419 — Page Expired | DTC Nexus</title>
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -74,7 +74,7 @@
             </a>
         </div>
         <div class="brand">
-            <strong>DTC EMS</strong> — Danao Technological College
+            <strong>DTC Nexus</strong> — Danao Technological College
         </div>
     </div>
 </body>

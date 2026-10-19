@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In — DTC EMS</title>
+    <title>Sign In — DTC Nexus</title>
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -335,7 +335,7 @@
         <img src="{{ asset('images/DTC-LOGO.png') }}" alt="DTC Logo">
 
         <div class="brand-text">
-            <h1>DTC EMS</h1>
+            <h1>DTC Nexus</h1>
             <p>Danao Technological College</p>
         </div>
     </div>
@@ -351,7 +351,7 @@
             <div class="card-header-logo">
                 <img src="{{ asset('images/DTC-LOGO.png') }}" alt="DTC Logo" class="card-logo">
                 <h2>Sign In</h2>
-                <p>Use your DTC EMS account</p>
+                <p>Use your DTC Nexus account</p>
             </div>
 
             @if ($errors->has('email') || $errors->has('captcha'))
@@ -438,7 +438,7 @@
                 {{-- reCAPTCHA --}}
                 <div class="recaptcha-wrap">
                     <div class="g-recaptcha"
-                         data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
+                         data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
                 </div>
 
                 @if ($errors->has('captcha'))

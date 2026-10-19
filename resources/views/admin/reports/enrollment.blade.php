@@ -101,7 +101,7 @@
 </table>
 
 <div class="footer">
-    DTC Enrollment Management System — Confidential Document — {{ now()->format('Y') }}
+    DTC Nexus — Admissions &amp; Enrollment System — Confidential Document — {{ now()->format('Y') }}
 </div>
 
 </body>
