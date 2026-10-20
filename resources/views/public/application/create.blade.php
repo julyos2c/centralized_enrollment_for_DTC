@@ -269,30 +269,10 @@
                 <div class="wiz-row wiz-row--3">
                     <div class="wiz-field">
                         <label for="religion">Religion <span class="opt">(Optional)</span></label>
-                        {{-- Combo: type-ahead via datalist, or pick from dropdown --}}
                         <input type="text" name="religion" id="religion"
-                            list="religion-list"
                             placeholder="e.g. Roman Catholic"
                             class="wiz-input" value="{{ old('religion') }}"
                             autocomplete="off">
-                        <datalist id="religion-list">
-                            <option value="Roman Catholic">
-                            <option value="Islam">
-                            <option value="Iglesia ni Cristo">
-                            <option value="Philippine Independent Church (Aglipayan)">
-                            <option value="Seventh-day Adventist">
-                            <option value="United Church of Christ in the Philippines">
-                            <option value="Christianity (Other)">
-                            <option value="Evangelical">
-                            <option value="Baptist">
-                            <option value="Born-Again Christian">
-                            <option value="Jehovah's Witnesses">
-                            <option value="The Church of Jesus Christ of Latter-day Saints">
-                            <option value="Buddhism">
-                            <option value="Hinduism">
-                            <option value="No Religion / Atheist / Agnostic">
-                            <option value="Prefer not to say">
-                        </datalist>
                     </div>
                     <div class="wiz-field">
                         <label for="nationality">Nationality <span class="opt">(Optional)</span></label>
@@ -372,93 +352,53 @@
                         autocomplete="street-address">
                 </div>
 
-                {{-- ── Cascading PH location ──────────────────── --}}
-                {{--
-                    VISIBLE: 4 <select> dropdowns (Region → Province → City → Barangay)
-                    HIDDEN:  4 text inputs submitted to the server with human-readable names
-                    The JS cascade in application-wizard.js drives everything.
-                --}}
-
-                {{-- Hidden text inputs that the server actually receives --}}
-                <input type="hidden" name="region"   id="region_text"   value="{{ old('region') }}">
-                <input type="hidden" name="province" id="province_text" value="{{ old('province') }}">
-                <input type="hidden" name="city"     id="city_text"     value="{{ old('city') }}">
-                <input type="hidden" name="barangay" id="barangay_text" value="{{ old('barangay') }}">
-
-                {{-- ── Location drill-down picker (bottom-sheet) ──────── --}}
-                {{-- Hidden selects kept for existing JS cascade logic --}}
-                <div style="display:none" aria-hidden="true">
-                    <select id="addr_region"   name="_addr_region"   class="loc-select" autocomplete="off" disabled><option value="">Loading regions…</option></select>
-                    <select id="addr_province" name="_addr_province" class="loc-select" autocomplete="off" disabled><option value="">Select province…</option></select>
-                    <select id="addr_city"     name="_addr_city"     class="loc-select" autocomplete="off" disabled><option value="">Select city / municipality…</option></select>
-                    <select id="addr_barangay" name="_addr_barangay" class="loc-select" autocomplete="off" disabled><option value="">Select barangay…</option></select>
-                </div>
-
-                {{-- Trigger button --}}
-                <div class="wiz-field">
-                    <label>Location <span class="opt">(Optional)</span></label>
-                    <button type="button" id="locPickerTrigger" class="loc-picker-trigger wiz-input">
-                        <i data-lucide="map-pin" class="loc-picker-trigger-icon"></i>
-                        <span id="locPickerTriggerText">Select region, province, city…</span>
-                        <i data-lucide="chevron-right" class="loc-picker-trigger-chevron"></i>
-                    </button>
-                </div>
-
-                {{-- Barangay trigger (shown after city is selected) --}}
-                <div class="wiz-field" id="locBarangayField" style="display:none">
-                    <label>Barangay <span class="opt">(Optional)</span></label>
-                    <button type="button" id="locBarangayTrigger" class="loc-picker-trigger wiz-input">
-                        <i data-lucide="map-pin" class="loc-picker-trigger-icon"></i>
-                        <span id="locBarangayTriggerText">Select barangay…</span>
-                        <i data-lucide="chevron-right" class="loc-picker-trigger-chevron"></i>
-                    </button>
-                </div>
-
-                {{-- Bottom-sheet modal --}}
-                <div id="locPickerModal" class="loc-picker-modal" role="dialog" aria-modal="true" aria-label="Select location" hidden>
-                    <div class="loc-picker-backdrop"></div>
-                    <div class="loc-picker-sheet">
-                        {{-- Sheet header --}}
-                        <div class="loc-picker-header">
-                            <button type="button" id="locPickerBack" class="loc-picker-nav-btn" aria-label="Back" hidden>
-                                <i data-lucide="chevron-left"></i>
-                            </button>
-                            <span id="locPickerTitle" class="loc-picker-title">Enter your location</span>
-                            <button type="button" id="locPickerClose" class="loc-picker-nav-btn" aria-label="Close">
-                                <i data-lucide="x"></i>
-                            </button>
-                        </div>
-
-                        {{-- Breadcrumb tabs --}}
-                        <div class="loc-picker-tabs" id="locPickerTabs">
-                            <button type="button" class="loc-tab active" data-level="region">Region</button>
-                            <button type="button" class="loc-tab" data-level="province" disabled>Province</button>
-                            <button type="button" class="loc-tab" data-level="city" disabled>City</button>
-                        </div>
-
-                        {{-- Search --}}
-                        <div class="loc-picker-search-wrap">
-                            <i data-lucide="search" class="loc-picker-search-icon"></i>
-                            <input type="text" id="locPickerSearch" class="loc-picker-search" placeholder="Search…" autocomplete="off">
-                        </div>
-
-                        {{-- List --}}
-                        <div id="locPickerList" class="loc-picker-list">
-                            <div class="loc-picker-loading">
-                                <span class="loc-picker-spinner"></span> Loading…
-                            </div>
-                        </div>
+                <div class="wiz-row wiz-row--2">
+                    <div class="wiz-field">
+                        <label for="locRegionTrigger">Region <span class="opt">(Optional)</span></label>
+                        <button type="button" class="loc-picker-trigger" id="locRegionTrigger" data-location-level="region" aria-haspopup="dialog" aria-controls="locPickerModal">
+                            <i data-lucide="map-pin" aria-hidden="true"></i><span data-location-value>{{ old('region', 'Select region') }}</span><i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <input type="hidden" name="region" id="region_text" value="{{ old('region') }}">
+                        <input type="hidden" name="region_code" id="region_code" value="{{ old('region_code') }}">
+                        @error('region_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="wiz-field">
+                        <label for="locProvinceTrigger">Province <span class="opt">(Optional; independent cities can be selected directly)</span></label>
+                        <button type="button" class="loc-picker-trigger" id="locProvinceTrigger" data-location-level="province" aria-haspopup="dialog" aria-controls="locPickerModal">
+                            <i data-lucide="map" aria-hidden="true"></i><span data-location-value>{{ old('province', 'Select province or independent city') }}</span><i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <input type="hidden" name="province" id="province_text" value="{{ old('province') }}">
+                        <input type="hidden" name="province_code" id="province_code" value="{{ old('province_code') }}">
+                        @error('province_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                 </div>
-
-                {{-- Postal code (auto-filled when city is picked, also editable) --}}
+                <div class="wiz-row wiz-row--2">
+                    <div class="wiz-field">
+                        <label for="locCityTrigger">City / Municipality <span class="opt">(Optional)</span></label>
+                        <button type="button" class="loc-picker-trigger" id="locCityTrigger" data-location-level="city" aria-haspopup="dialog" aria-controls="locPickerModal">
+                            <i data-lucide="building-2" aria-hidden="true"></i><span data-location-value>{{ old('city', 'Select city / municipality') }}</span><i data-lucide="chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <input type="hidden" name="city" id="city_text" value="{{ old('city') }}">
+                        <input type="hidden" name="city_code" id="city_code" value="{{ old('city_code') }}">
+                        @error('city_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="wiz-field">
+                        <label for="barangay_text">Barangay <span class="opt">(Optional)</span></label>
+                        <input type="text" name="barangay" id="barangay_text" placeholder="e.g. Poblacion" class="wiz-input" value="{{ old('barangay') }}" maxlength="255" autocomplete="address-level3">
+                    </div>
+                </div>
+                <div class="wiz-field" id="internationalLocationField" hidden>
+                    <label for="international_location">City / Province outside the Philippines <span class="opt">(Optional)</span></label>
+                    <input type="text" name="international_location" id="international_location" class="wiz-input" value="{{ old('international_location') }}" maxlength="255" autocomplete="address-level2">
+                    @error('international_location')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                </div>
                 <div class="wiz-row wiz-row--2">
                     <div class="wiz-field">
                         <label for="postal_code">Postal Code <span class="opt">(Optional)</span></label>
                         <input type="text" name="postal_code" id="postal_code" placeholder="e.g. 6004"
                             class="wiz-input" value="{{ old('postal_code') }}"
                             autocomplete="postal-code" inputmode="numeric" maxlength="4">
-                        <span class="wiz-hint">Auto-filled when you select a city or barangay — you can edit it.</span>
+                        <span class="wiz-hint">Enter your postal code if you know it.</span>
                     </div>
                     <div class="wiz-field" style="max-width:220px">
                         <label for="country">Country <span class="opt">(Optional)</span></label>
@@ -468,10 +408,24 @@
                     </div>
                 </div>
 
-                {{-- Address summary chip — shown by JS once all 4 selects are filled --}}
-                <div class="loc-summary" id="locSummary">
-                    <i data-lucide="map-pin"></i>
-                    <span id="locSummaryText"></span>
+                <div class="loc-picker-modal" id="locPickerModal" hidden aria-hidden="true"
+                    data-regions-url="{{ route('public.application.locations.regions') }}"
+                    data-areas-url="{{ route('public.application.locations.areas', ['region' => '__CODE__']) }}"
+                    data-cities-url="{{ route('public.application.locations.cities', ['province' => '__CODE__']) }}">
+                    <div class="loc-picker-backdrop"></div>
+                    <section class="loc-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="locPickerTitle" tabindex="-1">
+                        <header class="loc-picker-header">
+                            <button type="button" class="loc-picker-nav-btn" id="locPickerBack" aria-label="Go to previous location step" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                            <h2 class="loc-picker-title" id="locPickerTitle">Select region</h2>
+                            <button type="button" class="loc-picker-nav-btn" id="locPickerClose" aria-label="Close location picker"><i data-lucide="x" aria-hidden="true"></i></button>
+                        </header>
+                        <div class="loc-picker-search-wrap">
+                            <label class="sr-only" for="locPickerSearch">Search locations</label>
+                            <i data-lucide="search" class="loc-picker-search-icon" aria-hidden="true"></i>
+                            <input type="search" class="loc-picker-search" id="locPickerSearch" placeholder="Search…" autocomplete="off">
+                        </div>
+                        <div class="loc-picker-list" id="locPickerList" role="group" aria-label="Location options" aria-live="polite"></div>
+                    </section>
                 </div>
 
             </div>
@@ -926,7 +880,7 @@
     $errorStep = match (true) {
         in_array($firstErrorKey, ['academic_status', 'program_id'], true) => 1,
         in_array($firstErrorKey, ['first_name', 'last_name', 'middle_name', 'honorific', 'suffix', 'gender', 'birthdate', 'birth_place', 'religion', 'nationality', 'lrn', 'marital_status', 'spouse_name'], true) => 2,
-        in_array($firstErrorKey, ['email', 'phone', 'current_address', 'region', 'province', 'city', 'barangay', 'postal_code', 'country'], true) => 3,
+        in_array($firstErrorKey, ['email', 'phone', 'current_address', 'region', 'province', 'city', 'region_code', 'province_code', 'city_code', 'international_location', 'barangay', 'postal_code', 'country'], true) => 3,
         in_array($firstErrorKey, ['education_level', 'education_status', 'most_recent_school', 'school_year_completed', 'school_location', 'shs_strand', 'previous_program', 'last_year_level', 'home_institution', 'home_program'], true) => 4,
         $firstErrorKey === 'documents' || str_starts_with($firstErrorKey, 'documents.') || in_array($firstErrorKey, ['father_name', 'father_occupation', 'mother_name', 'mother_occupation', 'parent_address', 'parent_contact', 'occupation', 'disability', 'pwd_id', 'ack_enrollment'], true) => in_array($firstErrorKey, ['ack_enrollment'], true) ? 6 : 5,
         default => 1,

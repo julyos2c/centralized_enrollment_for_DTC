@@ -9,7 +9,7 @@
  *  - Cascading PH address picker  (Region → Province → City → Barangay)
  *  - Cascading PH place of birth  (Region → Province → City, Step 2)
  *  - Postal code auto-filled from barangay's postalCode via PSGC API
- *  - Religion searchable datalist
+ *  - Optional free-text religion field
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const TOTAL       = 6;
     const STORAGE_KEY = 'dtc_application_draft';
     const CHECKS_KEY  = 'dtc_req_checks';
-    const PSGC_BASE   = 'https://psgc.cloud/api';
     let   current     = 1;
 
 
@@ -55,16 +54,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const physicalRequirementsList = document.getElementById('physicalRequirementsList');
 
     /* Step 3 — current address cascade */
-    const selRegion   = document.getElementById('addr_region');
-    const selProvince = document.getElementById('addr_province');
-    const selCity     = document.getElementById('addr_city');
-    const selBarangay = document.getElementById('addr_barangay');
-    const hidRegion   = document.getElementById('region_text');
-    const hidProvince = document.getElementById('province_text');
-    const hidCity     = document.getElementById('city_text');
-    const hidBarangay = document.getElementById('barangay_text');
-    const inpPostal   = document.getElementById('postal_code');
-
     /* Step 2 — place of birth cascade */
 
 
@@ -526,514 +515,270 @@ document.addEventListener('DOMContentLoaded', function () {
        PSGC API  — shared cache + fetch helper
     ════════════════════════════════════════════════════════════ */
 
-    const _cache = {};
-    function apiFetch(url) {
-        if (_cache[url]) return Promise.resolve(_cache[url]);
-        return fetch(url)
-            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-            .then(function (d) { _cache[url] = d; return d; });
+    /* Local PSGC location picker. The API and submit validator share one snapshot. */
+    const locationModal = document.getElementById('locPickerModal');
+    const locationSearch = document.getElementById('locPickerSearch');
+    const locationList = document.getElementById('locPickerList');
+    const locationTitle = document.getElementById('locPickerTitle');
+    const locationBack = document.getElementById('locPickerBack');
+    const locationClose = document.getElementById('locPickerClose');
+    const regionCodeInput = document.getElementById('region_code');
+    const provinceCodeInput = document.getElementById('province_code');
+    const cityCodeInput = document.getElementById('city_code');
+    const locationCache = new Map();
+    const locationRequests = new Map();
+    let locationLevel = 'region';
+    let locationItems = [];
+    let locationOpener = null;
+    let locationRequest = 0;
+    let userChangedLocation = false;
+    let savedBodyOverflow = '';
+
+    const locationUrls = locationModal ? {
+        regions: locationModal.dataset.regionsUrl,
+        areas: locationModal.dataset.areasUrl,
+        cities: locationModal.dataset.citiesUrl
+    } : null;
+
+    function locationText(id) { return document.getElementById(id); }
+    function rememberLocation(el) { if (el) saveField(el); }
+    function normalizeSearch(value) { return value.toLocaleLowerCase().trim().replace(/\s+/g, ' '); }
+    function htmlEscape(value) {
+        return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function locationUrl(template, code) { return template.replace('__CODE__', encodeURIComponent(code)); }
+
+    function fetchLocations(url) {
+        if (locationCache.has(url)) return Promise.resolve(locationCache.get(url));
+        if (locationRequests.has(url)) return locationRequests.get(url);
+        const request = fetch(url, { headers: { Accept: 'application/json' } }).then(function (response) {
+            if (!response.ok) throw new Error('Location data is unavailable. Please try again.');
+            return response.json();
+        }).then(function (items) {
+            locationCache.set(url, items);
+            locationRequests.delete(url);
+            return items;
+        }).catch(function (error) {
+            locationRequests.delete(url);
+            throw error;
+        });
+        locationRequests.set(url, request);
+        return request;
     }
 
-
-    /* ════════════════════════════════════════════════════════════
-       SHARED CASCADE HELPERS
-    ════════════════════════════════════════════════════════════ */
-
-    function setLoading(sel, yes) {
-        sel.disabled = yes;
-        const w = sel.closest('.loc-select-wrap');
-        if (w) w.classList.toggle('loc-loading', yes);
+    function setLocationCode(input, labelInput, option) {
+        input.value = option ? option.code : '';
+        labelInput.value = option ? option.name : '';
+        rememberLocation(input);
+        rememberLocation(labelInput);
     }
 
-    function resetSelect(sel, placeholder) {
-        sel.innerHTML = '<option value="">' + placeholder + '</option>';
-        sel.disabled  = true;
-        const w = sel.closest('.loc-select-wrap');
-        if (w) w.classList.remove('loc-loading');
+    function updateLocationButtons() {
+        [
+            ['locRegionTrigger', 'region_text', 'Select region'],
+            ['locProvinceTrigger', 'province_text', 'Select province or independent city'],
+            ['locCityTrigger', 'city_text', 'Select city / municipality']
+        ].forEach(function (entry) {
+            const button = locationText(entry[0]);
+            const label = locationText(entry[1]);
+            if (button) {
+                const display = button.querySelector('[data-location-value]');
+                display.textContent = entry[0] === 'locProvinceTrigger' && !provinceCodeInput.value && cityCodeInput.value
+                    ? 'Independent city selected'
+                    : (label.value || entry[2]);
+                button.classList.toggle('has-value', !!label.value);
+            }
+        });
     }
 
-    function populateSelect(sel, items, valKey, lblKey) {
-        sel.innerHTML = '<option value="">Select…</option>';
-        items
-            .slice()
-            .sort(function (a, b) { return a[lblKey].localeCompare(b[lblKey]); })
-            .forEach(function (item) {
-                const o = document.createElement('option');
-                o.value = item[valKey]; o.textContent = item[lblKey];
-                sel.appendChild(o);
-            });
-        sel.disabled = false;
-        const w = sel.closest('.loc-select-wrap');
-        if (w) w.classList.remove('loc-loading');
+    function openLocationPicker(level, opener) {
+        if (!locationModal) return;
+        locationLevel = level;
+        locationOpener = opener || document.activeElement;
+        savedBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        locationModal.hidden = false;
+        locationModal.setAttribute('aria-hidden', 'false');
+        locationSearch.value = '';
+        showLocationItems();
+        window.requestAnimationFrame(function () { locationSearch.focus(); });
     }
 
-    function mirrorText(el, val) { if (el) el.value = val || ''; }
-
-    /* ── Postal code auto-fill ──────────────────────────────────
-       Priority: barangay postalCode → city postalCode → silent fail
-       Both PSGC endpoints return a postalCode field.
-       The barangay-level is more specific; city-level fires immediately
-       when city is chosen (before the user picks a barangay).
-    ──────────────────────────────────────────────────────────── */
-    function flashPostal(code) {
-        if (!code || !inpPostal) return;
-        inpPostal.value = code;
-        saveField(inpPostal);
-        inpPostal.classList.add('loc-autofilled');
-        setTimeout(function () { inpPostal.classList.remove('loc-autofilled'); }, 1600);
+    function closeLocationPicker() {
+        if (!locationModal || locationModal.hidden) return;
+        locationModal.hidden = true;
+        locationModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = savedBodyOverflow;
+        updateLocationButtons();
+        if (locationOpener) locationOpener.focus();
     }
 
-    function applyPostalFromCity(cityCode) {
-        if (!cityCode || !inpPostal) return;
-        apiFetch(PSGC_BASE + '/cities-municipalities/' + cityCode)
-            .then(function (data) {
-                const code = data && (data.postalCode || data.postal_code || data.zipCode);
-                if (code) flashPostal(code);
-            })
-            .catch(function () { /* silent */ });
+    function showLocationItems() {
+        const thisRequest = ++locationRequest;
+        const regionCode = regionCodeInput.value;
+        const provinceCode = provinceCodeInput.value;
+        const titles = { region: 'Select region', area: 'Select province or independent city', city: 'Select city / municipality' };
+        locationTitle.textContent = titles[locationLevel];
+        locationBack.hidden = locationLevel === 'region';
+        locationList.innerHTML = '<div class="loc-picker-loading"><span class="loc-picker-spinner" aria-hidden="true"></span>Loading locations…</div>';
+
+        let request;
+        if (locationLevel === 'region') request = fetchLocations(locationUrls.regions);
+        else if (locationLevel === 'area') request = fetchLocations(locationUrl(locationUrls.areas, regionCode));
+        else request = fetchLocations(locationUrl(locationUrls.cities, provinceCode));
+
+        request.then(function (items) {
+            if (thisRequest !== locationRequest || locationModal.hidden) return;
+            locationItems = items;
+            renderLocationItems();
+        }).catch(function () {
+            if (thisRequest !== locationRequest) return;
+            locationList.innerHTML = '<div class="loc-picker-empty">Location data could not be loaded. <button type="button" class="loc-picker-retry">Try again</button></div>';
+            const retry = locationList.querySelector('.loc-picker-retry');
+            retry.addEventListener('click', showLocationItems);
+        });
     }
 
-    function applyPostalFromBarangay(barangayCode) {
-        if (!barangayCode || !inpPostal) return;
-        apiFetch(PSGC_BASE + '/barangays/' + barangayCode)
-            .then(function (data) {
-                const code = data && (data.postalCode || data.postal_code || data.zipCode);
-                if (code) flashPostal(code);
-            })
-            .catch(function () { /* silent */ });
+    function renderLocationItems() {
+        const query = normalizeSearch(locationSearch.value);
+        const filtered = locationItems.filter(function (item) {
+            return normalizeSearch(item.name).includes(query);
+        });
+        if (!filtered.length) {
+            locationList.innerHTML = '<div class="loc-picker-empty" role="status">No locations match “' + htmlEscape(locationSearch.value) + '”.</div>';
+            return;
+        }
+
+        const selectedCode = locationLevel === 'region' ? regionCodeInput.value
+            : locationLevel === 'area' ? (provinceCodeInput.value || cityCodeInput.value) : cityCodeInput.value;
+        locationList.innerHTML = filtered.map(function (item) {
+            const selected = selectedCode === item.code;
+            const itemType = locationLevel === 'area' && item.type === 'city' ? ' · Independent city' : '';
+            return '<button type="button" class="loc-picker-item' + (selected ? ' selected' : '') + '" data-code="' + htmlEscape(item.code) + '" data-name="' + htmlEscape(item.name) + '" data-type="' + htmlEscape(item.type || '') + '" aria-pressed="' + (selected ? 'true' : 'false') + '">' + htmlEscape(item.name + itemType) + (selected ? '<span aria-hidden="true">✓</span>' : '') + '</button>';
+        }).join('');
     }
 
-
-    /* ════════════════════════════════════════════════════════════
-       CASCADE A — CURRENT ADDRESS  (Step 3)
-       Region → Province → City/Municipality → Barangay
-       Barangay selection triggers postal-code auto-fill from API
-    ════════════════════════════════════════════════════════════ */
-
-    function addrLoadRegions() {
-        if (!selRegion) return;
-        setLoading(selRegion, true);
-        resetSelect(selProvince, 'Select province…');
-        resetSelect(selCity,     'Select city / municipality…');
-        resetSelect(selBarangay, 'Select barangay…');
-
-        apiFetch(PSGC_BASE + '/regions')
-            .then(function (data) {
-                populateSelect(selRegion, data, 'code', 'name');
-                const draft = loadDraft();
-                if (draft._addr_region) {
-                    selRegion.value = draft._addr_region;
-                    if (selRegion.value) addrOnRegion(true);
-                }
-            })
-            .catch(function () {
-                selRegion.innerHTML = '<option value="">Could not load regions — try refreshing</option>';
-                setLoading(selRegion, false);
-            });
-    }
-
-    function addrOnRegion(silent) {
-        const code = selRegion.value;
-        const name = selRegion.options[selRegion.selectedIndex] ? selRegion.options[selRegion.selectedIndex].text : '';
-        mirrorText(hidRegion, name);
-        resetSelect(selProvince, 'Loading provinces…');
-        resetSelect(selCity,     'Select city / municipality…');
-        resetSelect(selBarangay, 'Select barangay…');
-        mirrorText(hidProvince, ''); mirrorText(hidCity, ''); mirrorText(hidBarangay, '');
-        if (!silent) { const d = loadDraft(); d._addr_region = code; saveDraft(d); }
-        if (!code) { resetSelect(selProvince, 'Select province…'); updateAddressSummary(); return; }
-
-        setLoading(selProvince, true);
-        apiFetch(PSGC_BASE + '/regions/' + code + '/provinces')
-            .then(function (data) {
-                if (!data || !data.length) {
-                    return apiFetch(PSGC_BASE + '/regions/' + code + '/cities-municipalities')
-                        .then(function (cities) {
-                            selProvince.innerHTML = '<option value="__none__">— No province —</option>';
-                            selProvince.disabled = false;
-                            selProvince.closest('.loc-select-wrap').classList.remove('loc-loading');
-                            mirrorText(hidProvince, '—');
-                            populateSelect(selCity, cities, 'code', 'name');
-                            const draft = loadDraft();
-                            if (draft._addr_city) { selCity.value = draft._addr_city; if (selCity.value) addrOnCity(true); }
-                        });
-                }
-                populateSelect(selProvince, data, 'code', 'name');
-                const draft = loadDraft();
-                if (draft._addr_province) { selProvince.value = draft._addr_province; if (selProvince.value) addrOnProvince(true); }
-            })
-            .catch(function () { resetSelect(selProvince, 'Could not load provinces'); });
-    }
-
-    function addrOnProvince(silent) {
-        const code = selProvince.value;
-        const name = selProvince.options[selProvince.selectedIndex] ? selProvince.options[selProvince.selectedIndex].text : '';
-        mirrorText(hidProvince, name);
-        resetSelect(selCity, 'Loading cities…'); resetSelect(selBarangay, 'Select barangay…');
-        mirrorText(hidCity, ''); mirrorText(hidBarangay, '');
-        if (!silent) { const d = loadDraft(); d._addr_province = code; saveDraft(d); }
-        if (!code || code === '__none__') { resetSelect(selCity, 'Select city / municipality…'); return; }
-
-        setLoading(selCity, true);
-        apiFetch(PSGC_BASE + '/provinces/' + code + '/cities-municipalities')
-            .then(function (data) {
-                populateSelect(selCity, data, 'code', 'name');
-                const draft = loadDraft();
-                if (draft._addr_city) { selCity.value = draft._addr_city; if (selCity.value) addrOnCity(true); }
-            })
-            .catch(function () { resetSelect(selCity, 'Could not load cities'); });
-    }
-
-    function addrOnCity(silent) {
-        const code = selCity.value;
-        const name = selCity.options[selCity.selectedIndex] ? selCity.options[selCity.selectedIndex].text : '';
-        mirrorText(hidCity, name);
-        resetSelect(selBarangay, 'Loading barangays…'); mirrorText(hidBarangay, '');
-        if (!silent) { const d = loadDraft(); d._addr_city = code; saveDraft(d); }
-        updateAddressSummary();
-        /* Fill postal from city immediately; barangay selection will refine it */
-        if (code) applyPostalFromCity(code);
-        if (!code) { resetSelect(selBarangay, 'Select barangay…'); return; }
-
-        setLoading(selBarangay, true);
-        apiFetch(PSGC_BASE + '/cities-municipalities/' + code + '/barangays')
-            .then(function (data) {
-                populateSelect(selBarangay, data, 'code', 'name');
-                const draft = loadDraft();
-                if (draft._addr_barangay) { selBarangay.value = draft._addr_barangay; if (selBarangay.value) addrOnBarangay(true); }
-            })
-            .catch(function () { resetSelect(selBarangay, 'Could not load barangays'); });
-    }
-
-    function addrOnBarangay(silent) {
-        const code = selBarangay.value;
-        const name = selBarangay.options[selBarangay.selectedIndex] ? selBarangay.options[selBarangay.selectedIndex].text : '';
-        mirrorText(hidBarangay, name);
-        if (!silent) { const d = loadDraft(); d._addr_barangay = code; saveDraft(d); }
-        updateAddressSummary();
-        /* Fetch postal code from barangay endpoint */
-        if (code) applyPostalFromBarangay(code);
-    }
-
-    /* Address summary chip */
-    function updateAddressSummary() {
-        const el  = document.getElementById('locSummary');
-        const txt = document.getElementById('locSummaryText');
-        if (!el || !txt) return;
-        const parts = [
-            hidBarangay && hidBarangay.value ? 'Brgy. ' + hidBarangay.value : '',
-            hidCity     && hidCity.value     ? hidCity.value     : '',
-            hidProvince && hidProvince.value && hidProvince.value !== '—' ? hidProvince.value : '',
-            hidRegion   && hidRegion.value   ? hidRegion.value   : '',
-        ].filter(Boolean);
-        if (parts.length >= 2) {
-            txt.textContent = parts.join(', ');
-            el.classList.add('visible');
-            if (window.lucide) lucide.createIcons({ nodes: [el] });
+    function chooseLocation(item) {
+        userChangedLocation = true;
+        if (locationLevel === 'region') {
+            setLocationCode(regionCodeInput, locationText('region_text'), item);
+            setLocationCode(provinceCodeInput, locationText('province_text'), null);
+            setLocationCode(cityCodeInput, locationText('city_text'), null);
+            locationLevel = 'area';
+            locationSearch.value = '';
+            showLocationItems();
+        } else if (locationLevel === 'area' && item.type === 'province') {
+            setLocationCode(provinceCodeInput, locationText('province_text'), item);
+            setLocationCode(cityCodeInput, locationText('city_text'), null);
+            locationLevel = 'city';
+            locationSearch.value = '';
+            showLocationItems();
+        } else if (locationLevel === 'area') {
+            setLocationCode(provinceCodeInput, locationText('province_text'), null);
+            setLocationCode(cityCodeInput, locationText('city_text'), item);
+            closeLocationPicker();
         } else {
-            el.classList.remove('visible');
+            setLocationCode(cityCodeInput, locationText('city_text'), item);
+            closeLocationPicker();
         }
+        updateLocationButtons();
     }
 
-    if (selRegion) {
-        selRegion.addEventListener('change',   function () { addrOnRegion(false); });
-        selProvince.addEventListener('change', function () { addrOnProvince(false); });
-        selCity.addEventListener('change',     function () { addrOnCity(false); });
-        selBarangay.addEventListener('change', function () { addrOnBarangay(false); });
-        addrLoadRegions();
-
-        /* ── Bottom-sheet picker wired to the existing cascade ─── */
-        locPickerInit();
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       BOTTOM-SHEET LOCATION PICKER
-       Drives the hidden <select> elements so the existing cascade
-       logic (addrOnRegion / addrOnProvince / addrOnCity / addrOnBarangay)
-       continues to work unchanged.
-    ════════════════════════════════════════════════════════════ */
-    function locPickerInit() {
-        var trigger        = document.getElementById('locPickerTrigger');
-        var barangayField  = document.getElementById('locBarangayField');
-        var barangayTrigger= document.getElementById('locBarangayTrigger');
-        var modal          = document.getElementById('locPickerModal');
-        var backdrop       = modal && modal.querySelector('.loc-picker-backdrop');
-        var btnBack        = document.getElementById('locPickerBack');
-        var btnClose       = document.getElementById('locPickerClose');
-        var titleEl        = document.getElementById('locPickerTitle');
-        var tabs           = document.querySelectorAll('.loc-tab');
-        var searchInp      = document.getElementById('locPickerSearch');
-        var listEl         = document.getElementById('locPickerList');
-
-        if (!trigger || !modal) return;
-
-        /* Current picker state */
-        var pickerLevel    = 'region'; /* region | province | city | barangay */
-        var pickerItems    = [];       /* current list items */
-        var pickerSearchVal= '';
-
-        /* ── Open / close ──────────────────────────────────────── */
-        function openPicker(startLevel) {
-            pickerLevel = startLevel || 'region';
-            modal.hidden = false;
-            /* Lock body scroll AND pin the scroll position so the fixed modal
-               stays at the bottom of the visible viewport, not the document */
-            var scrollY = window.scrollY;
-            document.body.style.position = 'fixed';
-            document.body.style.top = '-' + scrollY + 'px';
-            document.body.style.width = '100%';
-            document.body.dataset.scrollY = scrollY;
-            searchInp.value = '';
-            pickerSearchVal = '';
-            renderTabs();
-            renderList();
-            setTimeout(function () { searchInp.focus(); }, 320);
+    if (locationModal) {
+        const locationDraft = loadDraft();
+        [regionCodeInput, provinceCodeInput, cityCodeInput].forEach(function (input) {
+            if (input && !input.value && locationDraft[input.name]) input.value = locationDraft[input.name];
+        });
+        [['region_text', 'region'], ['province_text', 'province'], ['city_text', 'city']].forEach(function (pair) {
+            const input = locationText(pair[0]);
+            if (input && !input.value && locationDraft[pair[1]]) input.value = locationDraft[pair[1]];
+        });
+        const countryInput = document.getElementById('country');
+        const internationalField = document.getElementById('internationalLocationField');
+        function updateInternationalAddress() {
+            if (internationalField) internationalField.hidden = !countryInput || normalizeSearch(countryInput.value) === 'philippines';
         }
-
-        function closePicker() {
-            modal.hidden = true;
-            /* Restore body scroll position */
-            var scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-            window.scrollTo(0, scrollY);
-            updateTriggerLabel();
-        }
-
-        trigger.addEventListener('click', function () { openPicker('region'); });
-        if (barangayTrigger) barangayTrigger.addEventListener('click', function () { openPicker('barangay'); });
-        if (backdrop)  backdrop.addEventListener('click', closePicker);
-        btnClose.addEventListener('click', closePicker);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closePicker(); });
-
-        /* ── Tab navigation ────────────────────────────────────── */
-        tabs.forEach(function (tab) {
-            tab.addEventListener('click', function () {
-                if (tab.disabled) return;
-                openPicker(tab.getAttribute('data-level'));
+        if (countryInput) countryInput.addEventListener('input', updateInternationalAddress);
+        updateInternationalAddress();
+        document.querySelectorAll('[data-location-level]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const level = button.dataset.locationLevel;
+                const nextLevel = level === 'province'
+                    ? (regionCodeInput.value ? 'area' : 'region')
+                    : level === 'city'
+                        ? (provinceCodeInput.value ? 'city' : regionCodeInput.value ? 'area' : 'region')
+                        : 'region';
+                openLocationPicker(nextLevel, button);
             });
         });
-
-        btnBack.addEventListener('click', function () {
-            var levels = ['region', 'province', 'city', 'barangay'];
-            var idx = levels.indexOf(pickerLevel);
-            if (idx > 0) openPicker(levels[idx - 1]);
+        locationClose.addEventListener('click', closeLocationPicker);
+        locationModal.querySelector('.loc-picker-backdrop').addEventListener('click', closeLocationPicker);
+        locationBack.addEventListener('click', function () {
+            locationLevel = locationLevel === 'city' ? 'area' : 'region';
+            locationSearch.value = '';
+            showLocationItems();
         });
-
-        /* ── Search ────────────────────────────────────────────── */
-        searchInp.addEventListener('input', function () {
-            pickerSearchVal = searchInp.value.trim().toLowerCase();
-            renderList();
+        locationSearch.addEventListener('input', renderLocationItems);
+        locationList.addEventListener('click', function (event) {
+            const button = event.target.closest('.loc-picker-item');
+            if (!button) return;
+            chooseLocation({ code: button.dataset.code, name: button.dataset.name, type: button.dataset.type });
         });
-
-        /* ── Render helpers ────────────────────────────────────── */
-        function renderTabs() {
-            var levels = ['region', 'province', 'city'];
-            var labels = {
-                region:   selRegion.value   ? (selRegion.options[selRegion.selectedIndex]   || {}).text || 'Region'   : 'Region',
-                province: selProvince.value ? (selProvince.options[selProvince.selectedIndex]|| {}).text || 'Province' : 'Province',
-                city:     selCity.value     ? (selCity.options[selCity.selectedIndex]        || {}).text || 'City'     : 'City'
-            };
-            tabs.forEach(function (tab) {
-                var lv = tab.getAttribute('data-level');
-                tab.classList.toggle('active', lv === pickerLevel);
-                tab.classList.toggle('done',   lv !== pickerLevel && isLevelDone(lv));
-
-                /* Enable tab if the level before it is done */
-                var idx = levels.indexOf(lv);
-                tab.disabled = (idx > 0 && !isLevelDone(levels[idx - 1]));
-
-                /* Shorten label on small screens */
-                var shortLabel = labels[lv] || (lv.charAt(0).toUpperCase() + lv.slice(1));
-                tab.textContent = shortLabel.length > 12
-                    ? shortLabel.substring(0, 11) + '…'
-                    : shortLabel;
-            });
-
-            var levelLabels = { region: 'Select Region', province: 'Select Province', city: 'Select City / Municipality', barangay: 'Select Barangay' };
-            titleEl.textContent = levelLabels[pickerLevel] || 'Select Location';
-            btnBack.hidden = (pickerLevel === 'region');
-        }
-
-        function isLevelDone(lv) {
-            if (lv === 'region')   return !!selRegion.value;
-            if (lv === 'province') return !!selProvince.value || selProvince.querySelector('[value="__none__"]');
-            if (lv === 'city')     return !!selCity.value;
-            return false;
-        }
-
-        function renderList() {
-            var sel = levelToSelect(pickerLevel);
-            if (!sel) { listEl.innerHTML = ''; return; }
-
-            /* Collect options (skip first placeholder) */
-            pickerItems = Array.from(sel.options)
-                .filter(function (o) { return o.value && o.value !== '__none__'; })
-                .map(function (o) { return { value: o.value, label: o.textContent.trim() }; });
-
-            /* If still loading (only placeholder) show spinner */
-            if (!pickerItems.length) {
-                listEl.innerHTML = '<div class="loc-picker-loading"><span class="loc-picker-spinner"></span> Loading…</div>';
-                /* Poll until options arrive */
-                var poll = setInterval(function () {
-                    var opts = Array.from(sel.options).filter(function (o) { return o.value && o.value !== '__none__'; });
-                    if (opts.length) {
-                        clearInterval(poll);
-                        pickerItems = opts.map(function (o) { return { value: o.value, label: o.textContent.trim() }; });
-                        buildListHTML(sel);
-                    }
-                }, 80);
-                return;
+        locationList.addEventListener('keydown', function (event) {
+            if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+            const buttons = Array.from(locationList.querySelectorAll('.loc-picker-item'));
+            const index = buttons.indexOf(document.activeElement);
+            const direction = event.key === 'ArrowDown' ? 1 : -1;
+            const next = buttons[(index + direction + buttons.length) % buttons.length];
+            if (next) { event.preventDefault(); next.focus(); }
+        });
+        locationSearch.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                const first = locationList.querySelector('.loc-picker-item');
+                if (first) { event.preventDefault(); first.focus(); }
             }
-            buildListHTML(sel);
-        }
-
-        function buildListHTML(sel) {
-            var q = pickerSearchVal;
-            var filtered = pickerItems.filter(function (it) {
-                return !q || it.label.toLowerCase().indexOf(q) !== -1;
-            });
-
-            if (!filtered.length) {
-                listEl.innerHTML = '<div class="loc-picker-empty">No results for "' + escHtml(searchInp.value) + '"</div>';
-                return;
+        });
+        document.addEventListener('keydown', function (event) {
+            if (locationModal.hidden) return;
+            if (event.key === 'Escape') { event.preventDefault(); closeLocationPicker(); }
+            if (event.key === 'Tab') {
+                const focusable = Array.from(locationModal.querySelectorAll('button:not([disabled]), input:not([disabled])')).filter(el => !el.hidden);
+                const first = focusable[0], last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
             }
-
-            /* Group alphabetically */
-            var groups = {};
-            filtered.forEach(function (it) {
-                var letter = it.label.charAt(0).toUpperCase();
-                if (!groups[letter]) groups[letter] = [];
-                groups[letter].push(it);
-            });
-
-            var html = '';
-            Object.keys(groups).sort().forEach(function (letter) {
-                html += '<div class="loc-picker-group-label">' + escHtml(letter) + '</div>';
-                groups[letter].forEach(function (it) {
-                    var isSelected = sel.value === it.value;
-                    html += '<button type="button" class="loc-picker-item' + (isSelected ? ' selected' : '') + '" data-value="' + escHtml(it.value) + '" data-label="' + escHtml(it.label) + '">'
-                        + escHtml(it.label)
-                        + (isSelected ? '<svg class="loc-picker-item-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
-                        + '</button>';
-                });
-            });
-
-            listEl.innerHTML = html;
-            if (window.lucide) lucide.createIcons({ nodes: [listEl] });
-        }
-
-        /* Single delegated click handler — set once, never duplicated */
-        listEl.addEventListener('click', function (e) {
-            var btn = e.target.closest('.loc-picker-item');
-            if (btn) onItemSelected(btn.getAttribute('data-value'), btn.getAttribute('data-label'));
         });
 
-        function onItemSelected(value, label) {
-            var sel = levelToSelect(pickerLevel);
-            if (!sel) return;
-
-            /* Drive the hidden select → triggers existing cascade */
-            sel.value = value;
-            sel.dispatchEvent(new Event('change'));
-
-            if (pickerLevel === 'region') {
-                /* Wait for province options to load, then advance */
-                waitForOptions(selProvince, function () { openPicker('province'); });
-            } else if (pickerLevel === 'province') {
-                waitForOptions(selCity, function () { openPicker('city'); });
-            } else if (pickerLevel === 'city') {
-                /* Show barangay trigger; close picker */
-                closePicker();
-                if (barangayField) barangayField.style.display = '';
-                /* Wait for barangay options */
-                waitForOptions(selBarangay, function () {
-                    if (barangayTrigger) {
-                        var txt = barangayTrigger.querySelector('#locBarangayTriggerText');
-                        if (txt) txt.textContent = 'Select barangay (optional)…';
-                    }
-                });
-            } else if (pickerLevel === 'barangay') {
-                closePicker();
+        // Rehydrate saved/old input in parent-to-child order after validation or refresh.
+        fetchLocations(locationUrls.regions).then(function () {
+            if (userChangedLocation) return;
+            const regionName = locationText('region_text').value;
+            if (!regionCodeInput.value && regionName) {
+                const regions = locationCache.get(locationUrls.regions) || [];
+                const match = regions.find(item => item.name === regionName);
+                if (match) regionCodeInput.value = match.code;
             }
-        }
-
-        function waitForOptions(sel, cb) {
-            if (!sel) return;
-            var tries = 0;
-            var t = setInterval(function () {
-                var opts = Array.from(sel.options).filter(function (o) { return o.value && o.value !== '__none__'; });
-                if (opts.length || ++tries > 60) { clearInterval(t); if (opts.length) cb(); }
-            }, 100);
-        }
-
-        function levelToSelect(lv) {
-            if (lv === 'region')   return selRegion;
-            if (lv === 'province') return selProvince;
-            if (lv === 'city')     return selCity;
-            if (lv === 'barangay') return selBarangay;
-            return null;
-        }
-
-        function escHtml(s) {
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-
-        /* ── Update trigger button label ───────────────────────── */
-        function updateTriggerLabel() {
-            var parts = [];
-            if (hidRegion   && hidRegion.value)   parts.push(hidRegion.value);
-            if (hidProvince && hidProvince.value && hidProvince.value !== '—') parts.push(hidProvince.value);
-            if (hidCity     && hidCity.value)     parts.push(hidCity.value);
-            var txt = document.getElementById('locPickerTriggerText');
-            if (txt) {
-                if (parts.length) {
-                    txt.textContent = parts.join(' › ');
-                    trigger.classList.add('has-value');
-                } else {
-                    txt.textContent = 'Select region, province, city…';
-                    trigger.classList.remove('has-value');
+            if (!regionCodeInput.value) return;
+            return fetchLocations(locationUrl(locationUrls.areas, regionCodeInput.value)).then(function (areas) {
+                if (userChangedLocation) return;
+                const area = areas.find(item => item.code === (provinceCodeInput.value || cityCodeInput.value));
+                if (area && area.type === 'province') {
+                    if (!provinceCodeInput.value) provinceCodeInput.value = area.code;
+                    return fetchLocations(locationUrl(locationUrls.cities, provinceCodeInput.value)).then(function (cities) {
+                        if (userChangedLocation) return;
+                        const selected = cities.find(item => item.code === cityCodeInput.value) || cities.find(item => item.name === locationText('city_text').value);
+                        if (selected) { cityCodeInput.value = selected.code; locationText('city_text').value = selected.name; }
+                    });
                 }
-            }
-            /* Barangay trigger */
-            if (barangayTrigger && hidBarangay) {
-                var btxt = document.getElementById('locBarangayTriggerText');
-                if (btxt) {
-                    if (hidBarangay.value) {
-                        btxt.textContent = 'Brgy. ' + hidBarangay.value;
-                        barangayTrigger.classList.add('has-value');
-                    } else {
-                        btxt.textContent = 'Select barangay…';
-                        barangayTrigger.classList.remove('has-value');
-                    }
-                }
-            }
-        }
-
-        /* Update trigger labels whenever the cascade fires */
-        [selRegion, selProvince, selCity, selBarangay].forEach(function (sel) {
-            if (sel) sel.addEventListener('change', updateTriggerLabel);
-        });
-
-        /* Restore trigger label from draft on page load */
-        setTimeout(updateTriggerLabel, 800);
-
-        /* Show barangay field if city already selected (e.g. draft restore) */
-        setTimeout(function () {
-            if (selCity && selCity.value && barangayField) {
-                barangayField.style.display = '';
-            }
-        }, 1200);
+                const direct = areas.find(item => item.type === 'city' && (item.code === cityCodeInput.value || item.name === locationText('city_text').value));
+                if (direct) { provinceCodeInput.value = ''; locationText('province_text').value = ''; cityCodeInput.value = direct.code; locationText('city_text').value = direct.name; }
+            }).then(updateLocationButtons);
+        }).catch(function () { updateLocationButtons(); });
     }
 
-
-    /* ════════════════════════════════════════════════════════════
-       LOCALSTORAGE PERSISTENCE
-    ════════════════════════════════════════════════════════════ */
 
     /* Location select names are persisted manually above; exclude from generic loop */
-    const LOC_NAMES = ['_addr_region','_addr_province','_addr_city','_addr_barangay'];
+    const LOC_NAMES = ['region','province','city','region_code','province_code','city_code'];
 
     const PERSIST_SELECTOR = [
         'input[type="text"]',

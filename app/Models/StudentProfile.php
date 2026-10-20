@@ -32,11 +32,21 @@ class StudentProfile extends Model
         'program_id',
         'enrolled_ay',
         'graduation_year',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
+        'email',
+        'year_level',
+        'academic_status',
+        'graduation_date',
     ];
 
     protected $casts = [
         'birthdate'       => 'date',
         'graduation_year' => 'integer',
+        'year_level'      => 'integer',
+        'graduation_date' => 'date',
     ];
 
     public function user()

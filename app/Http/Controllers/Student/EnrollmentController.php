@@ -179,7 +179,7 @@ class EnrollmentController extends Controller
                 'New Enrollment Submitted',
                 "{$user->name} submitted an enrollment for {$enrollment->program->name} (Year {$enrollment->year_level}) and is awaiting your review.",
                 'info',
-                route('registrar.enrollments.show', $enrollment)
+                route('registrar.enrollments.index', ['review' => $enrollment->id])
             );
         }
 

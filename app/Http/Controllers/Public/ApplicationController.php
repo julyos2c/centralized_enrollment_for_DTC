@@ -101,6 +101,7 @@ class ApplicationController extends Controller
      */
     public function store(Request $request)
     {
+        $locations = app(\App\Services\PsgcLocationCatalog::class);
         $submissionToken = $request->input('submission_token');
         $sessionSubmissionToken = $request->session()->get('public_application_submission_token');
         if (
@@ -112,6 +113,20 @@ class ApplicationController extends Controller
                 'application' => 'This form has expired or was already submitted. Please review the application status or start a new application.',
             ]);
         }
+
+        $regionCodes = array_column($locations->regions(), 'code');
+        $selectedRegion = (string) $request->input('region_code', '');
+        $selectedProvince = (string) $request->input('province_code', '');
+        $provinceCodes = array_column(array_values(array_filter(
+            $locations->areas($selectedRegion),
+            fn ($area) => $area['type'] === 'province'
+        )), 'code');
+        $cityOptions = $selectedProvince !== ''
+            ? $locations->cities($selectedProvince)
+            : array_values(array_filter(
+                $locations->areas($selectedRegion),
+                fn ($area) => $area['type'] === 'city'
+            ));
 
         $rules = [
             'submission_token' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
@@ -230,12 +245,17 @@ class ApplicationController extends Controller
 
             'region' => ['nullable', 'string', 'max:255'],
             'barangay' => ['nullable', 'string', 'max:255'],
+            'region_code' => ['nullable', 'string', Rule::in($regionCodes)],
+            'province_code' => ['nullable', 'string', Rule::in($provinceCodes)],
+            'city_code' => ['nullable', 'string', Rule::in(array_column($cityOptions, 'code'))],
 
             'postal_code' => [
                 'nullable',
                 'string',
                 'max:20',
             ],
+
+            'international_location' => ['nullable', 'string', 'max:255'],
 
             'country' => [
                 'nullable',
@@ -382,7 +402,42 @@ class ApplicationController extends Controller
 
         $validated = $request->validate($rules, [
             'birthdate.before_or_equal' => 'Enter a date of birth that is today or earlier.',
+            'region_code.in' => 'Select a valid region from the list.',
+            'province_code.in' => 'Select a province that belongs to the chosen region.',
+            'city_code.in' => 'Select a city or municipality that belongs to the chosen area.',
         ]);
+
+        // Never treat browser-submitted geographic labels as authoritative.
+        if (strcasecmp(trim($validated['country'] ?? 'Philippines'), 'Philippines') === 0) {
+            $validated['region'] = null;
+            $validated['province'] = null;
+            $validated['city'] = null;
+
+            if (!empty($validated['region_code'])) {
+                $validated['region'] = $locations->region($validated['region_code'])['name'];
+                if (!empty($validated['province_code'])) {
+                    $area = $locations->area($validated['province_code'], $validated['region_code']);
+                    $validated['province'] = $area['name'];
+                    if (!empty($validated['city_code'])) {
+                        $validated['city'] = $locations->city(
+                            $validated['city_code'],
+                            $validated['province_code']
+                        )['name'];
+                    }
+                } elseif (!empty($validated['city_code'])) {
+                    $directCity = collect($locations->areas($validated['region_code']))
+                        ->firstWhere('code', $validated['city_code']);
+                    $validated['city'] = $directCity['name'];
+                }
+            }
+        } else {
+            $validated['city'] = $validated['international_location'] ?? null;
+            $validated['province'] = null;
+            $validated['region'] = null;
+            $validated['region_code'] = null;
+            $validated['province_code'] = null;
+            $validated['city_code'] = null;
+        }
 
         /*
          * Marriage certificate is only applicable when the applicant
@@ -476,6 +531,9 @@ class ApplicationController extends Controller
                     'city' => $validated['city'] ?? null,
                     'province' => $validated['province'] ?? null,
                     'region' => $validated['region'] ?? null,
+                    'region_code' => $validated['region_code'] ?? null,
+                    'province_code' => $validated['province_code'] ?? null,
+                    'city_code' => $validated['city_code'] ?? null,
                     'barangay' => $validated['barangay'] ?? null,
                     'postal_code' => $validated['postal_code'] ?? null,
                     'country' => $validated['country'] ?? 'Philippines',

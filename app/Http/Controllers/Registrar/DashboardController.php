@@ -25,7 +25,10 @@ class DashboardController extends Controller
         $recentApplications = Application::with('program')
             ->latest()->take(5)->paginate(5, ['*'], 'applications_page');
 
-        $recentNotifications = UserNotification::latest()->take(4)->get();
+        $recentNotifications = UserNotification::where('user_id', auth()->id())
+            ->latest()
+            ->take(4)
+            ->get();
 
         return view('registrar.dashboard', compact(
             'pendingEnrollments',

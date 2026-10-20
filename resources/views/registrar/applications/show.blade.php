@@ -20,7 +20,6 @@
             'cross_enrollee' => 'Cross-Enrollee',
         ];
 
-        $hasActions = !in_array($application->status, ['approved', 'rejected']);
     @endphp
 
     <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -493,31 +492,35 @@
         {{-- ===================================================== --}}
         {{-- SECTION 8 — ACTIONS                                    --}}
         {{-- ===================================================== --}}
-        @unless($hasActions)
+        @if($application->status === 'submitted')
         <div class="card">
             <div class="card-header">
                 <span class="font-weight-bold">Registrar Actions</span>
             </div>
             <div class="card-body">
-
-                @if($application->status === 'submitted')
-                    <form id="start-review-{{ $application->id }}"
-                          method="POST"
-                          action="{{ route('registrar.applications.start-review', $application) }}"
-                          class="mb-2">
-                        @csrf
-                        <button type="button"
-                                class="btn btn-primary btn-block"
-                                data-dtc-confirm
-                                data-dtc-confirm-title="Start Review?"
-                                data-dtc-confirm-message="This will mark the application as under review and notify the student. Are you sure?"
-                                data-dtc-confirm-ok="Start Review"
-                                data-dtc-confirm-type="info"
-                                data-dtc-confirm-form="#start-review-{{ $application->id }}">
-                            Start Review
-                        </button>
-                    </form>
-                @endif
+                <form id="start-review-{{ $application->id }}"
+                      method="POST"
+                      action="{{ route('registrar.applications.start-review', $application) }}">
+                    @csrf
+                    <button type="button"
+                            class="btn btn-primary btn-block"
+                            data-dtc-confirm
+                            data-dtc-confirm-title="Start Review?"
+                            data-dtc-confirm-message="This will mark the application as under review and notify the student. Are you sure?"
+                            data-dtc-confirm-ok="Start Review"
+                            data-dtc-confirm-type="info"
+                            data-dtc-confirm-form="#start-review-{{ $application->id }}">
+                        Start Review
+                    </button>
+                </form>
+            </div>
+        </div>
+        @elseif($application->status === 'under_review')
+        <div class="card">
+            <div class="card-header">
+                <span class="font-weight-bold">Registrar Actions</span>
+            </div>
+            <div class="card-body">
 
                 <form id="approve-application-{{ $application->id }}"
                       method="POST"
@@ -525,8 +528,7 @@
                       class="mb-2">
                     @csrf
                     <button type="button"
-                            class="btn btn-success btn-block {{ $application->status === 'submitted' ? 'disabled' : '' }}"
-                            {{ $application->status === 'submitted' ? 'disabled' : '' }}
+                            class="btn btn-success btn-block"
                             data-dtc-confirm
                             data-dtc-confirm-title="Approve Application?"
                             data-dtc-confirm-message="This will approve the application and create a student account. Are you sure?"
@@ -537,37 +539,56 @@
                     </button>
                 </form>
 
-                <button type="button" class="btn btn-warning btn-block mb-2 {{ $application->status === 'submitted' ? 'disabled' : '' }}"
-                        {{ $application->status === 'submitted' ? 'disabled' : '' }}
+                <button type="button" class="btn btn-warning btn-block mb-2"
                         data-toggle="modal" data-target="#revisionModal">
                     Request Revision
                 </button>
 
-                <button type="button" class="btn btn-danger btn-block {{ $application->status === 'submitted' ? 'disabled' : '' }}"
-                        {{ $application->status === 'submitted' ? 'disabled' : '' }}
+                <button type="button" class="btn btn-danger btn-block"
                         data-toggle="modal" data-target="#rejectModal">
                     Reject
                 </button>
 
             </div>
         </div>
-        @else
+        @elseif($application->status === 'revision_required')
         <div class="card">
             <div class="card-body">
-                <div class="text-muted u-text-sm" >
-                    @if($application->status === 'approved')
-                        This application has already been approved. No further action is available.
-                    @else
-                        This application has already been rejected.
-                    @endif
+                <div class="text-muted u-text-sm">
+                    This application requires revision. Review the Registrar remarks above before further action.
                 </div>
             </div>
         </div>
-        @endunless
+        @elseif($application->status === 'approved')
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted u-text-sm">
+                    This application has been approved. No further action is available.
+                </div>
+            </div>
+        </div>
+        @elseif($application->status === 'rejected')
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted u-text-sm" >
+                    This application has been rejected. Review the Registrar remarks above for the reason.
+                </div>
+            </div>
+        </div>
+        @else
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted u-text-sm">
+                    This application has an unrecognized status. No Registrar action is available.
+                </div>
+            </div>
+        </div>
+        @endif
 
     </div>
 </div>
 
+@if($application->status === 'under_review')
 {{-- Reject Modal --}}
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
@@ -613,5 +634,6 @@
         </div>
     </div>
 </div>
+@endif
 
 @endsection

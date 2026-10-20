@@ -25,6 +25,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Public\ApplicationController;
 use App\Http\Controllers\PasswordSetupController;
 use App\Http\Controllers\Registrar\ApplicationController as RegistrarApplicationController;
+use App\Http\Controllers\Registrar\AcademicRecordController;
+use App\Http\Controllers\Registrar\AcademicImportController;
 use App\Http\Controllers\Portal\ApplicationController as PortalApplicationController;
 use App\Http\Controllers\Portal\CorController as PortalCorController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -77,6 +79,9 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── PUBLIC APPLICATION / PRE-ENROLLMENT ─────────────────────────────────────
     Route::prefix('apply')->name('public.application.')->group(function () {
         Route::get('/', [ApplicationController::class, 'create'])->name('create');
+        Route::get('/locations/regions', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'regions'])->name('locations.regions');
+        Route::get('/locations/regions/{region}/areas', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'areas'])->whereNumber('region')->name('locations.areas');
+        Route::get('/locations/provinces/{province}/cities', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'cities'])->whereNumber('province')->name('locations.cities');
         Route::post('/', [ApplicationController::class, 'store'])->middleware('throttle:application-submission')->name('store');
         Route::get('/success', [ApplicationController::class, 'success'])->name('success');
         Route::get('/status', [ApplicationController::class, 'statusForm'])->name('status.form');
@@ -152,6 +157,20 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── REGISTRAR ─────────────────────────────────────────────────────────────────
     Route::middleware(['auth', 'role:registrar|admin'])->prefix('registrar')->name('registrar.')->group(function () {
     Route::get('/dashboard', [RegistrarDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/students', [AcademicRecordController::class, 'index'])->name('students.index');
+    Route::get('/students/create', [AcademicRecordController::class, 'create'])->name('students.create');
+    Route::post('/students', [AcademicRecordController::class, 'store'])->name('students.store');
+    Route::get('/students/{student}', [AcademicRecordController::class, 'show'])->name('students.show');
+    Route::get('/students/{student}/edit', [AcademicRecordController::class, 'edit'])->name('students.edit');
+    Route::put('/students/{student}', [AcademicRecordController::class, 'update'])->name('students.update');
+    Route::get('/imports', [AcademicImportController::class, 'index'])->name('imports.index');
+    Route::get('/imports/template/{type}', [AcademicImportController::class, 'template'])->name('imports.template');
+    Route::post('/imports', [AcademicImportController::class, 'upload'])->middleware('throttle:10,1')->name('imports.upload');
+    Route::get('/imports/{batch}', [AcademicImportController::class, 'show'])->name('imports.show');
+    Route::post('/imports/{batch}/commit', [AcademicImportController::class, 'commit'])->middleware('throttle:10,1')->name('imports.commit');
+    Route::post('/imports/{batch}/cancel', [AcademicImportController::class, 'cancel'])->name('imports.cancel');
+    Route::get('/imports/{batch}/report', [AcademicImportController::class, 'report'])->name('imports.report');
 
     Route::get('/enrollments', [RegistrarEnrollmentController::class, 'index'])->name('enrollments.index');
     Route::get('/enrollments/{enrollment}', [RegistrarEnrollmentController::class, 'show'])->name('enrollments.show');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserNotification;
+use App\Models\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,7 +27,7 @@ class NotificationController extends Controller
 
         $notification->markAsRead();
 
-        return redirect($notification->link ?? route('notifications.index'));
+        return redirect($this->safeDestination($notification->link));
     }
 
     /** Mark all unread notifications as read (AJAX or redirect). */
@@ -69,5 +70,40 @@ class NotificationController extends Controller
         }
 
         return back();
+    }
+
+    private function safeDestination(?string $link): string
+    {
+        if (! is_string($link) || $link === '') {
+            return route('notifications.index');
+        }
+
+        $parts = parse_url($link);
+        if ($parts === false || isset($parts['user'], $parts['pass'])) {
+            return route('notifications.index');
+        }
+
+        if (! isset($parts['host'])) {
+            return str_starts_with($link, '/') ? $link : route('notifications.index');
+        }
+
+        $applicationHost = parse_url(config('app.url'), PHP_URL_HOST);
+        if (! is_string($applicationHost) || ! hash_equals(strtolower($applicationHost), strtolower($parts['host']))) {
+            return route('notifications.index');
+        }
+
+        $path = $parts['path'] ?? '';
+        if (
+            Auth::user()?->hasAnyRole(['registrar', 'admin'])
+            && preg_match('#^/registrar/enrollments/(\d+)$#', $path, $matches)
+        ) {
+            $enrollment = Enrollment::whereKey($matches[1])->where('status', 'pending')->first();
+
+            return $enrollment
+                ? route('registrar.enrollments.index', ['review' => $enrollment->id])
+                : route('registrar.enrollments.index');
+        }
+
+        return $link;
     }
 }

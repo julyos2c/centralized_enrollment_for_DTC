@@ -10,14 +10,25 @@ use Illuminate\Http\Request;
 
 class EnrollmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $filters = $request->validate([
+            'review' => ['nullable', 'integer'],
+        ]);
+
         $enrollments = Enrollment::with('user', 'program')
             ->where('status', 'pending')
             ->latest()
             ->paginate(10);
 
-        return view('registrar.enrollments.index', compact('enrollments'));
+        $reviewEnrollment = null;
+        if (! empty($filters['review'])) {
+            $reviewEnrollment = Enrollment::whereKey($filters['review'])
+                ->where('status', 'pending')
+                ->first();
+        }
+
+        return view('registrar.enrollments.index', compact('enrollments', 'reviewEnrollment'));
     }
 
     public function show(Enrollment $enrollment)
@@ -181,7 +192,7 @@ class EnrollmentController extends Controller
         // paid students) are updated in place rather than duplicated.
         $profile = $user->studentProfile()->updateOrCreate(
             ['user_id' => $user->id],
-            ['graduation_year' => $validated['graduation_year']]
+            ['graduation_year' => $validated['graduation_year'], 'academic_status' => 'alumni']
         );
 
         // Role swap — atomic, using Spatie's syncRoles to prevent dual-role state.

@@ -5980,3 +5980,11 @@ body.dtc-dark .dtc-file-label {
 body.dtc-dark .dtc-file-label:hover {
     border-color: var(--dtc-primary);
 }
+
+/* Keep a consistent breathing space between the final page content and
+   the shared footer across every authenticated role on mobile. */
+@media (max-width: 767.98px) {
+    .content-wrapper > .content {
+        padding-bottom: 48px !important;
+    }
+}

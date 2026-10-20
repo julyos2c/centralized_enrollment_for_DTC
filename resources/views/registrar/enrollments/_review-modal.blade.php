@@ -3,7 +3,7 @@
      `data-url` pointing at the enrollment's show route) may appear —
      e.g. the registrar dashboard widget and the enrollments index table
      both point at the same modal instance. --}}
-<div class="modal fade" id="enrollmentReviewModal" tabindex="-1" role="dialog" aria-labelledby="enrollmentReviewModalLabel" aria-hidden="true">
+<div class="modal fade" id="enrollmentReviewModal" tabindex="-1" role="dialog" aria-labelledby="enrollmentReviewModalLabel" aria-hidden="true"@if(isset($reviewEnrollment) && $reviewEnrollment) data-auto-review-url="{{ route('registrar.enrollments.show', $reviewEnrollment) }}"@endif>
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content dtc-review-modal-content" id="enrollmentReviewModalContent">
             <div class="dtc-review-loading">
@@ -33,8 +33,8 @@
         </div>';
 
     // Open modal + lazy-load its content from the existing "show" route.
-    $(document).on('click', '.dtc-review-btn', function () {
-        var url = $(this).data('url');
+    function openReview(url) {
+        if (!url) return;
 
         $modalContent.html(loadingMarkup);
         $modal.modal('show');
@@ -47,7 +47,16 @@
             .fail(function () {
                 $modalContent.html(errorMarkup);
             });
+    }
+
+    $(document).on('click', '.dtc-review-btn', function () {
+        openReview($(this).data('url'));
     });
+
+    var autoReviewUrl = $modal.data('auto-review-url');
+    if (autoReviewUrl) {
+        $(function () { openReview(autoReviewUrl); });
+    }
 
     // Reset to the loading state once the modal has fully closed, so the
     // next enrollment doesn't briefly flash the previous one's details.

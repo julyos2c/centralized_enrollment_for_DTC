@@ -302,6 +302,7 @@ body.dtc-dark main:has(.app-wizard-page) {
     gap: 7px;
     margin-bottom: 20px;
 }
+.wiz-field[hidden] { display: none !important; }
 .wiz-row > .wiz-field { margin-bottom: 0; }
 
 .wiz-field label { font-size: 13.5px; font-weight: 600; color: #344054; }
@@ -1887,6 +1888,8 @@ body.dtc-dark .name-group .wiz-input { background: transparent; color: #f8fafc; 
     cursor: pointer;
     transition: border-color .2s, box-shadow .2s;
 }
+.loc-picker-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.loc-picker-trigger > svg { width: 17px; height: 17px; flex: 0 0 auto; color: #64748b; }
 .loc-picker-trigger.has-value { color: #17233c; }
 .loc-picker-trigger:hover,
 .loc-picker-trigger:focus { border-color: #0f4cdb; box-shadow: 0 0 0 3px rgba(15,76,219,.10); outline: none; }
@@ -1900,14 +1903,9 @@ body.dtc-dark .name-group .wiz-input { background: transparent; color: #f8fafc; 
     inset: 0;
     z-index: 10500;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: stretch;
-    /* Ensure it's anchored to viewport, not document scroll position */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
 }
 .loc-picker-modal[hidden] { display: none; }
 
@@ -1921,37 +1919,29 @@ body.dtc-dark .name-group .wiz-input { background: transparent; color: #f8fafc; 
 }
 @keyframes locBackdropIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Sheet — stays as a partial bottom sheet, never full screen */
+/* Centered dialog at every viewport size. */
 .loc-picker-sheet {
     position: relative;
     z-index: 1;
-    width: 100%;
-    max-width: 560px;
-    height: 60vh;           /* fixed at 60% of viewport — always a half-sheet */
-    max-height: 60vh;
-    margin: 0 auto;
+    width: min(100%, 560px);
+    height: min(85vh, 720px);
+    max-height: calc(100vh - 48px);
+    min-height: 0;
+    margin: auto;
     background: #fff;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -4px 32px rgba(15,23,42,.18);
+    border-radius: 20px;
+    box-shadow: 0 12px 48px rgba(15, 23, 42, .24);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: locSheetIn .3s cubic-bezier(.32,1,.45,1);
+    animation: locDialogIn .2s ease-out;
 }
-@keyframes locSheetIn {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
+@supports (height: 100dvh) {
+    .loc-picker-sheet { height: min(85dvh, 720px); max-height: calc(100dvh - 48px); }
 }
-/* Drag handle pill */
-.loc-picker-sheet::before {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 4px;
-    background: #cbd5e1;
-    border-radius: 99px;
-    margin: 10px auto 2px;
-    flex-shrink: 0;
+@keyframes locDialogIn {
+    from { opacity: 0; transform: translateY(8px) scale(.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* Header */
@@ -2052,9 +2042,10 @@ body.dtc-dark .name-group .wiz-input { background: transparent; color: #f8fafc; 
 /* Scrollable list */
 .loc-picker-list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0 0 env(safe-area-inset-bottom, 16px);
+    padding: 0 0 max(16px, env(safe-area-inset-bottom, 0px));
 }
 
 /* Alpha group header */
@@ -2089,6 +2080,9 @@ body.dtc-dark .name-group .wiz-input { background: transparent; color: #f8fafc; 
 }
 .loc-picker-item:hover,
 .loc-picker-item:focus { background: #f8fafc; outline: none; }
+.loc-picker-item:focus-visible,
+.loc-picker-nav-btn:focus-visible,
+.loc-picker-trigger:focus-visible { outline: 3px solid rgba(15,76,219,.38); outline-offset: 2px; }
 .loc-picker-item.selected { color: #0f4cdb; font-weight: 600; }
 .loc-picker-item-check {
     margin-left: auto;
@@ -2136,6 +2130,33 @@ body.dtc-dark .loc-picker-group-label { background: #1e293b; color: #475569; }
 body.dtc-dark .loc-picker-item { border-color: #1e293b; color: #e2e8f0; }
 body.dtc-dark .loc-picker-item:hover { background: #0f172a; }
 body.dtc-dark .loc-picker-item.selected { color: #60a5fa; }
+body.dtc-dark .loc-picker-trigger { color: #e2e8f0; }
+body.dtc-dark .loc-picker-trigger > svg { color: #94a3b8; }
+body.dtc-dark .loc-picker-item:hover,
+body.dtc-dark .loc-picker-item:focus { background: #0f172a; }
+
+.loc-picker-retry { margin-left: 6px; border: 0; background: none; color: #0f4cdb; text-decoration: underline; cursor: pointer; font: inherit; }
+.loc-picker-list { overscroll-behavior: contain; }
+.loc-picker-empty { flex-direction: column; text-align: center; }
+.loc-picker-modal[hidden] { display: none !important; }
+.loc-picker-modal .loc-picker-backdrop { animation: none; }
+.loc-picker-modal .loc-picker-sheet { width: min(100%, 560px); }
+.loc-picker-search { min-height: 48px; }
+.loc-picker-item { min-height: 52px; justify-content: space-between; gap: 12px; }
+.loc-picker-nav-btn { flex-shrink: 0; }
+.loc-picker-title { margin: 0; }
+.loc-picker-modal .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 600px) {
+    .loc-picker-modal { padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+    .loc-picker-sheet { width: 100%; height: min(86dvh, 680px); max-height: calc(100dvh - 24px); border-radius: 16px; }
+    .loc-picker-header { min-height: 60px; padding: 10px 12px; }
+    .loc-picker-search-wrap { padding: 8px 12px; }
+    .loc-picker-search-icon { left: 24px; }
+    .loc-picker-item { min-height: 56px; padding: 14px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .loc-picker-sheet, .loc-picker-backdrop, .loc-picker-spinner { animation: none !important; transition: none !important; }
+}
 
 /* Admission flow refinements: restrained surfaces, clearer hierarchy, and compact progress. */
 main:has(.app-wizard-page) { background: #f8fafc; padding: 0 16px 32px; }

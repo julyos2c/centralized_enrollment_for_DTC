@@ -2,303 +2,128 @@
 
 @section('title', 'Application Submitted')
 
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/application-success.css') }}">
+@stop
+
 @section('content')
+@php
+    $hasEducationDetails = collect([$application->education_level, $application->education_status, $application->most_recent_school, $application->school_year_completed, $application->school_location, $application->shs_strand, $application->previous_program, $application->last_year_level, $application->home_institution, $application->home_program])->filter()->isNotEmpty();
+    $applicantType = match ($application->academic_status) {
+        'new_student' => 'New Student / First Year',
+        'cross_enrollee' => 'Cross-Enrollee',
+        default => ucwords(str_replace('_', ' ', $application->academic_status)),
+    };
+@endphp
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
+<div class="application-success-page">
+    <div class="application-success-shell">
+        <header class="application-success-hero">
+            <div class="application-success-icon" aria-hidden="true"><i data-lucide="check"></i></div>
+            <p class="application-success-eyebrow">Admissions application received</p>
+            <h1>Application submitted successfully</h1>
+            <p>Your pre-enrollment application is now awaiting preliminary screening by the Registrar.</p>
+        </header>
 
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-
-                {{-- Success Header --}}
-                <div class="text-center px-4 py-5">
-
-                    <div class="mb-4">
-                        <div
-                            class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10"
-                            style="width: 80px; height: 80px;">
-                            <i data-lucide="check" class="text-success" style="font-size: 36px;"></i>
-                        </div>
-                    </div>
-
-                    <h2 class="fw-bold mb-2">
-                        Application Submitted Successfully
-                    </h2>
-
-                    <p class="text-muted mb-0">
-                        Your pre-enrollment application has been successfully submitted
-                        for preliminary screening.
-                    </p>
-
+        <section class="application-reference-card" aria-labelledby="application-reference-title">
+            <div class="application-reference-heading">
+                <div>
+                    <p class="application-success-eyebrow">Keep this for your records</p>
+                    <h2 id="application-reference-title">Application reference number</h2>
                 </div>
-
-                {{-- Reference Number --}}
-                <div class="px-4 pb-4">
-                    <div class="bg-light rounded-4 p-4 text-center">
-
-                        <p class="text-muted small text-uppercase fw-semibold mb-2">
-                            Your Application Reference Number
-                        </p>
-
-                        <div class="fs-3 fw-bold text-primary mb-2">
-                            {{ $application->reference_no }}
-                        </div>
-
-                        <p class="text-muted small mb-0">
-                            Please save this reference number. You will need it together
-                            with your email address to check your application status.
-                        </p>
-
-                    </div>
-                </div>
-
-                <div class="px-4 pb-4">
-                    <div class="border rounded-3 p-3">
-                        <h3 class="h6 fw-bold mb-3">Educational background submitted</h3>
-                        <div class="row g-3 small">
-                            <div class="col-sm-6">
-                                <div class="text-muted">Education level</div>
-                                <div>{{ $application->education_level ?: 'Not provided' }}</div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted">Most recent school</div>
-                                <div>{{ $application->most_recent_school ?: 'Not provided' }}</div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted">Completion status</div>
-                                <div>{{ $application->education_status ?: 'Not provided' }}</div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted">School year</div>
-                                <div>{{ $application->school_year_completed ?: 'Not provided' }}</div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="text-muted">School location</div>
-                                <div>{{ $application->school_location ?: 'Not provided' }}</div>
-                            </div>
-                            @if($application->academic_status === 'new_student' && $application->shs_strand)
-                                <div class="col-sm-6"><div class="text-muted">SHS strand</div><div>{{ $application->shs_strand }}</div></div>
-                            @endif
-                            @if($application->previous_program)
-                                <div class="col-sm-6"><div class="text-muted">Previous or current program</div><div>{{ $application->previous_program }}</div></div>
-                            @endif
-                            @if($application->last_year_level)
-                                <div class="col-sm-6"><div class="text-muted">Last year level or semester attended</div><div>{{ $application->last_year_level }}</div></div>
-                            @endif
-                            @if($application->home_institution)
-                                <div class="col-sm-6"><div class="text-muted">Home institution</div><div>{{ $application->home_institution }}</div></div>
-                            @endif
-                            @if($application->home_program)
-                                <div class="col-sm-6"><div class="text-muted">Home program</div><div>{{ $application->home_program }}</div></div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Important Notice --}}
-                <div class="px-4 pb-4">
-
-                    <div class="alert alert-warning border-0 rounded-4 mb-0">
-                        <div class="d-flex">
-
-                            <div class="me-3">
-                                <i data-lucide="alert-triangle"></i>
-                            </div>
-
-                            <div>
-                                <h6 class="fw-bold mb-2">
-                                    Important
-                                </h6>
-
-                                <p class="mb-0 small">
-                                    Uploaded documents are for preliminary screening only.
-                                    You must still present the required original/physical
-                                    documents to the Registrar's Office for verification
-                                    before official enrollment.
-                                </p>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-
-                {{-- Application Information --}}
-                <div class="px-4 pb-4">
-
-                    <div class="border rounded-4 p-4">
-
-                        <h5 class="fw-bold mb-3">
-                            Application Information
-                        </h5>
-
-                        <div class="row g-3">
-
-                            <div class="col-md-6">
-                                <div class="text-muted small">
-                                    Applicant
-                                </div>
-
-                                <div class="fw-semibold">
-                                    {{ $application->first_name }}
-                                    {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                                    {{ $application->last_name }}
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="text-muted small">
-                                    Applicant Type
-                                </div>
-
-                                <div class="fw-semibold">
-                                    {{ ucwords(str_replace('_', ' ', $application->academic_status)) }}
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="text-muted small">
-                                    Email
-                                </div>
-
-                                <div class="fw-semibold">
-                                    {{ $application->email }}
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="text-muted small">
-                                    Status
-                                </div>
-
-                                <span class="badge bg-warning text-dark">
-                                    Submitted
-                                </span>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                {{-- Physical Requirements --}}
-                @if(in_array($application->academic_status, ['new_student', 'transferee']))
-
-                <div class="px-4 pb-4">
-
-                    <div class="border rounded-4 p-4">
-
-                        <h5 class="fw-bold mb-2">
-                            Physical Documents & Requirements
-                        </h5>
-
-                        <p class="text-muted small mb-3">
-                            Please prepare the following requirements for presentation
-                            to the Registrar's Office.
-                        </p>
-
-                        @if($application->academic_status === 'new_student')
-
-                        <ul class="small mb-0">
-                            <li class="mb-2">
-                                Form 138 or equivalent — original/required physical copy
-                            </li>
-                            <li class="mb-2">
-                                Certificate of Good Moral Character — original/required physical copy
-                            </li>
-                            <li class="mb-2">
-                                PSA Birth Certificate — required physical copy
-                            </li>
-
-                            @if($application->marital_status === 'married')
-                            <li class="mb-2">
-                                Marriage Certificate — if applicable
-                            </li>
-                            @endif
-
-                            <li class="mb-2">
-                                2 copies recent 2×2 picture
-                            </li>
-                            <li class="mb-2">
-                                2 copies recent 1×1 picture
-                            </li>
-                            <li>
-                                2 pcs Long Brown Envelope
-                            </li>
-                        </ul>
-
-                        @elseif($application->academic_status === 'transferee')
-
-                        <ul class="small mb-0">
-                            <li class="mb-2">
-                                Certificate of Transfer Credentials
-                            </li>
-                            <li class="mb-2">
-                                Transcript of Records
-                            </li>
-                            <li class="mb-2">
-                                Certificate of Good Moral Character
-                            </li>
-                            <li class="mb-2">
-                                PSA Birth Certificate
-                            </li>
-
-                            @if($application->marital_status === 'married')
-                            <li class="mb-2">
-                                Marriage Certificate — if applicable
-                            </li>
-                            @endif
-
-                            <li class="mb-2">
-                                2 copies recent 2×2 picture
-                            </li>
-                            <li class="mb-2">
-                                2 copies recent 1×1 picture
-                            </li>
-                            <li>
-                                2 pcs Long Brown Envelope
-                            </li>
-                        </ul>
-
-                        @endif
-
-                    </div>
-
-                </div>
-
-                @endif
-
-                {{-- Actions --}}
-                <div class="border-top px-4 py-4">
-
-                    <div class="d-flex flex-column flex-md-row justify-content-center gap-2">
-                        <a
-                        href="{{ route('public.application.status.form') }}"
-                        class="btn btn-primary px-4">
-                        <i data-lucide="search" class="me-2"></i>
-                        Check Application Status
-                        </a>
-                        <a
-                        href="{{ route('public.application.create') }}"
-                        class="btn btn-outline-secondary px-4">
-                        <i data-lucide="plus" class="me-2"></i>
-                        Submit Another Application
-                        </a>
-                        <a
-                        href="{{ route('password.activation.request') }}"
-                        class="btn btn-outline-secondary px-4">
-                        Request Account Activation Link
-                        </a>
-
-                    </div>
-
-                </div>
-
+                <span class="application-submitted-badge"><i data-lucide="clock-3" aria-hidden="true"></i> Submitted</span>
             </div>
+            <div class="application-reference-value">{{ $application->reference_no }}</div>
+            <div class="application-reference-footer">
+                <p>Use this reference number and your email address to check your application status.</p>
+                <button type="button" class="application-copy-reference" data-reference-copy="{{ $application->reference_no }}">
+                    <i data-lucide="copy" aria-hidden="true"></i><span>Copy reference</span>
+                </button>
+            </div>
+            <span class="visually-hidden" aria-live="polite" id="referenceCopyStatus"></span>
+        </section>
 
+        <div class="application-success-grid">
+            <section class="application-success-card" aria-labelledby="application-summary-title">
+                <div class="application-success-card-heading">
+                    <div class="application-success-card-icon"><i data-lucide="file-text" aria-hidden="true"></i></div>
+                    <div><h2 id="application-summary-title">Application summary</h2><p>Review the details submitted for this application.</p></div>
+                </div>
+                <dl class="application-summary-list">
+                    <div><dt>Applicant</dt><dd>{{ $application->first_name }} {{ $application->middle_name ? $application->middle_name . ' ' : '' }}{{ $application->last_name }}</dd></div>
+                    <div><dt>Applicant type</dt><dd>{{ $applicantType }}</dd></div>
+                    <div><dt>Email address</dt><dd>{{ $application->email }}</dd></div>
+                    <div><dt>Current status</dt><dd><span class="application-submitted-badge">Submitted</span></dd></div>
+                </dl>
+            </section>
+
+            <aside class="application-next-steps" aria-labelledby="application-next-steps-title">
+                <div class="application-success-card-icon"><i data-lucide="list-checks" aria-hidden="true"></i></div>
+                <h2 id="application-next-steps-title">What happens next</h2>
+                <ol>
+                    <li>The Registrar reviews your submitted information.</li>
+                    <li>Check your status using your reference number and email.</li>
+                    <li>Follow any instructions or document requests from the Registrar.</li>
+                </ol>
+            </aside>
+        </div>
+
+        <section class="application-success-card" aria-labelledby="education-summary-title">
+            <div class="application-success-card-heading">
+                <div class="application-success-card-icon"><i data-lucide="graduation-cap" aria-hidden="true"></i></div>
+                <div><h2 id="education-summary-title">Educational background submitted</h2><p>Optional education details included with this application.</p></div>
+            </div>
+            @if($hasEducationDetails)
+                <dl class="application-education-list">
+                    @foreach(['Education level' => $application->education_level, 'Completion status' => $application->education_status, 'Most recent school' => $application->most_recent_school, 'School year' => $application->school_year_completed, 'School location' => $application->school_location, 'SHS strand' => $application->shs_strand, 'Previous or current program' => $application->previous_program, 'Last year level or semester attended' => $application->last_year_level, 'Home institution' => $application->home_institution, 'Home program' => $application->home_program] as $label => $value)
+                        @if($value)<div><dt>{{ $label }}</dt><dd>{{ $value }}</dd></div>@endif
+                    @endforeach
+                </dl>
+            @else
+                <p class="application-empty-detail">No optional educational background details were provided with this application.</p>
+            @endif
+        </section>
+
+        @if(!empty($physicalRequirements))
+            <section class="application-success-card" aria-labelledby="physical-requirements-title">
+                <div class="application-success-card-heading">
+                    <div class="application-success-card-icon"><i data-lucide="clipboard-list" aria-hidden="true"></i></div>
+                    <div><h2 id="physical-requirements-title">Prepare these physical requirements</h2><p>Bring the applicable original documents to the Registrar's Office when requested.</p></div>
+                </div>
+                <ul class="application-requirements-list">
+                    @foreach($physicalRequirements as $requirement)
+                        <li><i data-lucide="check" aria-hidden="true"></i>{{ $requirement }}</li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
+        <section class="application-screening-notice" aria-labelledby="screening-notice-title">
+            <i data-lucide="info" aria-hidden="true"></i>
+            <div><h2 id="screening-notice-title">Preliminary screening only</h2><p>Uploaded documents support preliminary screening. Original or physical documents are still required for Registrar verification before official enrollment.</p></div>
+        </section>
+
+        <div class="application-success-actions">
+            <a href="{{ route('public.application.status.form') }}" class="application-success-button application-success-button--primary"><i data-lucide="search" aria-hidden="true"></i> Check application status</a>
+            <a href="{{ route('public.application.create') }}" class="application-success-button application-success-button--secondary"><i data-lucide="plus" aria-hidden="true"></i> Submit another application</a>
+            <a href="{{ route('password.activation.request') }}" class="application-success-button application-success-button--secondary">Request account activation link</a>
         </div>
     </div>
 </div>
+@endsection
 
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var copyButton = document.querySelector('[data-reference-copy]');
+        var copyStatus = document.getElementById('referenceCopyStatus');
+        if (!copyButton || !navigator.clipboard) return;
+        copyButton.addEventListener('click', function () {
+            navigator.clipboard.writeText(copyButton.dataset.referenceCopy).then(function () {
+                copyButton.querySelector('span').textContent = 'Copied';
+                copyStatus.textContent = 'Application reference copied to clipboard.';
+            });
+        });
+    });
+</script>
 @endsection

@@ -68,7 +68,9 @@ class PublicApplicationEducationTest extends TestCase
                 'email' => $email,
                 'honorific' => 'Dr.',
                 'suffix' => 'Jr.',
-                'region' => 'Central Visayas',
+                'region_code' => '0700000000',
+                'province_code' => '0701200000',
+                'city_code' => '0701218000',
                 'barangay' => 'Poblacion',
                 'ack_enrollment' => 'on',
                 'education_level' => 'Senior High School',
@@ -85,7 +87,9 @@ class PublicApplicationEducationTest extends TestCase
             $this->assertSame('Danao National High School', $application->most_recent_school);
             $this->assertSame('Dr.', $application->honorific);
             $this->assertSame('Jr.', $application->suffix);
-            $this->assertSame('Central Visayas', $application->region);
+            $this->assertSame('Region VII (Central Visayas)', $application->region);
+            $this->assertSame('Bohol', $application->province);
+            $this->assertSame('Danao', $application->city);
             $this->assertSame('Poblacion', $application->barangay);
             $this->assertNotNull($application->acknowledged_at, 'The acknowledgment must be auditable.');
             $this->get(route('public.application.success'))

@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('appointments:generate-slots')->dailyAt('00:10')->withoutOverlapping();
+        $schedule->command('academic-imports:cleanup')->dailyAt('00:30')->withoutOverlapping();
     }
 
     /**

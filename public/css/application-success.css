@@ -1,0 +1,67 @@
+.application-success-page { min-height: calc(100vh - 88px); padding: 48px 24px 80px; background: #f5f8fc; }
+.application-success-shell { width: min(100%, 920px); margin: 0 auto; }
+.application-success-hero { max-width: 680px; margin: 0 auto 32px; text-align: center; }
+.application-success-icon, .application-success-card-icon { display: inline-flex; align-items: center; justify-content: center; color: #167a46; background: #eaf8ef; border: 1px solid #ccecd8; border-radius: 14px; }
+.application-success-icon { width: 64px; height: 64px; margin-bottom: 18px; border-radius: 50%; }
+.application-success-icon svg { width: 30px; height: 30px; stroke-width: 2.75; }
+.application-success-card-icon { width: 42px; height: 42px; flex: 0 0 42px; }
+.application-success-card-icon svg { width: 20px; height: 20px; }
+.application-success-eyebrow { margin: 0 0 8px; color: #0f4cdb; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.application-success-hero h1, .application-success-card h2, .application-next-steps h2, .application-screening-notice h2 { margin: 0; color: #17233c; font-weight: 700; }
+.application-success-hero h1 { font-size: clamp(28px, 4vw, 38px); line-height: 1.2; }
+.application-success-hero > p:last-child { margin: 12px 0 0; color: #64748b; font-size: 16px; line-height: 1.65; }
+.application-reference-card, .application-success-card, .application-next-steps, .application-screening-notice { border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 10px 30px rgba(15, 35, 60, .06); }
+.application-reference-card { padding: 28px 30px; color: #fff; background: linear-gradient(135deg, #0f4cdb, #143a9a); border-color: transparent; box-shadow: 0 16px 32px rgba(15, 76, 219, .2); }
+.application-reference-heading, .application-reference-footer, .application-success-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.application-reference-card .application-success-eyebrow { color: #cddcff; }
+.application-reference-card h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.application-reference-value { margin: 22px 0; font-size: clamp(26px, 4vw, 38px); font-weight: 700; letter-spacing: .055em; overflow-wrap: anywhere; }
+.application-reference-footer p { max-width: 560px; margin: 0; color: #dbe7ff; font-size: 14px; line-height: 1.6; }
+.application-submitted-badge, .application-copy-reference { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.application-reference-card .application-submitted-badge { padding: 7px 10px; color: #fff; background: rgba(255,255,255,.16); }
+.application-submitted-badge { padding: 6px 10px; color: #166534; background: #dcfce7; }
+.application-submitted-badge svg { width: 14px; height: 14px; }
+.application-copy-reference { min-height: 40px; padding: 0 14px; color: #0f4cdb; background: #fff; border: 0; cursor: pointer; }
+.application-copy-reference:hover { background: #eaf0ff; }
+.application-copy-reference svg { width: 16px; height: 16px; }
+.application-success-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(250px, .85fr); gap: 20px; margin-top: 20px; }
+.application-success-card { padding: 26px; margin-top: 20px; background: #fff; }
+.application-success-grid .application-success-card { margin-top: 0; }
+.application-success-card-heading { justify-content: flex-start; align-items: flex-start; }
+.application-success-card-heading h2, .application-next-steps h2, .application-screening-notice h2 { font-size: 17px; }
+.application-success-card-heading p { margin: 5px 0 0; color: #64748b; font-size: 13px; line-height: 1.55; }
+.application-summary-list, .application-education-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; margin: 24px 0 0; }
+.application-summary-list dt, .application-education-list dt { margin-bottom: 4px; color: #64748b; font-size: 12px; font-weight: 500; }
+.application-summary-list dd, .application-education-list dd { margin: 0; color: #17233c; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.application-next-steps { padding: 26px; color: #dce8ff; background: #17233c; border-color: #17233c; }
+.application-next-steps .application-success-card-icon { color: #aecdff; background: rgba(112, 157, 255, .14); border-color: rgba(174, 205, 255, .2); }
+.application-next-steps h2 { margin-top: 20px; color: #fff; }
+.application-next-steps ol { margin: 16px 0 0; padding-left: 20px; }
+.application-next-steps li { padding-left: 3px; margin-bottom: 12px; font-size: 13px; line-height: 1.6; }
+.application-empty-detail { margin: 22px 0 0; padding: 14px 16px; color: #475569; background: #f8fafc; border-radius: 10px; font-size: 14px; }
+.application-requirements-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 24px; margin: 22px 0 0; padding: 0; list-style: none; }
+.application-requirements-list li { display: flex; gap: 9px; align-items: flex-start; color: #334155; font-size: 13px; line-height: 1.55; }
+.application-requirements-list svg { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 2px; color: #167a46; }
+.application-screening-notice { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; margin-top: 20px; color: #854d0e; background: #fffbeb; border-color: #fde68a; }
+.application-screening-notice > svg { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; }
+.application-screening-notice h2 { color: #854d0e; font-size: 15px; }
+.application-screening-notice p { margin: 5px 0 0; font-size: 13px; line-height: 1.6; }
+.application-success-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+.application-success-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 17px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.application-success-button:hover { text-decoration: none; transform: translateY(-1px); }
+.application-success-button svg { width: 16px; height: 16px; }
+.application-success-button--primary { color: #fff; background: #0f4cdb; box-shadow: 0 6px 14px rgba(15, 76, 219, .18); }
+.application-success-button--primary:hover { color: #fff; background: #0b43c1; }
+.application-success-button--secondary { color: #334155; background: #fff; border-color: #cbd5e1; }
+.application-success-button--secondary:hover { color: #0f4cdb; border-color: #0f4cdb; }
+body.dtc-dark .application-success-page { background: #0a0f1a; }
+body.dtc-dark .application-success-hero h1, body.dtc-dark .application-success-card h2 { color: #f8fafc; }
+body.dtc-dark .application-success-hero > p:last-child, body.dtc-dark .application-success-card-heading p, body.dtc-dark .application-summary-list dt, body.dtc-dark .application-education-list dt { color: #94a3b8; }
+body.dtc-dark .application-success-card { background: #111827; border-color: #263348; box-shadow: none; }
+body.dtc-dark .application-summary-list dd, body.dtc-dark .application-education-list dd { color: #e2e8f0; }
+body.dtc-dark .application-empty-detail { color: #cbd5e1; background: #182235; }
+body.dtc-dark .application-success-button--secondary { color: #dbeafe; background: #111827; border-color: #334155; }
+body.dtc-dark .application-screening-notice { color: #fcd34d; background: #2b210a; border-color: #6b4d0d; }
+body.dtc-dark .application-screening-notice h2 { color: #fcd34d; }
+body.dtc-dark .application-requirements-list li { color: #dbeafe; }
+@media (max-width: 700px) { .application-success-page { padding: 32px 16px 56px; } .application-reference-card, .application-success-card, .application-next-steps { padding: 22px; border-radius: 15px; } .application-reference-heading, .application-reference-footer { align-items: flex-start; flex-direction: column; gap: 14px; } .application-success-grid, .application-summary-list, .application-education-list, .application-requirements-list { grid-template-columns: 1fr; } .application-copy-reference, .application-success-button { width: 100%; } .application-success-actions { align-items: stretch; flex-direction: column; } }
