@@ -2,22 +2,29 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Production-safe by design. Every seeder called unconditionally here is
+     * idempotent and insert-only: it never truncates, deletes, or overwrites
+     * existing records, and never creates users or passwords.
+     *
+     * Sample data (DevelopmentSeeder) is added only in local/testing.
      *
      * @return void
      */
     public function run()
     {
         $this->call([
-            RoleSeeder::class,
-            ProgramSeeder::class,
-            SubjectSeeder::class,
+            RolePermissionSeeder::class,        // mandatory: application roles
+            SystemSettingsSeeder::class,        // mandatory: operational setting defaults (missing keys only)
+            AcademicConfigurationSeeder::class, // optional: approved data file only; no-op without it
         ]);
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(DevelopmentSeeder::class);
+        }
     }
 }

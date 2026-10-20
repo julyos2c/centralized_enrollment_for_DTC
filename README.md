@@ -43,7 +43,7 @@ Run `composer check-platform-reqs` after installing Composer dependencies to che
    php artisan migrate --seed
    ```
 
-   `RoleSeeder` also creates a development administrator (`admin@dtc.edu.ph`) with the password `admin123` if that address does not already exist. This is a local convenience only: change that password immediately and never seed this account into a production database. For production, provision an administrator through a controlled, audited process.
+   In the `local` environment this also adds a sample (unapproved) curriculum. To get a local administrator, set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in your local `.env` before seeding; no account is created otherwise, and an existing account with that email is never modified. For production, provision administrators through a controlled, audited process.
 
 6. Build frontend assets and start the local server:
 
@@ -82,7 +82,16 @@ Create an empty database before running migrations. For local development:
 php artisan migrate --seed
 ```
 
-For a deployed environment, use `php artisan migrate --force` only after taking and checking a backup. The standard `DatabaseSeeder` creates application roles, a sample BSIS program/subjects, and the development admin account described above. Review `database/seeders/DatabaseSeeder.php` and the individual seeders before using `--seed` on any database containing real data. Avoid `migrate:fresh`, `migrate:refresh`, or `db:wipe` on any database that must be preserved.
+For a deployed environment, use `php artisan migrate --force` only after taking and checking a backup. `DatabaseSeeder` is production-safe: every seeder it runs is idempotent and insert-only, never truncates, deletes, or overwrites records, and never creates users or passwords.
+
+| Seeder | Kind | Writes |
+|---|---|---|
+| `RolePermissionSeeder` (alias `RoleSeeder`) | Mandatory reference data | Missing `roles` only (the six application roles). No permissions: authorization is role-based. |
+| `SystemSettingsSeeder` | Mandatory reference data | Missing operational keys in `settings` only; never changes an existing value. Fees, GCash, term, and institution details are not seeded. |
+| `AcademicConfigurationSeeder` | Optional, approved data only | Missing `programs`, `course_subjects`, and an unset term, from `database/seeders/data/academic-configuration.json` (see the README there). No file, no changes. |
+| `DevelopmentSeeder`, `SubjectSeeder`, `ProgramSeeder`, `DemoDataSeeder` | Sample data | Refuse to run outside `local`/`testing`. |
+
+Run in production with `php artisan db:seed --force` after a backup. Avoid `migrate:fresh`, `migrate:refresh`, or `db:wipe` on any database that must be preserved.
 
 ## Tests
 

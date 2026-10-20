@@ -5,11 +5,21 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Program;
 use App\Models\CourseSubject;
+use Database\Seeders\Concerns\DevelopmentOnly;
 
+/**
+ * Sample curriculum for local development and testing. It has NOT been
+ * confirmed against approved institutional records, so it refuses to run in
+ * production. Approved subjects go through AcademicConfigurationSeeder.
+ */
 class SubjectSeeder extends Seeder
 {
+    use DevelopmentOnly;
+
     public function run(): void
     {
+        $this->ensureDevelopmentEnvironment();
+
         $this->seedBSIS();
         $this->seedBSCRIM();
         $this->seedBSTM();

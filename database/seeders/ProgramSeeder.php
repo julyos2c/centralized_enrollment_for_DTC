@@ -5,11 +5,20 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Program;
 use App\Models\CourseSubject;
+use Database\Seeders\Concerns\DevelopmentOnly;
 
+/**
+ * Sample BSIS program/subjects for local development only (not an approved
+ * curriculum). Refuses to run in production.
+ */
 class ProgramSeeder extends Seeder
 {
+    use DevelopmentOnly;
+
     public function run(): void
     {
+        $this->ensureDevelopmentEnvironment();
+
         $bsis = Program::firstOrCreate(['code' => 'BSIS'], ['name' => 'BS Information Systems']);
 
         $subjects = [

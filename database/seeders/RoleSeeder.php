@@ -2,31 +2,20 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 
+/**
+ * Backwards-compatible alias for RolePermissionSeeder.
+ *
+ * This seeder used to also create a default administrator with a hard-coded
+ * password. That account creation was removed: administrators must be
+ * provisioned through a controlled process (or, locally, DevelopmentSeeder
+ * with SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD).
+ */
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $roles = ['admin', 'registrar', 'cashier', 'new_applicant', 'student', 'alumni'];
-
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role]);
-        }
-
-        // Create default admin account
-        $admin = \App\Models\User::firstOrCreate(
-            ['email' => 'admin@dtc.edu.ph'],
-            [
-                'name'     => 'Administrator',
-                'password' => bcrypt('admin123'),
-            ]
-        );
-        $admin->assignRole('admin');
+        $this->call(RolePermissionSeeder::class);
     }
 }
