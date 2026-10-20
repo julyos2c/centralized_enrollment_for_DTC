@@ -5,7 +5,6 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><div><h4 class="mb-0 font-weight-bold u-text">Office Schedule & Closures</h4><p class="mb-0 u-text-secondary-sm">Configure the Registrar's operating hours and confirmed office closures.</p></div><a href="{{ route('registrar.appointments.slots') }}" class="btn btn-secondary btn-sm">Manage Slots</a></div>
 @endsection
 @section('content')
-@if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <div class="row">
 <div class="col-lg-6"><div class="card"><div class="card-header"><strong>Recurring schedule</strong></div><form method="POST" action="{{ route('registrar.appointments.schedule.update') }}">@csrf @method('PUT') @php($s = old() ? old() : ($schedule ?? []))<div class="card-body">

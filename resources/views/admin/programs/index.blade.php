@@ -11,7 +11,7 @@
                 Manage academic programs and their subjects
             </p>
         </div>
-        <button type="button" class="dtc-btn dtc-btn-primary dtc-header-btn" data-toggle="modal" data-target="#addProgramModal">
+        <button type="button" class="dtc-btn dtc-btn-primary dtc-header-btn" aria-label="Add program" data-toggle="modal" data-target="#addProgramModal">
             <i data-lucide="plus"></i>
             <span class="dtc-header-btn-label">Add Program</span>
         </button>
@@ -29,8 +29,8 @@
     </div>
 
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0">
+        <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="All programs table" tabindex="0">
+            <table class="table mb-0 dtc-programs-table">
                 <thead>
                     <tr>
                         <th>Program</th>

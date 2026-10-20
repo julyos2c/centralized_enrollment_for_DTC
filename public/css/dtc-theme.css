@@ -83,6 +83,9 @@ body {
    horizontally. Wide content (tables, etc.) should scroll inside
    its own container — see .dtc-table-wrap — not the page. */
 .wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
     max-width: 100vw !important;
     overflow-x: hidden !important;
 }
@@ -842,10 +845,6 @@ color: var(--dtc-text-secondary) !important;}
     .dtc-toolbar { align-items:stretch; flex-direction:column; }
     .dtc-toolbar-left,.dtc-toolbar-right { width:100%; }
     .dtc-filter { flex:1; }
-.content-wrapper {
-        padding-bottom: 60px !important; /* extra room for the wrapped 2-line footer */
-    }
-
     .main-footer .d-flex {
         text-align: center;
         gap: 2px !important;
@@ -947,10 +946,19 @@ color: var(--dtc-text-secondary) !important;}
 /* ── CONTENT WRAPPER ─────────────────────────────────────── */
 .content-wrapper {
     background: var(--dtc-bg) !important;
+    display: flex !important;
+    flex: 1 0 auto !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
     padding: 0 !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
-padding: 0 0 30px 0 !important; /* was: padding: 0 !important; */}
+}
+
+.content-wrapper > .content {
+    flex: 0 0 auto;
+    padding-bottom: 24px;
+}
 
 .content-header {
     padding: 20px 24px 0 !important;
@@ -1673,6 +1681,7 @@ body.dtc-dark .quick-action-btn i {
 
 /* ── MAIN FOOTER ─────────────────────────────────────────── */
 .main-footer {
+    flex: 0 0 auto;
     background: var(--dtc-surface) !important;
     border-top: 1px solid var(--dtc-border) !important;
     font-size: 12px !important;
@@ -5981,10 +5990,618 @@ body.dtc-dark .dtc-file-label:hover {
     border-color: var(--dtc-primary);
 }
 
-/* Keep a consistent breathing space between the final page content and
-   the shared footer across every authenticated role on mobile. */
+/* Shared responsive refinements for the management screens referenced in
+   the current UI review. */
+.ar-page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.ar-page-heading h1 {
+    margin: 0;
+    color: var(--dtc-text);
+    font-size: 22px;
+    font-weight: 700;
+}
+.ar-page-heading p {
+    margin: 4px 0 0;
+    color: var(--dtc-text-secondary);
+    font-size: 14px;
+}
+.ar-record-card { max-width: 1080px; margin: 0 auto; }
+.ar-record-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+    margin: 0;
+}
+.ar-record-field {
+    min-width: 0;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--dtc-border-soft);
+}
+.ar-record-field dt {
+    margin: 0 0 4px;
+    color: var(--dtc-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+.ar-record-field dd {
+    margin: 0;
+    color: var(--dtc-text);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+.ar-history-section { margin-top: 28px; }
+.ar-history-section h2 {
+    margin: 0 0 12px;
+    color: var(--dtc-text);
+    font-size: 17px;
+    font-weight: 700;
+}
+.ar-history-table { min-width: 520px; }
+
+.dtc-programs-table { min-width: 760px; }
+.dtc-subjects-table { min-width: 860px; }
+.dtc-subjects-page > .col-lg-8 > .card:last-child { margin-bottom: 0 !important; }
+.dtc-program-subject-table { min-width: 520px; }
+.dtc-programs-table th,
+.dtc-subjects-table th,
+.dtc-program-subject-table th { white-space: nowrap; }
+.dtc-programs-table td,
+.dtc-subjects-table td,
+.dtc-program-subject-table td { vertical-align: middle; }
+.dtc-programs-table .u-actions-gap,
+.dtc-subjects-table .u-actions-gap { flex-wrap: nowrap; }
+.dtc-program-table-wrap { overscroll-behavior-inline: contain; }
+.dtc-program-table-wrap:focus-visible {
+    outline: 2px solid var(--dtc-primary);
+    outline-offset: 2px;
+}
+
+.dtc-subjects-title {
+    max-width: 100%;
+    font-size: clamp(16px, 2vw, 21px);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.dtc-review-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+}
+.dtc-review-body { min-height: 0; }
+.dtc-review-footer { flex: 0 0 auto; }
+.dtc-review-subject-name { min-width: 0; overflow-wrap: anywhere; }
+
+.dtc-receipt-modal-dialog {
+    width: calc(100% - 32px);
+    max-width: 760px;
+}
+.dtc-receipt-standalone .dtc-receipt-body {
+    max-height: none;
+    overflow: visible;
+}
+.dtc-receipt-standalone .dtc-review-close { display: none; }
+.dtc-receipt-page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.dtc-receipt-modal-dialog .dtc-review-modal-content {
+    max-height: calc(100vh - 32px);
+}
+.dtc-receipt-header {
+    align-items: center;
+    background: var(--dtc-primary);
+}
+.dtc-receipt-icon {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .16);
+    color: var(--dtc-accent);
+}
+.dtc-receipt-icon svg { width: 21px; height: 21px; }
+.dtc-receipt-body {
+    max-height: min(62vh, 620px);
+    flex: 1 1 auto;
+    overscroll-behavior: contain;
+}
+.dtc-receipt-number {
+    margin-top: 2px;
+    color: var(--dtc-primary);
+    font-size: 17px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.dtc-receipt-date {
+    margin-top: 2px;
+    color: var(--dtc-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+.dtc-receipt-email { overflow-wrap: anywhere; }
+.dtc-receipt-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 14px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: var(--dtc-primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+.dtc-receipt-total-amount {
+    color: var(--dtc-accent);
+    font-size: 22px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.dtc-receipt-footer .dtc-review-footer-default {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
 @media (max-width: 767.98px) {
-    .content-wrapper > .content {
-        padding-bottom: 48px !important;
+    .ar-page-heading { align-items: flex-start; }
+    .ar-page-heading h1 { font-size: 20px; }
+    .ar-page-heading p { font-size: 13px; }
+    .ar-record-card > .card-body { padding: 18px; }
+    .ar-record-grid { grid-template-columns: 1fr; }
+    .dtc-review-modal-content { max-height: calc(100vh - 20px); }
+    .dtc-review-body { overflow-y: auto; }
+    .dtc-receipt-modal-dialog { width: calc(100% - 20px); margin: 10px auto; }
+    .dtc-receipt-page-heading { align-items: flex-start !important; flex-wrap: wrap; }
+    .dtc-receipt-page-actions { width: 100%; justify-content: flex-start; }
+    .dtc-receipt-modal-dialog .dtc-review-modal-content { max-height: calc(100vh - 20px); }
+    .dtc-receipt-header { flex-direction: row; align-items: center; }
+    .dtc-receipt-header .dtc-review-header-right { align-self: auto; }
+    .dtc-receipt-body { max-height: none; padding: 18px; }
+    .dtc-receipt-footer .dtc-review-footer-default { flex-direction: row; align-items: center; }
+}
+
+@media (max-width: 575.98px) {
+    .ar-page-heading { flex-wrap: wrap; }
+    .ar-page-heading > a { width: 100%; }
+    .dtc-subjects-header { flex-direction: column; align-items: flex-start !important; }
+    .dtc-review-footer-default,
+    .dtc-review-footer-reject {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .dtc-review-footer-right { flex-wrap: wrap; justify-content: flex-end; }
+    .dtc-receipt-header { padding: 16px; }
+    .dtc-receipt-body { padding: 16px; }
+    .dtc-receipt-footer { padding: 12px 16px; }
+    .dtc-receipt-footer .dtc-review-footer-default { flex-direction: row; }
+    .dtc-receipt-footer .dtc-review-footer-right { width: auto; flex: 0 0 auto; }
+}
+
+@media (max-width: 360px) {
+    .dtc-review-footer-default,
+    .dtc-review-footer-reject { flex-direction: column-reverse; align-items: stretch; }
+    .dtc-review-footer-right { width: 100%; justify-content: stretch; }
+    .dtc-review-footer-right form,
+    .dtc-review-footer-right .dtc-btn { flex: 1 1 auto; }
+    .dtc-review-footer-right form .dtc-btn { width: 100%; }
+    .dtc-receipt-footer .dtc-review-footer-default { flex-direction: column-reverse; align-items: stretch; }
+    .dtc-receipt-footer .dtc-review-footer-right,
+    .dtc-receipt-footer .dtc-review-footer-right .dtc-btn { width: 100%; }
+}
+
+/* ==========================================================================
+   Review / Receipt modal footers — mobile button alignment fix
+   Buttons stack full-width: primary actions on one equal-width row,
+   Close underneath, all sharing the same left/right edges.
+   ========================================================================== */
+@media (max-width: 575.98px) {
+    .dtc-review-footer-default,
+    .dtc-review-footer-reject,
+    .dtc-receipt-footer .dtc-review-footer-default {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    .dtc-review-footer-right,
+    .dtc-receipt-footer .dtc-review-footer-right {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        justify-content: stretch;
+        width: 100%;
+        flex: 0 0 auto;
+        gap: 10px;
+    }
+
+    .dtc-review-footer-right > .dtc-btn,
+    .dtc-review-footer-right > form,
+    .dtc-review-footer-right > button,
+    .dtc-review-footer-right > a {
+        flex: 1 1 0;
+        min-width: 0;
+        width: auto;
+    }
+
+    .dtc-review-footer-right form .dtc-btn,
+    .dtc-review-footer-right form button {
+        width: 100%;
+    }
+
+    .dtc-review-footer-default > .dtc-btn,
+    .dtc-review-footer-default > button,
+    .dtc-review-footer-reject > .dtc-btn,
+    .dtc-review-footer-reject > button,
+    .dtc-receipt-footer .dtc-review-footer-right .dtc-btn {
+        width: 100%;
+    }
+
+    .dtc-review-footer .dtc-btn,
+    .dtc-review-footer button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-align: center;
+        white-space: nowrap;
+        margin: 0;
     }
 }
+
+/* ==========================================================================
+   Programs & Subjects — mobile layout
+   Tables with 4–7 columns forced sideways scrolling (Actions column cut
+   off, buttons clipped). Below 768px each row becomes a compact card:
+   identity on top, details underneath, action buttons in one aligned row.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    /* Header: keep title + "+" button on one row */
+    .dtc-subjects-header {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+    }
+    .dtc-subjects-header > div { flex: 1 1 auto; min-width: 0; }
+    .dtc-subjects-header .dtc-header-btn { flex: 0 0 auto; }
+
+    .dtc-program-table-wrap { overflow-x: visible; }
+    .dtc-programs-table,
+    .dtc-subjects-table { min-width: 0 !important; width: 100%; }
+
+    .dtc-programs-table thead,
+    .dtc-subjects-table thead {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+    }
+    .dtc-programs-table,
+    .dtc-programs-table tbody,
+    .dtc-subjects-table,
+    .dtc-subjects-table tbody { display: block; }
+
+    .dtc-programs-table tbody tr,
+    .dtc-subjects-table tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--dtc-border-soft, var(--dtc-border));
+    }
+    .dtc-programs-table tbody tr:last-child,
+    .dtc-subjects-table tbody tr:last-child { border-bottom: 0; }
+
+    .dtc-programs-table tbody td,
+    .dtc-subjects-table tbody td {
+        display: block;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        width: auto;
+        min-width: 0;
+    }
+    .dtc-programs-table tbody tr.is-selected {
+        background: var(--dtc-primary-soft, rgba(37, 99, 235, .12));
+    }
+    /* empty-state row keeps its single full-width cell */
+    .dtc-programs-table tbody td[colspan],
+    .dtc-subjects-table tbody td[colspan] { width: 100%; }
+
+    /* ── Programs: name | code / count / actions ── */
+    .dtc-programs-table tbody td:nth-child(1) { order: 1; flex: 1 1 0; }
+    .dtc-programs-table tbody td:nth-child(2) { order: 2; flex: 0 0 auto; }
+    .dtc-programs-table tbody td:nth-child(3) { order: 3; flex: 1 0 100%; }
+    .dtc-programs-table tbody td:nth-child(4) { order: 4; flex: 1 0 100%; }
+
+    /* ── Subjects: code | action / name / units · year · sem / schedule ── */
+    .dtc-subjects-table tbody td:nth-child(1) { order: 1; flex: 1 1 0; }
+    .dtc-subjects-table tbody td:nth-child(7) { order: 2; flex: 0 0 auto; margin-left: auto; }
+    .dtc-subjects-table tbody td:nth-child(2) { order: 3; flex: 1 0 100%; font-weight: 600; }
+    .dtc-subjects-table tbody td:nth-child(3),
+    .dtc-subjects-table tbody td:nth-child(4),
+    .dtc-subjects-table tbody td:nth-child(5) { order: 4; flex: 0 0 auto; }
+    .dtc-subjects-table tbody td:nth-child(3)::after { content: "units"; margin-left: 4px; }
+    .dtc-subjects-table tbody td:nth-child(6) { order: 5; flex: 1 0 100%; }
+
+    /* ── Action buttons: one aligned row, equal heights ── */
+    .dtc-programs-table .u-actions-gap,
+    .dtc-subjects-table .u-actions-gap {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .dtc-programs-table .u-actions-gap > .dtc-btn { flex: 1 1 auto; justify-content: center; }
+    .dtc-programs-table .u-actions-gap > form { display: flex; margin: 0; }
+    .dtc-programs-table .u-actions-gap .dtc-icon-btn,
+    .dtc-subjects-table .u-actions-gap .dtc-icon-btn {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+    }
+    .dtc-programs-table .u-actions-gap > .dtc-btn { min-height: 40px; }
+}
+
+/* ==========================================================================
+   Modal header (X button alignment) — mobile
+   The header used to stack into a column, which pushed the badge + X to the
+   bottom-right. Now: identity on the left, X pinned top-right, status badge
+   on its own line under the name.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+    .dtc-review-header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 18px 16px;
+    }
+    .dtc-review-identity { flex: 1 1 0; min-width: 0; order: 1; }
+    .dtc-review-header-right { display: contents; }
+    .dtc-review-header-right .dtc-review-close {
+        order: 2;
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        margin-left: auto;
+        align-self: flex-start;
+    }
+    .dtc-review-header-right .dtc-status-badge {
+        order: 3;
+        flex: 0 0 auto;
+        margin-right: auto;
+    }
+    .dtc-review-email { overflow-wrap: anywhere; }
+}
+
+/* ==========================================================================
+   Process Payments page
+   ========================================================================== */
+.dtc-filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.dtc-pay-fee { font-weight: 700; color: #15803D; white-space: nowrap; }
+body.dtc-dark .dtc-pay-fee { color: #4ADE80; }
+.dtc-pay-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+@media (max-width: 767.98px) {
+    /* Filter pills: one swipeable row instead of a ragged 3-line wrap */
+    .dtc-filter-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        margin: 0 -4px 14px;
+        padding: 2px 4px 6px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .dtc-filter-bar::-webkit-scrollbar { display: none; }
+    .dtc-filter-bar .dtc-filter-pill { flex: 0 0 auto; white-space: nowrap; }
+
+    /* Table → cards */
+    .dtc-payments-table { min-width: 0 !important; width: 100%; }
+    .dtc-payments-table thead {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+    }
+    .dtc-payments-table,
+    .dtc-payments-table tbody { display: block; }
+    .dtc-payments-table tbody tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--dtc-border-soft, var(--dtc-border));
+    }
+    .dtc-payments-table tbody tr:last-child { border-bottom: 0; }
+    .dtc-payments-table tbody td {
+        display: block;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        width: auto;
+        min-width: 0;
+        font-size: 12.5px;
+    }
+    .dtc-payments-table tbody td[colspan] { width: 100%; flex: 1 0 100%; }
+
+    .dtc-payments-table tbody td:nth-child(1) { order: 1; flex: 1 1 0; }          /* applicant  */
+    .dtc-payments-table tbody td:nth-child(6) { order: 2; flex: 0 0 auto; }       /* status     */
+    .dtc-payments-table tbody td:nth-child(2) { order: 3; flex: 1 0 100%; font-weight: 600; } /* program */
+    .dtc-payments-table tbody td:nth-child(3),
+    .dtc-payments-table tbody td:nth-child(4),
+    .dtc-payments-table tbody td:nth-child(5) { order: 4; flex: 0 0 auto; }       /* meta       */
+    .dtc-payments-table tbody td:nth-child(3)::after,
+    .dtc-payments-table tbody td:nth-child(4)::after { content: "·"; margin-left: 10px; opacity: .5; }
+    .dtc-payments-table tbody td:nth-child(7) {                                   /* fee        */
+        order: 5; flex: 1 1 0; font-size: 17px; margin-top: 6px;
+    }
+    .dtc-payments-table tbody td:nth-child(8) { order: 6; flex: 0 0 auto; margin-top: 6px; }
+
+    /* Show button labels again (global rule collapses them to icon-only) */
+    .dtc-payments-table .dtc-header-btn .dtc-header-btn-label { display: inline; }
+    .dtc-payments-table .dtc-header-btn {
+        min-height: 40px;
+        padding: 8px 14px !important;
+        gap: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dtc-payments-table .dtc-header-btn i { margin: 0 !important; }
+    .dtc-pay-actions { justify-content: flex-end; }
+}
+
+/* ── Process Payments: search box ─────────────────────────── */
+.dtc-pay-search {
+    position: relative;
+    margin-bottom: 12px;
+}
+.dtc-pay-search-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 42px 0 42px;
+    border: 1px solid var(--dtc-border);
+    border-radius: var(--dtc-radius-md, 10px);
+    background: var(--dtc-surface);
+    color: var(--dtc-text);
+    font-size: 14px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.dtc-pay-search-input::placeholder { color: var(--dtc-text-muted); }
+.dtc-pay-search-input:focus {
+    border-color: var(--dtc-primary);
+    box-shadow: 0 0 0 3px rgba(15, 76, 219, .18);
+}
+.dtc-pay-search-input::-webkit-search-cancel-button { display: none; }
+.dtc-pay-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    color: var(--dtc-text-muted);
+    pointer-events: none;
+}
+.dtc-pay-search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    width: 32px;
+    height: 32px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dtc-text-secondary);
+    cursor: pointer;
+}
+.dtc-pay-search-clear[hidden] { display: none; }
+.dtc-pay-search-clear:hover { background: var(--dtc-primary-soft); color: var(--dtc-primary); }
+.dtc-pay-search-clear svg { width: 16px; height: 16px; }
+@media (min-width: 768px) { .dtc-pay-search { max-width: 420px; } }
+
+/* Fix: fee was squeezed onto the meta line and clipped — force it to its own row */
+@media (max-width: 767.98px) {
+    .dtc-payments-table tbody tr::after {
+        content: "";
+        order: 5;
+        flex: 1 0 100%;
+        height: 0;
+        margin: -6px 0 0;
+    }
+    .dtc-payments-table tbody td:nth-child(7) { order: 6; flex: 1 1 0; font-size: 18px; }
+    .dtc-payments-table tbody td:nth-child(8) { order: 7; }
+    .dtc-payments-table tbody tr[hidden] { display: none; }
+    #paymentNoResults:not([hidden]) { display: block; }
+}
+
+/* ==========================================================================
+   Document Fee Payments
+   ========================================================================== */
+.dtc-pay-avatar {
+    width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #22C55E, #059669);
+    color: #fff; font-weight: 700; font-size: 12px;
+}
+/* search form variant: clear control is a link */
+a.dtc-pay-search-clear { text-decoration: none; }
+.dtc-docpay-table td { vertical-align: middle; }
+.dtc-docpay-action { white-space: nowrap; }
+.dtc-docpay-show .card-body dt { color: var(--dtc-text-secondary); font-weight: 500; font-size: 12.5px; }
+.dtc-docpay-show .card-body dd { color: var(--dtc-text); overflow-wrap: anywhere; }
+
+@media (max-width: 767.98px) {
+    .dtc-docpay-table { min-width: 0 !important; width: 100%; }
+    .dtc-docpay-table thead {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip: rect(0 0 0 0); white-space: nowrap;
+    }
+    .dtc-docpay-table,
+    .dtc-docpay-table tbody { display: block; }
+    .dtc-docpay-table tbody tr {
+        display: flex; flex-wrap: wrap; align-items: center;
+        gap: 6px 10px; padding: 14px 16px;
+        border-bottom: 1px solid var(--dtc-border-soft, var(--dtc-border));
+    }
+    .dtc-docpay-table tbody tr:last-child { border-bottom: 0; }
+    .dtc-docpay-table tbody td {
+        display: block; padding: 0 !important; border: 0 !important;
+        background: transparent !important; width: auto; min-width: 0; font-size: 12.5px;
+    }
+    .dtc-docpay-table tbody td[colspan] { flex: 1 0 100%; width: 100%; }
+
+    .dtc-docpay-table tbody td:nth-child(1) { order: 1; flex: 1 1 0; }
+    .dtc-docpay-table tbody td:nth-child(5) { order: 2; flex: 0 0 auto; }
+    .dtc-docpay-table tbody td:nth-child(2) { order: 3; flex: 1 0 100%; font-weight: 600; }
+    .dtc-docpay-table tbody td:nth-child(3),
+    .dtc-docpay-table tbody td:nth-child(6) { order: 4; flex: 0 0 auto; color: var(--dtc-text-secondary); }
+    .dtc-docpay-table tbody td:nth-child(3)::after { content: "·"; margin-left: 10px; opacity: .5; }
+    .dtc-docpay-table tbody td:nth-child(6)::before { content: "Request: "; opacity: .7; }
+    .dtc-docpay-table tbody tr::after { content: ""; order: 5; flex: 1 0 100%; height: 0; margin: -6px 0 0; }
+    .dtc-docpay-table tbody td:nth-child(4) { order: 6; flex: 1 1 0; font-size: 18px; margin-top: 6px; }
+    .dtc-docpay-table tbody td:nth-child(7) { order: 7; flex: 0 0 auto; margin-top: 6px; }
+    .dtc-docpay-action { min-height: 40px; display: inline-flex; align-items: center; padding: 8px 16px; }
+
+    /* Review page */
+    .dtc-docpay-back { width: 100%; justify-content: center; }
+    .dtc-docpay-show .btn { width: 100%; min-height: 44px; }
+    .dtc-docpay-show dt { margin-top: 10px; }
+    .dtc-docpay-show dd { margin-bottom: 0; }
+}
+
+/* AdminLTE adds a clearfix ::after to .card-header. Inside a flex header it becomes a third
+   flex item, so "space-between" pushes the right-hand link toward the middle. */
+.card-header.d-flex::before,
+.card-header.d-flex::after { content: none; display: none; }

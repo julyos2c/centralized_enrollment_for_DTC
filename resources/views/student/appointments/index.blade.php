@@ -17,26 +17,59 @@
 
 @php
     $items = method_exists($appointments, 'getCollection') ? $appointments->getCollection() : collect($appointments);
-    $counts = ['all' => $items->count(), 'pending' => 0, 'confirmed' => 0, 'cancelled' => 0];
-    foreach ($items as $a) { $counts[$a->status] = ($counts[$a->status] ?? 0) + 1; }
-    $groupOf = fn ($s) => in_array($s, ['confirmed', 'cancelled'], true) ? $s : 'pending';
     $docNames = ['transcript' => 'Transcript of Records', 'diploma' => 'Diploma', 'certification' => 'Certification', 'tor' => 'True Copy of Records', 'true_copy' => 'True Copy of Records'];
-    $badgeText = ['pending' => 'Waiting for confirmation', 'confirmed' => 'Confirmed', 'cancelled' => 'Cancelled'];
-    $badgeTone = ['pending' => 'warning', 'confirmed' => 'success', 'cancelled' => 'neutral'];
+
+    // Four-step track driven by the document request; cancelled bookings get their own group.
+    $stageOf   = ['submitted' => 0, 'processing' => 1, 'ready' => 2, 'released' => 3];
+    $stageName = ['Submitted', 'Preparing', 'Ready', 'Released'];
+    $badgeText = ['submitted' => 'Submitted', 'processing' => 'Being prepared', 'ready' => 'Ready for pickup', 'released' => 'Released'];
+    $badgeTextAppt = ['pending' => 'waiting for confirmation', 'confirmed' => 'confirmed', 'cancelled' => 'cancelled'];
+    $badgeTone = ['submitted' => 'warning', 'processing' => 'info', 'ready' => 'purple', 'released' => 'success'];
+    $groupOf = function ($a) {
+        if ($a->status === 'cancelled') { return 'cancelled'; }
+        $st = $a->documentRequest?->status;
+        return $st === 'ready' ? 'ready' : ($st === 'released' ? 'released' : 'progress');
+    };
+
+    $counts = ['all' => $items->count(), 'progress' => 0, 'ready' => 0, 'released' => 0, 'cancelled' => 0];
+    foreach ($items as $a) { $counts[$groupOf($a)]++; }
+    $activeItems = $items->filter(fn ($a) => $a->status !== 'cancelled');
+    $pickupNow   = $activeItems->filter(fn ($a) => $a->documentRequest && $a->documentRequest->status === 'ready' && $a->documentRequest->payment_status === 'verified')->count();
+    $totalFees   = $activeItems->sum(fn ($a) => (float) ($a->documentRequest->fee ?? 0));
+    $confirmed   = $items->where('status', 'confirmed')->count();
 @endphp
 
 @section('content')
 <div class="dr dr-index dtc-appointments-page">
 
-    @if (session('success'))
-        <div class="dr-alert dr-alert--ok" role="status"><i data-lucide="circle-check" aria-hidden="true"></i><div>{{ session('success') }}</div></div>
-    @endif
-    @if (session('error'))
-        <div class="dr-alert dr-alert--error" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><div>{{ session('error') }}</div></div>
-    @endif
     @if ($errors->any())
         <div class="dr-alert dr-alert--error" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><div>{{ $errors->first() }}</div></div>
     @endif
+
+    <div class="dtc-dashboard-overview dtc-dashboard-overview--four mb-3" aria-label="Appointment summary">
+        <div class="dtc-overview-item">
+            <span class="dtc-overview-label">Total appointments</span>
+            <strong>{{ $counts['all'] }}</strong>
+            <span class="dtc-overview-note">All bookings</span>
+        </div>
+        <div class="dtc-overview-item">
+            <span class="dtc-overview-label">Ready for pickup</span>
+            <strong>{{ $pickupNow }}</strong>
+            <span class="dtc-overview-note">Payment verified</span>
+        </div>
+        <div class="dtc-overview-item">
+            <span class="dtc-overview-label">Confirmed pickups</span>
+            <strong>{{ $confirmed }}</strong>
+            <span class="dtc-overview-note">Registrar confirmed</span>
+        </div>
+        <div class="dtc-overview-item">
+            <span class="dtc-overview-label">Total fees</span>
+            <strong>&#8369;{{ number_format($totalFees, 2) }}</strong>
+            <span class="dtc-overview-note">Across active requests</span>
+        </div>
+    </div>
+
+    <h2 class="dr-section-title">Appointment History</h2>
 
     @if ($items->isEmpty())
         <div class="dr-empty">
@@ -47,10 +80,21 @@
             </a>
         </div>
     @else
+        @if ($pickupNow > 0)
+            <div class="dr-ready" role="status">
+                <span class="dr-ready-icon" aria-hidden="true"><i data-lucide="package-check"></i></span>
+                <p>
+                    <strong>{{ $pickupNow === 1 ? '1 document is' : $pickupNow.' documents are' }} ready to collect</strong>
+                    Pick up at the Registrar’s Office on your booked time. Bring your receipt and a valid ID.
+                </p>
+            </div>
+        @endif
+
         <div class="dr-filters" role="group" aria-label="Filter appointments" data-dr-filters>
             <button type="button" class="dr-filter" data-filter="all" aria-pressed="true">All <span class="dr-filter-count">{{ $counts['all'] }}</span></button>
-            <button type="button" class="dr-filter" data-filter="pending" aria-pressed="false">Waiting <span class="dr-filter-count">{{ $counts['pending'] }}</span></button>
-            <button type="button" class="dr-filter" data-filter="confirmed" aria-pressed="false">Confirmed <span class="dr-filter-count">{{ $counts['confirmed'] }}</span></button>
+            <button type="button" class="dr-filter" data-filter="progress" aria-pressed="false">In progress <span class="dr-filter-count">{{ $counts['progress'] }}</span></button>
+            <button type="button" class="dr-filter" data-filter="ready" aria-pressed="false">Ready <span class="dr-filter-count">{{ $counts['ready'] }}</span></button>
+            <button type="button" class="dr-filter" data-filter="released" aria-pressed="false">Released <span class="dr-filter-count">{{ $counts['released'] }}</span></button>
             <button type="button" class="dr-filter" data-filter="cancelled" aria-pressed="false">Cancelled <span class="dr-filter-count">{{ $counts['cancelled'] }}</span></button>
         </div>
 
@@ -58,54 +102,110 @@
             @foreach ($items as $appointment)
                 @php
                     $pay = $appointment->latestPayment;
+                    $docRequest = $appointment->documentRequest;
                     $when = \Carbon\Carbon::parse($appointment->slot->date);
                     $time = \Carbon\Carbon::parse($appointment->slot->start_time)->format('g:i A').' to '.\Carbon\Carbon::parse($appointment->slot->end_time)->format('g:i A');
                     $cancelled = $appointment->status === 'cancelled';
-                    $payRejected = $pay && $pay->status === 'rejected';
-                    $payTone = $pay ? ($pay->status === 'verified' ? 'success' : ($pay->status === 'rejected' ? 'danger' : ($pay->isGcash() ? 'info' : 'warning'))) : 'neutral';
-                    $payLabel = $pay
-                        ? ($pay->status === 'verified' ? 'Paid' : ($pay->status === 'rejected' ? 'Payment not verified' : ($pay->isGcash() ? 'Payment under review' : 'Pay at Cashier')))
-                        : 'No payment yet';
+                    $st = \Carbon\Carbon::parse($appointment->slot->start_time); $en = \Carbon\Carbon::parse($appointment->slot->end_time);
+                    $timeShort = $st->format('g:i').($st->format('A') === $en->format('A') ? '' : ' '.$st->format('A')).'–'.$en->format('g:i A');
+                    $payRejected = $docRequest
+                        ? $docRequest->payment_status === 'rejected'
+                        : ($pay && $pay->status === 'rejected');
+                    $docPayStatus = $docRequest?->payment_status;
+                    $payTone = $docRequest
+                        ? (['verified' => 'success', 'pending_verification' => 'info', 'rejected' => 'danger', 'unpaid' => 'warning'][$docPayStatus] ?? 'neutral')
+                        : ($pay ? ($pay->status === 'verified' ? 'success' : ($pay->status === 'rejected' ? 'danger' : ($pay->isGcash() ? 'info' : 'warning'))) : 'neutral');
+                    $payLabel = $docRequest
+                        ? (['verified' => 'Verified', 'pending_verification' => 'Pending verification', 'rejected' => 'Payment rejected', 'unpaid' => 'Unpaid'][$docPayStatus] ?? ucfirst((string) $docPayStatus))
+                        : ($pay
+                            ? ($pay->status === 'verified' ? 'Paid' : ($pay->status === 'rejected' ? 'Payment not verified' : ($pay->isGcash() ? 'Payment under review' : 'Pay at Cashier')))
+                            : 'No payment yet');
                 @endphp
-                <li class="dr-req {{ $payRejected ? 'needs-fix' : ($appointment->status === 'confirmed' ? 'needs-action' : '') }} {{ $cancelled ? 'is-muted' : '' }}"
-                    data-group="{{ $groupOf($appointment->status) }}">
+                @php
+                    $docStatus = $docRequest?->status;
+                    $stage     = $docStatus ? ($stageOf[$docStatus] ?? 0) : ($appointment->status === 'confirmed' ? 1 : 0);
+                    $copiesTx  = $docRequest ? $docRequest->copies.($docRequest->copies > 1 ? ' copies' : ' copy') : null;
+                    $collect   = $docRequest && $docStatus === 'ready' && $docRequest->payment_status === 'verified';
+                    $docLabel  = $docNames[$appointment->document_type] ?? ucwords(str_replace('_', ' ', $appointment->document_type));
+                    $topBadgeText = $cancelled ? 'Cancelled' : ($docStatus ? ($badgeText[$docStatus] ?? ucfirst($docStatus)) : 'Waiting for confirmation');
+                    $topBadgeTone = $cancelled ? 'neutral' : ($docStatus ? ($badgeTone[$docStatus] ?? 'neutral') : 'warning');
+                @endphp
+                <li class="dr-req {{ $payRejected ? 'needs-fix' : ($collect ? 'needs-action' : '') }} {{ $cancelled ? 'is-muted' : '' }}"
+                    data-group="{{ $groupOf($appointment) }}">
                     <div class="dr-req-top">
-                        <div class="dr-when">
-                            <span class="dr-when-leaf" aria-hidden="true"><span>{{ $when->format('M') }}</span><strong>{{ $when->format('j') }}</strong></span>
-                            <div>
-                                <h2 class="dr-req-name">{{ $docNames[$appointment->document_type] ?? ucwords(str_replace('_', ' ', $appointment->document_type)) }}</h2>
-                                <p class="dr-req-meta">{{ $when->format('l') }}, {{ $time }}</p>
-                                @if ($appointment->purpose)
-                                    <p class="dr-req-purpose">Purpose: {{ $appointment->purpose }}</p>
-                                @endif
-                            </div>
+                        <div>
+                            <h2 class="dr-req-name">{{ $docRequest->document_label ?? $docLabel }}</h2>
+                            <p class="dr-req-meta">
+                                @if ($copiesTx){{ $copiesTx }}, &#8369;{{ number_format($docRequest->fee, 2) }}, @endif
+                                requested {{ $appointment->created_at->format('M j, Y') }}
+                            </p>
+                            @if ($appointment->purpose)
+                                <p class="dr-req-purpose">Purpose: {{ $appointment->purpose }}</p>
+                            @endif
                         </div>
-                        <span class="dtc-status-badge is-{{ $badgeTone[$appointment->status] ?? 'neutral' }}">{{ $badgeText[$appointment->status] ?? ucfirst($appointment->status) }}</span>
+                        @if ($cancelled)
+                            <span class="dtc-status-badge is-{{ $topBadgeTone }}">{{ $topBadgeText }}</span>
+                        @endif
                     </div>
 
-                    @if ($appointment->status === 'confirmed')
-                        <p class="dr-step-note">Your appointment is confirmed. Be at the Registrar’s Office on time and bring a valid ID.</p>
-                    @elseif ($cancelled)
-                        @if ($appointment->remarks)
-                            <div class="dr-remark" style="margin-top:14px;"><i data-lucide="circle-x" aria-hidden="true"></i><span><strong>Cancelled:</strong> {{ $appointment->remarks }}</span></div>
-                        @else
-                            <p class="dr-step-note">This appointment was cancelled.</p>
-                        @endif
-                    @else
-                        <p class="dr-step-note">Waiting for the Registrar to confirm your time. You’ll get a notification.</p>
+                    @if (! $cancelled)
+                        <ol class="dr-track" aria-label="Progress: step {{ $stage + 1 }} of 4, {{ $stageName[$stage] }}">
+                            @foreach ($stageName as $i => $name)
+                                <li class="{{ $i < $stage || ($i === $stage && $docStatus === 'released') ? 'is-done' : '' }} {{ $i === $stage ? 'is-current' : '' }}"
+                                    @if ($i === $stage) aria-current="step" @endif>{{ $name }}</li>
+                            @endforeach
+                        </ol>
                     @endif
+
+                    <div class="dr-remark" style="margin-top:12px;" aria-label="Pickup appointment">
+                        <i data-lucide="calendar-days" aria-hidden="true"></i>
+                        <span>
+                            <strong>{{ $when->format('D, M j') }}</strong> · {{ $timeShort }}
+                            · {{ ucfirst($badgeTextAppt[$appointment->status] ?? $appointment->status) }}
+                            @if ($cancelled && $appointment->remarks)<br>{{ $appointment->remarks }}@endif
+                        </span>
+                    </div>
 
                     @if (! $cancelled)
                         <div class="dr-pay">
                             <div class="dr-pay-line">
                                 <span class="dtc-status-badge is-{{ $payTone }}">{{ $payLabel }}</span>
-                                @if ($pay)
+                                @if ($docRequest)
+                                    <span class="dr-pay-method">{{ $docRequest->payment_method === 'gcash_qr' ? 'GCash' : 'Cashier’s Office' }} · ₱{{ number_format($docRequest->fee, 2) }}</span>
+                                @elseif ($pay)
                                     <span class="dr-pay-method">{{ $pay->isGcash() ? 'GCash' : 'Cashier’s Office' }}@if ($pay->reference_number), ref {{ $pay->reference_number }}@endif</span>
                                 @endif
                             </div>
 
-                            @if (! $pay)
-                                <p class="dr-pay-text">Pay at the Cashier’s Office, or send the fee by GCash and upload your receipt.</p>
+                            @if ($docRequest)
+                                @if ($docRequest->payment_status === 'verified')
+                                    <p class="dr-pay-text">Fee verified by the Cashier.</p>
+                                @elseif ($docRequest->payment_status === 'pending_verification')
+                                    <p class="dr-pay-text">GCash proof submitted. Awaiting Cashier verification.@if($docRequest->proof_of_payment) <a href="{{ route('portal.appointments.document-payment.proof', $docRequest) }}" target="_blank" rel="noopener">View submitted proof</a>@endif</p>
+                                @else
+                                    @if ($docRequest->payment_status === 'rejected')
+                                        <div class="dr-remark" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><span>{{ $docRequest->payment_rejection_reason ?: 'The Cashier could not verify this payment. Submit corrected details or pay at the Cashier.' }}</span></div>
+                                    @else
+                                        <p class="dr-pay-text">Pay ₱{{ number_format($docRequest->fee, 2) }} at the Cashier’s Office.</p>
+                                    @endif
+                                    @if ($gcashQrReady && $docRequest->status !== 'released')
+                                        <details class="dr-gcash-inline">
+                                            <summary>{{ $docRequest->payment_status === 'rejected' ? 'Resubmit GCash proof' : 'Pay by GCash instead' }}</summary>
+                                            <div class="dr-gcash-inline-body">
+                                                <img src="{{ route('portal.appointments.gcash.qr') }}" alt="Official DTC GCash QR code" width="120" height="120" loading="lazy">
+                                                <p>Send exactly <strong>₱{{ number_format($docRequest->fee, 2) }}</strong> to {{ \App\Models\Setting::get('gcash_name', 'DTC') }} ({{ \App\Models\Setting::get('gcash_number', 'see official QR') }}), then submit the reference and receipt.</p>
+                                                <form method="POST" action="{{ route('portal.appointments.document-payment.gcash', $docRequest) }}" enctype="multipart/form-data">
+                                                    @csrf
+                                                    <label class="dr-label">GCash reference number<input class="dr-input" name="reference_number" maxlength="100" required></label>
+                                                    <label class="dr-label">Receipt image or PDF<input class="dr-input" type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf" required></label>
+                                                    <button class="dr-btn dr-btn--primary dr-btn--sm" type="submit">Submit proof for verification</button>
+                                                </form>
+                                            </div>
+                                        </details>
+                                    @endif
+                                @endif
+                            @elseif (! $pay)
+                                <p class="dr-pay-text">Pay at the Cashier or by GCash.</p>
                                 <div class="dr-actions">
                                     <button type="button" class="dr-btn dr-btn--primary dr-btn--sm" data-toggle="modal" data-target="#gcashModal{{ $appointment->id }}">Pay with GCash</button>
                                 </div>
@@ -115,16 +215,16 @@
                                     <button type="button" class="dr-btn dr-btn--primary dr-btn--sm" data-toggle="modal" data-target="#gcashModal{{ $appointment->id }}">Resubmit GCash proof</button>
                                 </div>
                             @elseif ($pay->status === 'verified')
-                                <p class="dr-pay-text">The Cashier has verified your payment.</p>
+                                <p class="dr-pay-text">Payment verified.</p>
                             @elseif ($pay->isGcash())
                                 <p class="dr-pay-text">
-                                    Your receipt is a claim until the Cashier confirms the funds arrived.
+                                    GCash receipt submitted. Awaiting Cashier verification.
                                     @if ($pay->proof_of_payment)
                                         <a href="{{ route('portal.appointments.payment.proof', $pay) }}" target="_blank" rel="noopener">View submitted proof</a>
                                     @endif
                                 </p>
                             @else
-                                <p class="dr-pay-text">Pay at the Cashier’s Office. Your payment counts once the Cashier records it.</p>
+                                <p class="dr-pay-text">Pay at the Cashier’s Office.</p>
                             @endif
                         </div>
                     @endif
@@ -171,7 +271,7 @@
         {{-- Modals (unchanged behaviour): pay with GCash, edit booking --}}
         @foreach ($items as $appointment)
         {{-- ── GCash Upload Modal (per appointment) ───────────────────── --}}
-        @if($appointment->status !== 'cancelled')
+        @if($appointment->status !== 'cancelled' && ! $appointment->documentRequest)
         <div class="modal fade" id="gcashModal{{ $appointment->id }}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">

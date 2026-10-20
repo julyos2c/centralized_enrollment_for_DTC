@@ -167,6 +167,55 @@
         render();
     }
 
+    /* ---------------- Pickup booking (My Requests): day, then time ---------------- */
+    document.querySelectorAll('[data-pickup-form]').forEach(function (pf) {
+        var hint = pf.querySelector('[data-pp-hint]');
+        var picked = pf.querySelector('[data-pp-picked]');
+        var submitBtn = pf.querySelector('[data-pp-submit]');
+        var empty = 'No time chosen.';
+
+        var sync = function () {
+            var slot = pf.querySelector('input[name="appointment_slot_id"]:checked');
+            if (picked) {
+                picked.textContent = slot ? slot.getAttribute('data-date') + ', ' + slot.getAttribute('data-time') : empty;
+                picked.classList.toggle('has-value', !!slot);
+            }
+            if (submitBtn) submitBtn.disabled = !slot;
+        };
+
+        var showDay = function () {
+            var day = pf.querySelector('input[name="pickup_date"]:checked');
+            var value = day ? day.value : '';
+            pf.querySelectorAll('[data-pp-panel]').forEach(function (panel) {
+                var active = panel.getAttribute('data-pp-panel') === value;
+                panel.hidden = !active;
+                if (!active) {
+                    var c = panel.querySelector('input[name="appointment_slot_id"]:checked');
+                    if (c) c.checked = false;
+                }
+            });
+            if (hint) hint.hidden = value !== '';
+            sync();
+        };
+
+        pf.addEventListener('change', function (e) {
+            if (e.target.name === 'pickup_date') showDay();
+            else if (e.target.name === 'appointment_slot_id') sync();
+        });
+
+        // Never submit without a time, even if the button was re-enabled.
+        pf.addEventListener('submit', function (e) {
+            if (!pf.querySelector('input[name="appointment_slot_id"]:checked')) { e.preventDefault(); return; }
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Requesting…'; }
+        });
+
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted && submitBtn) { submitBtn.textContent = 'Request pickup time'; showDay(); }
+        });
+
+        showDay();
+    });
+
     /* ---------------- My Requests filters ---------------- */
     var filters = document.querySelector('[data-dr-filters]');
     if (filters) {

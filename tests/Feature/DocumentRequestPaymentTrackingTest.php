@@ -4,10 +4,17 @@ namespace Tests\Feature;
 
 use App\Models\AuditLog;
 use App\Models\DocumentRequest;
+use App\Models\DocumentPaymentNotificationOutbox;
+use App\Models\Appointment;
+use App\Models\AppointmentSlot;
 use App\Models\Setting;
+use App\Models\UserNotification;
+use App\Mail\DocumentRequestUpdate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Event;
 use Tests\SeedsRoles;
 use Tests\TestCase;
 
@@ -26,6 +33,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
     {
         $alumni = $this->makeUserWithRole('alumni');
         $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
         Storage::disk('local')->put('gcash/official-qr.png', 'configured-qr');
         Setting::set('gcash_qr_path', 'gcash/official-qr.png');
 
@@ -46,6 +54,8 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         Storage::disk('local')->assertExists($documentRequest->proof_of_payment);
         $this->assertStringStartsWith('document-request-proofs/', $documentRequest->proof_of_payment);
         $this->assertDatabaseHas('user_notifications', ['user_id' => $cashier->id, 'title' => 'Document Payment Needs Verification']);
+        $this->assertSame(0, $registrar->userNotifications()->where('title', 'Document Payment Verified')->count());
+        $this->assertDatabaseCount('document_payment_notification_outbox', 0);
     }
 
     public function test_alumni_cannot_submit_gcash_claim_without_a_configured_official_qr(): void
@@ -89,6 +99,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
     public function test_cashier_can_verify_gcash_only_after_entering_the_exact_received_amount(): void
     {
         $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
         $alumni = $this->makeUserWithRole('alumni');
         $documentRequest = $this->makeDocumentRequest($alumni, [
             'payment_method' => 'gcash_qr',
@@ -108,10 +119,24 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $this->actingAs($cashier)->post($verifyUrl, ['amount_received' => '50.00', 'receipt_no' => 'DTC-GC-200'])
             ->assertRedirect(route('cashier.document-payments.show', $documentRequest));
 
+        $outboxEvent = DocumentPaymentNotificationOutbox::firstOrFail();
+        $this->assertSame('pending', $outboxEvent->status);
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+
         $documentRequest->refresh();
         $this->assertSame('verified', $documentRequest->payment_status);
         $this->assertTrue($documentRequest->is_paid);
         $this->assertSame($cashier->id, $documentRequest->verified_by);
+
+        $notice = $registrar->userNotifications()->where('title', 'Document Payment Verified')->firstOrFail();
+        $this->assertSame(route('registrar.documents.index'), $notice->link);
+        $this->assertStringContainsString($alumni->name, $notice->message);
+        $this->assertStringContainsString('Transcript of Records', $notice->message);
+        $this->assertStringContainsString('PHP 50.00', $notice->message);
+        $this->assertStringContainsString('GCash', $notice->message);
+        $this->assertStringNotContainsString('private-proof', $notice->message);
+        $this->assertStringNotContainsString('GCASH-REF-200', $notice->message);
+        $this->actingAs($registrar)->get($notice->link)->assertOk();
     }
 
     public function test_alumni_and_cashier_payment_screens_render_with_private_qr_and_request_details(): void
@@ -129,7 +154,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         Storage::disk('local')->put($documentRequest->proof_of_payment, 'private-proof');
 
         $this->actingAs($alumni)->get(route('portal.documents.create'))
-            ->assertOk()->assertSee('Pay online using the official GCash QR');
+            ->assertOk()->assertSee('Pay with GCash QR')->assertSee('Official DTC GCash QR code');
         $this->actingAs($alumni)->get(route('portal.documents.index'))
             ->assertOk()->assertSee('Payment under review');
         $this->actingAs($cashier)->get(route('cashier.document-payments.index'))
@@ -141,8 +166,9 @@ class DocumentRequestPaymentTrackingTest extends TestCase
     public function test_cashier_can_verify_a_walk_in_payment_with_exact_amount_and_manual_receipt(): void
     {
         $cashier = $this->makeUserWithRole('cashier');
-        $alumni = $this->makeUserWithRole('alumni');
-        $documentRequest = $this->makeDocumentRequest($alumni, ['payment_method' => 'walk_in']);
+        $registrar = $this->makeUserWithRole('registrar');
+        $student = $this->makeUserWithRole('student');
+        $documentRequest = $this->makeDocumentRequest($student, ['payment_method' => 'walk_in']);
 
         $response = $this->actingAs($cashier)->post(route('cashier.document-payments.verify-walk-in', $documentRequest), [
             'amount_received' => '50.00',
@@ -150,6 +176,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         ]);
 
         $response->assertRedirect(route('cashier.document-payments.show', $documentRequest));
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
         $documentRequest->refresh();
         $this->assertSame('verified', $documentRequest->payment_status);
         $this->assertTrue($documentRequest->is_paid);
@@ -158,11 +185,126 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $this->assertSame($cashier->id, $documentRequest->verified_by);
         $this->assertNotNull($documentRequest->verified_at);
         $this->assertDatabaseHas('audit_logs', ['action' => 'document_payment.verified', 'user_id' => $cashier->id]);
+
+        $notice = $registrar->userNotifications()->where('title', 'Document Payment Verified')->firstOrFail();
+        $this->assertSame(route('registrar.documents.index'), $notice->link);
+        $this->assertStringContainsString($student->name, $notice->message);
+        $this->assertStringContainsString('Transcript of Records', $notice->message);
+        $this->assertStringContainsString('PHP 50.00', $notice->message);
+        $this->assertStringContainsString('Cash / walk-in', $notice->message);
+        $this->actingAs($registrar)->get($notice->link)->assertOk();
+    }
+
+    public function test_notification_persistence_failure_does_not_undo_verified_payment(): void
+    {
+        Mail::fake();
+        $cashier = $this->makeUserWithRole('cashier');
+        $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $documentRequest = $this->makeDocumentRequest($alumni);
+        $event = 'eloquent.creating: ' . UserNotification::class;
+        Event::listen($event, function () {
+            throw new \RuntimeException('Simulated notification persistence failure.');
+        });
+
+        try {
+            $this->actingAs($cashier)->post(route('cashier.document-payments.verify-walk-in', $documentRequest), [
+                'amount_received' => '50.00',
+                'receipt_no' => 'DTC-OR-FAILURE',
+            ])->assertRedirect(route('cashier.document-payments.show', $documentRequest));
+        } finally {
+            Event::forget($event);
+        }
+
+        $this->assertTrue($documentRequest->fresh()->is_paid);
+        $this->assertSame('verified', $documentRequest->fresh()->payment_status);
+        $this->assertSame(1, AuditLog::where('action', 'document_payment.verified')->count());
+        $outboxEvent = DocumentPaymentNotificationOutbox::firstOrFail();
+        $this->assertSame('pending', $outboxEvent->status);
+        $this->assertSame(0, $outboxEvent->attempts);
+
+        Event::listen($event, function () {
+            throw new \RuntimeException('Simulated notification persistence failure.');
+        });
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        Event::forget($event);
+        $outboxEvent->refresh();
+        $this->assertSame('pending', $outboxEvent->status);
+        $this->assertSame(1, $outboxEvent->attempts);
+        $outboxEvent->update(['available_at' => now()->subSecond()]);
+
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        $this->assertSame('delivered', $outboxEvent->fresh()->status);
+        $this->assertSame(1, UserNotification::where('title', 'Document Payment Verified')->count());
+    }
+
+    public function test_outbox_marks_event_failed_after_bounded_delivery_attempts(): void
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $request = $this->makeDocumentRequest($alumni);
+        $this->actingAs($cashier)->post(route('cashier.document-payments.verify-walk-in', $request), [
+            'amount_received' => '50.00', 'receipt_no' => 'DTC-OR-FAILED',
+        ]);
+
+        $event = DocumentPaymentNotificationOutbox::firstOrFail();
+        $event->update(['max_attempts' => 1, 'available_at' => now()->subSecond()]);
+        $listener = 'eloquent.creating: ' . UserNotification::class;
+        Event::listen($listener, function () {
+            throw new \RuntimeException('Simulated persistent storage failure.');
+        });
+        try {
+            $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        } finally {
+            Event::forget($listener);
+        }
+
+        $this->assertSame('failed', $event->fresh()->status);
+        $this->assertSame(1, $event->fresh()->attempts);
+        $this->assertSame(\RuntimeException::class, $event->fresh()->last_error);
+        $this->assertSame('verified', $request->fresh()->payment_status);
+    }
+
+    public function test_outbox_retry_after_acknowledgement_failure_creates_only_one_notification(): void
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $request = $this->makeDocumentRequest($alumni);
+        $this->actingAs($cashier)->post(route('cashier.document-payments.verify-walk-in', $request), [
+            'amount_received' => '50.00', 'receipt_no' => 'DTC-OR-ACK',
+        ]);
+
+        $event = DocumentPaymentNotificationOutbox::firstOrFail();
+        $listener = 'eloquent.updating: ' . DocumentPaymentNotificationOutbox::class;
+        Event::listen($listener, function ($outbox) {
+            if ($outbox->status === 'delivered') {
+                throw new \RuntimeException('Simulated acknowledgement failure.');
+            }
+        });
+        try {
+            $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        } finally {
+            Event::forget($listener);
+        }
+
+        $this->assertSame('pending', $event->fresh()->status);
+        $this->assertSame(1, $event->fresh()->attempts);
+        $this->assertSame(0, $registrar->userNotifications()->where('event_key', $event->event_key)->count());
+
+        $event->update(['available_at' => now()->subSecond()]);
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+
+        $this->assertSame('delivered', $event->fresh()->status);
+        $this->assertSame(1, $registrar->userNotifications()->where('event_key', $event->event_key)->count());
     }
 
     public function test_cashier_cannot_verify_an_inconsistent_amount_or_verify_twice(): void
     {
         $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
         $alumni = $this->makeUserWithRole('alumni');
         $documentRequest = $this->makeDocumentRequest($alumni);
         $route = route('cashier.document-payments.verify-walk-in', $documentRequest);
@@ -182,11 +324,17 @@ class DocumentRequestPaymentTrackingTest extends TestCase
 
         $this->assertSame(1, AuditLog::where('action', 'document_payment.verified')->count());
         $this->assertSame('DTC-OR-1', $documentRequest->fresh()->receipt_no);
+        $this->assertSame(1, DocumentPaymentNotificationOutbox::where('document_request_id', $documentRequest->id)->count());
+        $this->assertSame(0, $registrar->userNotifications()->where('title', 'Document Payment Verified')->count());
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        $this->artisan('document-payment-notifications:process')->assertExitCode(0);
+        $this->assertSame(1, $registrar->userNotifications()->where('title', 'Document Payment Verified')->count());
     }
 
     public function test_cashier_can_reject_and_alumni_can_resubmit_gcash_payment(): void
     {
         $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
         $alumni = $this->makeUserWithRole('alumni');
         Storage::disk('local')->put('gcash/official-qr.png', 'configured-qr');
         Setting::set('gcash_qr_path', 'gcash/official-qr.png');
@@ -209,6 +357,8 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $this->assertSame($cashier->id, $documentRequest->rejected_by);
         $this->assertNotNull($documentRequest->rejected_at);
         $this->assertNull($documentRequest->verified_at);
+        $this->assertSame(0, $registrar->userNotifications()->where('title', 'Document Payment Verified')->count());
+        $this->assertDatabaseCount('document_payment_notification_outbox', 0);
 
         $response = $this->actingAs($alumni)->post(route('portal.documents.payment.submit', $documentRequest), [
             'reference_number' => 'NEW-REF',
@@ -284,6 +434,190 @@ class DocumentRequestPaymentTrackingTest extends TestCase
 
         $this->actingAs($student)->get(route('portal.documents.index'))->assertForbidden();
         $this->actingAs($applicant)->get(route('portal.documents.create'))->assertForbidden();
+    }
+
+    public function test_request_submission_sends_only_one_admin_alert_and_queues_applicant_email(): void
+    {
+        Mail::fake();
+        $admin = $this->makeUserWithRole('admin');
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+
+        $this->actingAs($alumni)->post(route('portal.documents.store'), [
+            'document_type' => 'tor',
+            'copies' => 1,
+            'payment_method' => 'walk_in',
+        ])->assertRedirect(route('portal.documents.index'));
+
+        $this->assertSame(1, $admin->userNotifications()->where('title', 'New Document Request')->count());
+        $this->assertSame(1, $registrar->userNotifications()->where('title', 'New Document Request')->count());
+        $this->assertSame(1, $admin->userNotifications()->count());
+        Mail::assertQueued(DocumentRequestUpdate::class, fn ($mail) => $mail->hasTo($alumni->email));
+    }
+
+    public function test_status_flow_is_forward_only_and_audits_only_successful_changes(): void
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $request = $this->makeDocumentRequest($alumni);
+        $url = route('registrar.documents.status', $request);
+
+        $this->actingAs($registrar)->post($url, ['status' => 'processing', 'remarks' => 'Started'])->assertRedirect(route('registrar.documents.index'));
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $registrar->id,
+            'action' => 'document_request.status_changed',
+            'description' => "Document request #{$request->id} status changed from submitted to processing.",
+        ]);
+        $log = AuditLog::where('action', 'document_request.status_changed')->firstOrFail();
+        $this->assertSame($request->id, $log->metadata['document_request_id']);
+        $this->assertSame('submitted', $log->metadata['previous_status']);
+        $this->assertSame('processing', $log->metadata['new_status']);
+        $this->assertSame('Started', $log->metadata['remarks']);
+
+        $this->actingAs($registrar)->from(route('registrar.documents.index'))->post($url, ['status' => 'processing'])
+            ->assertRedirect(route('registrar.documents.index'))->assertSessionHasErrors('status');
+        $this->actingAs($registrar)->from(route('registrar.documents.index'))->post($url, ['status' => 'submitted'])
+            ->assertRedirect(route('registrar.documents.index'))->assertSessionHasErrors('status');
+        $this->assertSame(1, AuditLog::where('action', 'document_request.status_changed')->count());
+        $this->assertSame(1, $alumni->userNotifications()->where('title', 'Document Request Update')->count());
+    }
+
+    public function test_marking_student_document_ready_notifies_student_and_cashier_with_payment_next_steps(): void
+    {
+        Mail::fake();
+        $registrar = $this->makeUserWithRole('registrar');
+        $student = $this->makeUserWithRole('student');
+        $cashier = $this->makeUserWithRole('cashier');
+        $request = $this->makeDocumentRequest($student, [
+            'document_type' => 'certification',
+            'status' => 'processing',
+            'payment_method' => 'gcash_qr',
+            'payment_status' => 'pending_verification',
+        ]);
+
+        $this->actingAs($registrar)->post(route('registrar.documents.status', $request), [
+            'status' => 'ready',
+        ])->assertRedirect(route('registrar.documents.index'))
+            ->assertSessionHas('success');
+
+        $studentNotice = UserNotification::where('user_id', $student->id)
+            ->where('title', 'Document Request Update')->firstOrFail();
+        $this->assertSame(route('portal.appointments.index'), $studentNotice->link);
+        $this->assertStringContainsString('Cashier is still verifying your GCash payment', $studentNotice->message);
+
+        $cashierNotice = UserNotification::where('user_id', $cashier->id)
+            ->where('title', 'Document Ready for Pickup')->firstOrFail();
+        $this->assertSame(route('cashier.document-payments.show', $request), $cashierNotice->link);
+        $this->assertStringContainsString('GCash payment awaiting verification', $cashierNotice->message);
+
+        Mail::assertQueued(DocumentRequestUpdate::class, 1);
+    }
+
+    public function test_linked_pickup_appointment_waits_for_ready_and_verified_request_and_appears_in_history(): void
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $slot = AppointmentSlot::create([
+            'date' => today()->addDay()->toDateString(),
+            'start_time' => '09:00:00',
+            'end_time' => '09:30:00',
+            'max_bookings' => 1,
+        ]);
+        $appointment = Appointment::create([
+            'user_id' => $alumni->id,
+            'appointment_slot_id' => $slot->id,
+            'document_type' => 'tor',
+            'status' => 'pending',
+        ]);
+        $request = $this->makeDocumentRequest($alumni, ['appointment_id' => $appointment->id]);
+
+        $this->actingAs($registrar)->post(route('registrar.appointments.confirm', $appointment))
+            ->assertRedirect()->assertSessionHas('error');
+        $this->assertSame('pending', $appointment->fresh()->status);
+
+        $request->update(['status' => 'ready', 'is_paid' => true, 'payment_status' => 'verified']);
+        $this->actingAs($registrar)->post(route('registrar.appointments.confirm', $appointment))
+            ->assertRedirect(route('registrar.documents.index'));
+        $this->assertSame('confirmed', $appointment->fresh()->status);
+
+        $this->actingAs($alumni)->get(route('portal.documents.index'))
+            ->assertOk()
+            ->assertSee('Pickup:')
+            ->assertSee(today()->addDay()->format('M j, Y'))
+            ->assertSee('Confirmed.');
+    }
+
+    public function test_confirmed_pickup_is_blocked_if_its_slot_is_unavailable(): void
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $slot = AppointmentSlot::create([
+            'date' => today()->addDay()->toDateString(),
+            'start_time' => '09:00:00',
+            'end_time' => '09:30:00',
+            'max_bookings' => 1,
+            'status' => 'closed',
+        ]);
+        $appointment = Appointment::create([
+            'user_id' => $alumni->id,
+            'appointment_slot_id' => $slot->id,
+            'document_type' => 'tor',
+            'status' => 'pending',
+        ]);
+        $this->makeDocumentRequest($alumni, [
+            'appointment_id' => $appointment->id,
+            'status' => 'ready',
+            'is_paid' => true,
+            'payment_status' => 'verified',
+        ]);
+
+        $this->actingAs($registrar)->post(route('registrar.appointments.confirm', $appointment))
+            ->assertRedirect()->assertSessionHas('error');
+        $this->assertSame('pending', $appointment->fresh()->status);
+    }
+
+    public function test_email_queue_failure_does_not_report_a_committed_request_as_failed(): void
+    {
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('mail offline'));
+        $registrar = $this->makeUserWithRole('registrar');
+        $alumni = $this->makeUserWithRole('alumni');
+        $request = $this->makeDocumentRequest($alumni);
+
+        $this->actingAs($registrar)->from(route('registrar.documents.index'))
+            ->post(route('registrar.documents.status', $request), ['status' => 'processing'])
+            ->assertRedirect(route('registrar.documents.index'))
+            ->assertSessionHas('success', 'Request status updated. Email could not be queued; the failure was logged.');
+
+        $this->assertSame('processing', $request->fresh()->status);
+        $this->assertSame(1, AuditLog::where('action', 'document_request.status_changed')->count());
+    }
+
+    public function test_cancelled_request_is_hidden_from_cashier_queue_and_cannot_be_paid(): void
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $alumni = $this->makeUserWithRole('alumni');
+        $request = $this->makeDocumentRequest($alumni, [
+            'status' => 'cancelled',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.document-payments.index'))
+            ->assertOk()
+            ->assertSee('No document payments match this filter.')
+            ->assertDontSee('Review / record');
+
+        $this->actingAs($cashier)
+            ->from(route('cashier.document-payments.show', $request))
+            ->post(route('cashier.document-payments.verify-walk-in', $request), [
+                'amount_received' => '50.00',
+                'receipt_no' => 'OR-CANCELLED',
+            ])
+            ->assertRedirect(route('cashier.document-payments.show', $request))
+            ->assertSessionHasErrors('payment');
+
+        $this->assertFalse($request->fresh()->is_paid);
+        $this->assertSame('unpaid', $request->fresh()->payment_status);
     }
 
     private function makeDocumentRequest($user, array $attributes = []): DocumentRequest

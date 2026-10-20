@@ -62,6 +62,7 @@ class DocumentRequest extends Model
             'processing' => '#3B82F6',
             'ready'      => '#8B5CF6',
             'released'   => '#22C55E',
+            'cancelled'  => '#DC2626',
             default      => '#94A3B8',
         };
     }

@@ -15,8 +15,19 @@
 @section('content')
 
 
+{{-- Search (filters the rows on this page instantly) --}}
+<div class="dtc-pay-search">
+    <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+    <input type="search" id="paymentSearch" class="dtc-pay-search-input"
+           placeholder="Search name, email, program…" autocomplete="off"
+           aria-label="Search enrollments">
+    <button type="button" id="paymentSearchClear" class="dtc-pay-search-clear" aria-label="Clear search" hidden>
+        <i data-lucide="x"></i>
+    </button>
+</div>
+
 {{-- Filter Tabs --}}
-<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+<div class="dtc-filter-bar">
     @foreach ([
         'all'           => 'All',
         'unpaid'        => 'Unpaid',
@@ -35,12 +46,12 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="font-weight-bold u-text" >Approved Enrollments</span>
-        <span  class="u-text-secondary-sm">{{ $enrollments->total() }} total</span>
+        <span class="u-text-secondary-sm" id="paymentCount" data-total="{{ $enrollments->total() }}">{{ $enrollments->total() }} total</span>
     </div>
 
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table dtc-table mb-0">
+        <table class="table dtc-table dtc-payments-table mb-0">
             <thead>
                 <tr>
                     <th>Applicant</th>
@@ -55,7 +66,7 @@
             </thead>
             <tbody>
                 @forelse ($enrollments as $enrollment)
-                <tr>
+                <tr class="js-payment-row">
                     <td>
                         <div  class="u-flex-center-gap-10">
                             <div style="width:32px; height:32px; border-radius:50%;
@@ -103,11 +114,11 @@
                             <x-dtc.status-badge status="Rejected" />
                         @endif
                     </td>
-                    <td style="font-weight:700; color:#15803D;">
+                    <td class="dtc-pay-fee">
                         ₱{{ number_format($enrollment->payment->amount ?? \App\Models\Setting::get('enrollment_fee', 500), 2) }}
                     </td>
                     <td>
-                        <div class="d-flex flex-row align-items-center justify-content-center" style="gap:6px;">
+                        <div class="dtc-pay-actions">
                             <button type="button" class="dtc-review-btn dtc-payment-btn dtc-header-btn"
                                     data-url="{{ route('cashier.payments.show', $enrollment) }}">
                                 <i data-lucide="banknote"></i>
@@ -130,6 +141,9 @@
                     </td>
                 </tr>
                 @endforelse
+                <tr id="paymentNoResults" hidden>
+                    <td colspan="8" class="text-center py-4 u-text-muted">No enrollments match your search.</td>
+                </tr>
             </tbody>
         </table>
         </div>
@@ -160,3 +174,39 @@
 @include('cashier.payments._receipt-modal')
 
 @endsection
+
+@push('js')
+<script>
+(function () {
+    var input   = document.getElementById('paymentSearch');
+    var clear   = document.getElementById('paymentSearchClear');
+    var rows    = Array.prototype.slice.call(document.querySelectorAll('.js-payment-row'));
+    var none    = document.getElementById('paymentNoResults');
+    var counter = document.getElementById('paymentCount');
+    if (!input || !rows.length) { return; }
+
+    var index = rows.map(function (r) { return r.textContent.replace(/\s+/g, ' ').toLowerCase(); });
+
+    function apply() {
+        var terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        var shown = 0;
+        rows.forEach(function (row, i) {
+            var match = terms.every(function (t) { return index[i].indexOf(t) !== -1; });
+            row.hidden = !match;
+            row.style.display = match ? '' : 'none';
+            if (match) { shown++; }
+        });
+        none.hidden = shown !== 0;
+        none.style.display = shown !== 0 ? 'none' : '';
+        clear.hidden = !input.value;
+        counter.textContent = terms.length
+            ? shown + ' of ' + rows.length + ' shown'
+            : counter.getAttribute('data-total') + ' total';
+    }
+
+    input.addEventListener('input', apply);
+    clear.addEventListener('click', function () { input.value = ''; apply(); input.focus(); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') { input.value = ''; apply(); } });
+})();
+</script>
+@endpush

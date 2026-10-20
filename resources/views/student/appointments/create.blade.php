@@ -36,7 +36,8 @@
     $selectedPickupDate = $slotGroups->has($pickedDay) ? $pickedDay : $firstOpenDay;
     $todayKey = now()->format('Y-m-d');
     $dayParts = ['Morning' => [0, 12], 'Afternoon' => [12, 17], 'Evening' => [17, 24]];
-    $feeText = $processingFee > 0 ? '₱'.number_format($processingFee, 2) : 'No fee';
+    $selectedFee = $documentFees[old('document_type')] ?? null;
+    $feeText = $selectedFee === null ? 'Choose a document' : '₱'.number_format($selectedFee, 2);
 @endphp
 
 @section('content')
@@ -51,7 +52,7 @@
     <form method="POST" action="{{ route('portal.appointments.store') }}" enctype="multipart/form-data"
           id="bkForm" class="dr-grid" novalidate
           data-initial-step="{{ $initialStep }}"
-          data-fee="{{ $processingFee }}">
+          data-fees='@json($documentFees)'>
         @csrf
 
         <div class="dr-form">
@@ -78,6 +79,7 @@
                                 <input type="radio" name="document_type" value="{{ $value }}"
                                        class="dr-opt-input dr-visually-hidden"
                                        data-label="{{ $doc['label'] }}"
+                                       data-fee="{{ $documentFees[$value] }}"
                                        {{ old('document_type') === $value ? 'checked' : '' }}>
                                 <span class="dr-opt-mark" aria-hidden="true"></span>
                                 <span class="dr-opt-text">
@@ -184,13 +186,7 @@
                 {{-- 3. Payment --}}
                 <fieldset class="dr-sec" data-step-panel="3" hidden>
                     <legend class="dr-sec-title">Purpose and payment</legend>
-                    <p class="dr-sec-hint">
-                        @if ($processingFee > 0)
-                            The processing fee is <strong>₱{{ number_format($processingFee, 2) }}</strong>. The Cashier verifies every payment.
-                        @else
-                            There’s no processing fee for this booking.
-                        @endif
-                    </p>
+                    <p class="dr-sec-hint">Document fee: <strong data-document-fee>{{ $selectedFee === null ? 'Choose a document first' : '₱'.number_format($selectedFee, 2) }}</strong>. The Cashier verifies every payment.</p>
 
                     <div class="dr-field">
                         <label class="dr-label" for="bk-purpose">What is it for?</label>
@@ -237,11 +233,7 @@
                             </div>
                             <div class="dr-gcash-fields">
                                 <p class="dr-gcash-note">
-                                    @if ($processingFee > 0)
-                                        Send exactly <strong>₱{{ number_format($processingFee, 2) }}</strong>, then add the reference number and a screenshot of the receipt.
-                                    @else
-                                        Pay the amount the Registrar advised, then add the reference number and a screenshot of the receipt.
-                                    @endif
+                                    Send exactly <strong data-gcash-fee>{{ $selectedFee === null ? 'the document fee' : '₱'.number_format($selectedFee, 2) }}</strong>, then add the reference number and a screenshot of the receipt.
                                 </p>
                                 <div class="dr-field">
                                     <label class="dr-label" for="gcash-ref">GCash reference number</label>
@@ -293,8 +285,8 @@
                 </div>
                 <div class="dr-slip-tear" aria-hidden="true"></div>
                 <div class="dr-slip-total">
-                    <span class="dr-slip-total-label">Processing fee</span>
-                    <span class="dr-slip-total-amount {{ $processingFee > 0 ? '' : 'is-free' }}">{{ $feeText }}</span>
+                    <span class="dr-slip-total-label">Document fee</span>
+                    <span class="dr-slip-total-amount {{ $selectedFee === null ? 'is-free' : '' }}" data-slip-fee>{{ $feeText }}</span>
                 </div>
                 <div class="dr-slip-foot">
                     <button type="button" class="dr-slip-back" id="bkBack" hidden>Back</button>

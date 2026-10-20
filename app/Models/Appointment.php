@@ -32,6 +32,11 @@ class Appointment extends Model
         return $this->hasOne(\App\Models\AppointmentPayment::class)->latestOfMany();
     }
 
+    public function documentRequest()
+    {
+        return $this->hasOne(DocumentRequest::class);
+    }
+
     public function isPaid(): bool
     {
         return $this->payments()->where('status', 'verified')->exists();

@@ -2,69 +2,62 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <style>
-        * { font-family: Arial, sans-serif; font-size: 12px; }
-        body { margin: 20px; color: #1E293B; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0F4CDB; padding-bottom: 12px; }
-        .header h1 { font-size: 20px; color: #0F4CDB; margin: 0 0 4px; }
-        .header p  { font-size: 11px; color: #64748B; margin: 0; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th {
-            background: #0F4CDB; color: #fff; padding: 8px 10px;
-            text-align: left; font-size: 11px; text-transform: uppercase;
-        }
-        tbody tr:nth-child(even) { background: #F8FAFC; }
-        tbody td { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; }
-        .total-row td { background: #EEF2FF; font-weight: bold; color: #0F4CDB; }
-        .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #94A3B8; }
-        .summary { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
-        .total { font-size: 20px; font-weight: bold; color: #15803D; }
-    </style>
+    <title>Payment Report</title>
+    @include('admin.reports._report-styles')
 </head>
 <body>
 
-<div class="header">
-    <h1>Danao Technological College</h1>
-    <p>Payment Report — Generated {{ now()->format('F d, Y h:i A') }}</p>
-</div>
+<table class="brand">
+    <tr>
+        <td>
+            <div class="college">Danao Technological College</div>
+            <div class="sub">Centralized Enrollment System</div>
+        </td>
+        <td class="title">
+            <b>Payment Report</b>
+            <span>Generated {{ now()->format('F d, Y h:i A') }}</span>
+        </td>
+    </tr>
+</table>
 
-<div class="summary">
-    <strong>Total Collection:</strong>
-    <span class="total">₱{{ number_format($totalRevenue, 2) }}</span>
-    &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>Total Transactions:</strong> {{ $payments->count() }}
-    &nbsp;&nbsp;|&nbsp;&nbsp;
-    <strong>Avg. per Verified Transaction:</strong>
-    ₱{{ $verifiedCount > 0 ? number_format($totalRevenue / $verifiedCount, 2) : '0.00' }}
-</div>
+<table class="stats">
+    <tr>
+        <td class="ok"><span class="num">₱{{ number_format($totalRevenue, 2) }}</span><span class="lbl">Total Collection</span></td>
+        <td><span class="num">{{ $payments->count() }}</span><span class="lbl">Total Transactions</span></td>
+        <td><span class="num">₱{{ $verifiedCount > 0 ? number_format($totalRevenue / $verifiedCount, 2) : '0.00' }}</span><span class="lbl">Avg. per Verified Transaction</span></td>
+    </tr>
+</table>
 
-<table>
+<table class="data">
     <thead>
         <tr>
-            <th>#</th>
+            <th style="width:4%">#</th>
             <th>Receipt No.</th>
             <th>Student</th>
             <th>Program</th>
-            <th>Amount</th>
+            <th class="num-col">Amount</th>
             <th>Processed By</th>
             <th>Date Paid</th>
         </tr>
     </thead>
     <tbody>
-        @foreach ($payments as $i => $payment)
+        @forelse ($payments as $i => $payment)
         <tr>
-            <td>{{ $i + 1 }}</td>
-            <td><strong>{{ $payment->receipt_no }}</strong></td>
-            <td>{{ $payment->enrollment->user->name }}</td>
+            <td class="muted">{{ $i + 1 }}</td>
+            <td class="strong mono">{{ $payment->receipt_no }}</td>
+            <td class="strong">{{ $payment->enrollment->user->name }}</td>
             <td>{{ $payment->enrollment->program->code }}</td>
-            <td><strong>₱{{ number_format($payment->amount, 2) }}</strong></td>
-            <td>{{ $payment->cashier->name }}</td>
-            <td>{{ $payment->paid_at->format('M d, Y') }}</td>
+            <td class="num-col strong">₱{{ number_format($payment->amount, 2) }}</td>
+            <td>{{ $payment->cashier->name ?? '—' }}</td>
+            <td class="muted">{{ optional($payment->paid_at)->format('M d, Y') ?? '—' }}</td>
         </tr>
-        @endforeach
+        @empty
+        <tr><td colspan="7" class="empty">No payments found.</td></tr>
+        @endforelse
         <tr class="total-row">
-            <td colspan="4" style="text-align:right;">TOTAL COLLECTED:</td>
-            <td colspan="3">₱{{ number_format($totalRevenue, 2) }}</td>
+            <td colspan="4" style="text-align:right;">TOTAL COLLECTED</td>
+            <td class="amt num-col">₱{{ number_format($totalRevenue, 2) }}</td>
+            <td colspan="2"></td>
         </tr>
     </tbody>
 </table>

@@ -12,6 +12,7 @@ use App\Models\Program;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -233,102 +234,147 @@ class ApplicationController extends Controller
 
     public function reject(Request $request, Application $application)
     {
-        // ── Only allow rejection for applications under review ───────────
-        if ($application->status !== 'under_review') {
-            return redirect()->route('registrar.applications.show', $application)
-                ->with('error', 'This application must be under review before it can be rejected.');
-        }
-
         $validated = $request->validate([
             'remarks' => ['required', 'string', 'max:500'],
         ]);
 
-        $application->update([
-            'status'      => 'rejected',
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-            'remarks'     => $validated['remarks'],
-        ]);
+        $application = $this->transitionApplication($application, 'rejected', $validated['remarks']);
+        if (! $application) {
+            return redirect()->route('registrar.applications.show', $request->route('application'))
+                ->with('error', 'This application must be under review before it can be rejected.');
+        }
 
-        Mail::to($application->email)->send(
-            new ApplicationRejected($application)
+        $delivery = $this->notifyApplicationDecision(
+            $application,
+            new ApplicationRejected($application),
+            'Application Rejected',
+            'Registrar rejected the pre-enrollment application for ' . $application->first_name . ' ' . $application->last_name . '. Reason: ' . $validated['remarks'],
+            'warning',
+            'Application Rejected',
+            'Your pre-enrollment application was not approved. Reason: ' . $validated['remarks'],
+            'danger'
         );
 
-        // ── Notify Admin ─────────────────────────────────────────────────
-        $admins = User::role('admin')->get();
-        foreach ($admins as $admin) {
-            NotificationService::send(
-                $admin,
-                'Application Rejected',
-                'Registrar rejected the pre-enrollment application for ' . $application->first_name . ' ' . $application->last_name . '. Reason: ' . $validated['remarks'],
-                'warning',
-                route('registrar.applications.show', $application)
-            );
-        }
-
-        // ── Notify Student if they have an account ─────────────────────
-        if ($application->user) {
-            NotificationService::send(
-                $application->user,
-                'Application Rejected',
-                'Your pre-enrollment application was not approved. Reason: ' . $validated['remarks'],
-                'danger',
-                route('portal.application.show')
-            );
-        }
-
         return redirect()->route('registrar.applications.index')
-            ->with('success', 'Application rejected. The applicant has been notified by email.');
+            ->with($delivery['ok'] ? 'success' : 'warning', 'Application rejected. ' . $delivery['message']);
     }
 
     public function revision(Request $request, Application $application)
     {
-        // ── Only allow revision requests for applications under review ───
-        if ($application->status !== 'under_review') {
-            return redirect()->route('registrar.applications.show', $application)
-                ->with('error', 'This application must be under review before requesting revision.');
-        }
-
         $validated = $request->validate([
             'remarks' => ['required', 'string', 'max:500'],
         ]);
 
-        $application->update([
-            'status'      => 'revision_required',
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-            'remarks'     => $validated['remarks'],
-        ]);
+        $application = $this->transitionApplication($application, 'revision_required', $validated['remarks']);
+        if (! $application) {
+            return redirect()->route('registrar.applications.show', $request->route('application'))
+                ->with('error', 'This application must be under review before requesting revision.');
+        }
 
-        Mail::to($application->email)->send(
-            new ApplicationRevisionRequired($application)
+        $delivery = $this->notifyApplicationDecision(
+            $application,
+            new ApplicationRevisionRequired($application),
+            'Application Requires Revision',
+            'Registrar requested revision on the pre-enrollment application for ' . $application->first_name . ' ' . $application->last_name . '.',
+            'info',
+            'Action Required: Application Revision',
+            'Your application requires document corrections. Please review the remarks and contact the Registrar.',
+            'warning'
         );
 
-        // ── Notify Admin ─────────────────────────────────────────────────
-        $admins = User::role('admin')->get();
-        foreach ($admins as $admin) {
-            NotificationService::send(
-                $admin,
-                'Application Requires Revision',
-                'Registrar requested revision on the pre-enrollment application for ' . $application->first_name . ' ' . $application->last_name . '.',
-                'info',
-                route('registrar.applications.show', $application)
-            );
-        }
-
-        // ── Notify Student if they have an account ─────────────────────
-        if ($application->user) {
-            NotificationService::send(
-                $application->user,
-                'Action Required: Application Revision',
-                'Your application requires document corrections. Please review the remarks and contact the Registrar.',
-                'warning',
-                route('portal.application.show')
-            );
-        }
-
         return redirect()->route('registrar.applications.index')
-            ->with('success', 'Revision requested. The applicant has been notified by email.');
+            ->with($delivery['ok'] ? 'success' : 'warning', 'Revision requested. ' . $delivery['message']);
+    }
+
+    /** Atomically claim the review transition so retried requests cannot duplicate notices. */
+    private function transitionApplication(Application $application, string $status, string $remarks): ?Application
+    {
+        return DB::transaction(function () use ($application, $status, $remarks) {
+            $locked = Application::whereKey($application->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'under_review') {
+                return null;
+            }
+
+            $locked->update([
+                'status' => $status,
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+                'remarks' => $remarks,
+            ]);
+
+            return $locked->fresh(['user']);
+        });
+    }
+
+    /** Deliver email and in-app alerts after the state transition has committed. */
+    private function notifyApplicationDecision(
+        Application $application,
+        Mailable $mail,
+        string $adminTitle,
+        string $adminMessage,
+        string $adminTone,
+        string $applicantTitle,
+        string $applicantMessage,
+        string $applicantTone
+    ): array {
+        $emailSent = false;
+        if (filter_var($application->email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                Mail::to($application->email)->send($mail);
+                $emailSent = true;
+            } catch (\Throwable $exception) {
+                Log::warning('Application decision email delivery failed.', [
+                    'application_id' => $application->id,
+                    'exception' => get_class($exception),
+                ]);
+            }
+        } else {
+            Log::warning('Application decision email has no valid destination.', [
+                'application_id' => $application->id,
+            ]);
+        }
+
+        $notificationsOk = true;
+        try {
+            foreach (User::role('admin')->get() as $admin) {
+                $notificationsOk = NotificationService::sendSafely(
+                    $admin,
+                    $adminTitle,
+                    $adminMessage,
+                    $adminTone,
+                    route('registrar.applications.show', $application)
+                ) && $notificationsOk;
+            }
+        } catch (\Throwable $exception) {
+            $notificationsOk = false;
+            Log::warning('Application decision admin notifications failed.', [
+                'application_id' => $application->id,
+                'exception' => get_class($exception),
+            ]);
+        }
+
+        if ($application->user) {
+            $notificationsOk = NotificationService::sendSafely(
+                $application->user,
+                $applicantTitle,
+                $applicantMessage,
+                $applicantTone,
+                route('portal.application.show')
+            ) && $notificationsOk;
+        }
+
+        $messages = [];
+        if (! $emailSent) {
+            $messages[] = 'Email could not be delivered; ' . ($application->email ? 'the saved email address may need correction or SMTP needs attention.' : 'no email address is on file.');
+        }
+        if (! $notificationsOk) {
+            $messages[] = 'One or more in-app notifications could not be saved.';
+        }
+
+        return [
+            'ok' => $emailSent && $notificationsOk,
+            'message' => $messages ? implode(' ', $messages) : 'The applicant has been notified by email and in the portal where an account exists.',
+        ];
     }
 
     public function downloadDocument(Application $application, ApplicationDocument $document)

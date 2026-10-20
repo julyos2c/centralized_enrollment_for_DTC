@@ -105,44 +105,36 @@
     {{-- LEFT: Recent Requests --}}
     <div class="col-lg-8">
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="font-weight-bold">Recent Document Requests</span>
-                <a href="{{ route('portal.documents.index') }}"
-                   style="font-size:12px; color:var(--dtc-primary); text-decoration:none; font-weight:600;">
-                    View All
-                </a>
+            <div class="card-header dtc-recent-head">
+                <span class="font-weight-bold">Recent Requests</span>
+                <a href="{{ route('portal.documents.index') }}" class="dtc-recent-all">View all</a>
             </div>
             <div class="card-body p-0">
                 @forelse ($recentRequests as $req)
-                <div style="padding:14px 20px; border-bottom:1px solid var(--dtc-border-soft);
-                            display:flex; align-items:center; justify-content:space-between;">
-                    <div  class="u-flex-center-gap-12">
-                        <div class="dtc-icon-swatch is-primary" style="flex-shrink:0;">
-                            <i data-lucide="file-text" class="u-link-md"></i>
-                        </div>
-                        <div>
-                            <div  class="u-text-sm-bold">
-                                {{ $req->document_label }}
-                            </div>
-                            <div  class="u-text-xs-secondary">
-                                {{ $req->copies }} cop{{ $req->copies> 1 ? 'ies' : 'y' }} ·
-                                {{ $req->created_at->format('M d, Y') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column align-items-end" style="gap:5px;">
-                        <span class="dtc-status-badge is-{{ $statusTones[$req->status] ?? 'neutral' }}" style="font-weight:700;">{{ ucfirst($req->status) }}</span>
-                        @php $paymentTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'][$req->payment_status] ?? 'neutral'; @endphp
-                        <span class="dtc-status-badge is-{{ $paymentTone }}">{{ ucwords(str_replace('_', ' ', $req->payment_status)) }}</span>
-                    </div>
-                </div>
+                    @php
+                        $statusText  = ['submitted' => 'Submitted', 'processing' => 'Preparing', 'ready' => 'Ready', 'released' => 'Released'][$req->status] ?? ucfirst($req->status);
+                        $paymentTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'][$req->payment_status] ?? 'neutral';
+                        $paymentText = ['unpaid' => 'Unpaid', 'pending_verification' => 'Under review', 'verified' => 'Paid', 'rejected' => 'Rejected'][$req->payment_status] ?? ucwords(str_replace('_', ' ', $req->payment_status));
+                    @endphp
+                    <a href="{{ route('portal.documents.index') }}" class="dtc-recent-row">
+                        <span class="dtc-recent-main">
+                            <span class="dtc-recent-name">{{ $req->document_label }}</span>
+                            <span class="dtc-recent-meta">{{ $req->copies }} {{ $req->copies > 1 ? 'copies' : 'copy' }} · {{ $req->created_at->format('M j, Y') }}</span>
+                        </span>
+                        <span class="dtc-recent-status">
+                            <span class="dtc-status-badge is-{{ $statusTones[$req->status] ?? 'neutral' }}">{{ $statusText }}</span>
+                            @if ($req->payment_status === 'verified')
+                                <span class="dtc-recent-paid">{{ $paymentText }}</span>
+                            @else
+                                <span class="dtc-status-badge is-{{ $paymentTone }}">{{ $paymentText }}</span>
+                            @endif
+                        </span>
+                    </a>
                 @empty
-                <div class="text-center py-4 u-muted" >
-                    <i data-lucide="folder-open" class="mb-2" style="width:2em;height:2em"></i>
-                    <p  class="u-text-sm">No document requests yet.</p>
-                    <a href="{{ route('portal.documents.create') }}"
-                       class="btn btn-primary btn-sm">Request Document</a>
-                </div>
+                    <div class="text-center py-4 u-muted">
+                        <p class="u-text-sm mb-2">No document requests yet.</p>
+                        <a href="{{ route('portal.documents.create') }}" class="btn btn-primary btn-sm">Request a document</a>
+                    </div>
                 @endforelse
             </div>
         </div>
@@ -220,6 +212,23 @@
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<style>
+    .dtc-recent-head { display: flex !important; align-items: center; justify-content: space-between !important; gap: 14px; padding-left: 20px !important; padding-right: 20px !important; }
+    .dtc-recent-all { margin-left: auto; text-align: right; }
+    .dtc-recent-all { font-size: 13px; font-weight: 600; color: var(--dtc-primary); text-decoration: none; }
+    .dtc-recent-all:hover { text-decoration: underline; }
+    body.dtc-dark .dtc-recent-all { color: #93C5FD; }
+    .dtc-recent-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; padding: 12px 20px; border-bottom: 1px solid var(--dtc-border-soft); color: inherit; text-decoration: none; }
+    .dtc-recent-row:last-child { border-bottom: 0; }
+    .dtc-recent-row:hover { background: var(--dtc-surface-soft); color: inherit; text-decoration: none; }
+    .dtc-recent-row:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: -2px; }
+    .dtc-recent-main { display: grid; gap: 2px; min-width: 0; }
+    .dtc-recent-name { font-size: 14px; font-weight: 600; color: var(--dtc-text); overflow-wrap: anywhere; }
+    .dtc-recent-meta { font-size: 12.5px; color: var(--dtc-text-secondary); }
+    .dtc-recent-status { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .dtc-recent-paid { font-size: 12px; font-weight: 600; color: var(--dtc-text-secondary); padding-right: 2px; }
+    @media (max-width: 575.98px) { .dtc-recent-row { padding: 12px 16px; } .dtc-recent-head { padding-left: 16px !important; padding-right: 16px !important; } }
+</style>
 @endsection
 
 @section('js')

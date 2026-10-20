@@ -256,12 +256,15 @@ use App\Http\Controllers\Portal\ProfileController;
     Route::put('/appointments/{appointment}', [StudentAppointmentController::class, 'update'])->name('appointments.update');
     Route::post('/appointments/{appointment}/payment/gcash', [StudentAppointmentController::class, 'submitGcash'])->name('appointments.payment.gcash');
     Route::get('/appointments/payment/proof/{payment}', [StudentAppointmentController::class, 'viewProof'])->name('appointments.payment.proof');
+    Route::post('/appointments/document-requests/{documentRequest}/payment/gcash', [StudentAppointmentController::class, 'submitDocumentGcash'])->name('appointments.document-payment.gcash');
+    Route::get('/appointments/document-requests/{documentRequest}/payment/proof', [StudentAppointmentController::class, 'viewDocumentProof'])->name('appointments.document-payment.proof');
     Route::get('/appointments/payment/gcash-qr', [StudentAppointmentController::class, 'showGcashQr'])->name('appointments.gcash.qr');
 
     Route::middleware('role:alumni')->group(function () {
         Route::get('/documents', [AlumniDocumentController::class, 'index'])->name('documents.index');
         Route::get('/documents/create', [AlumniDocumentController::class, 'create'])->name('documents.create');
         Route::post('/documents', [AlumniDocumentController::class, 'store'])->name('documents.store');
+        Route::post('/documents/{documentRequest}/pickup-appointment', [AlumniDocumentController::class, 'bookPickup'])->name('documents.pickup-appointment');
         Route::post('/documents/{documentRequest}/payment', [AlumniDocumentController::class, 'submitPayment'])->name('documents.payment.submit');
         Route::get('/documents/{documentRequest}/proof', [AlumniDocumentController::class, 'viewProof'])->name('documents.payment.proof');
         Route::get('/documents/gcash-qr', [AlumniDocumentController::class, 'showGcashQr'])->name('documents.gcash.qr');

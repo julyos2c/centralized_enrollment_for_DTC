@@ -83,16 +83,28 @@ class NotificationController extends Controller
             return route('notifications.index');
         }
 
-        if (! isset($parts['host'])) {
-            return str_starts_with($link, '/') ? $link : route('notifications.index');
-        }
+        if (isset($parts['host'])) {
+            $applicationHost = parse_url(config('app.url'), PHP_URL_HOST);
+            $requestHost = request()->getHost();
+            $allowedHosts = array_filter([$applicationHost, $requestHost], 'is_string');
 
-        $applicationHost = parse_url(config('app.url'), PHP_URL_HOST);
-        if (! is_string($applicationHost) || ! hash_equals(strtolower($applicationHost), strtolower($parts['host']))) {
+            if (! collect($allowedHosts)->contains(fn ($host) => hash_equals(strtolower($host), strtolower($parts['host'])))) {
+                return route('notifications.index');
+            }
+        } elseif (! str_starts_with($link, '/') || str_starts_with($link, '//')) {
             return route('notifications.index');
         }
 
-        $path = $parts['path'] ?? '';
+        // Redirect through the current application host so notifications created
+        // behind a proxy or under an old APP_URL still open their intended page.
+        $path = $parts['path'] ?? '/';
+        if (! str_starts_with($path, '/') || str_starts_with($path, '//') || str_contains($path, '\\')) {
+            return route('notifications.index');
+        }
+        $destination = $path
+            . (isset($parts['query']) ? '?' . $parts['query'] : '')
+            . (isset($parts['fragment']) ? '#' . $parts['fragment'] : '');
+
         if (
             Auth::user()?->hasAnyRole(['registrar', 'admin'])
             && preg_match('#^/registrar/enrollments/(\d+)$#', $path, $matches)
@@ -104,6 +116,6 @@ class NotificationController extends Controller
                 : route('registrar.enrollments.index');
         }
 
-        return $link;
+        return url($destination);
     }
 }

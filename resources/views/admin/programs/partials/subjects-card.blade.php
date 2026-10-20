@@ -22,44 +22,18 @@
         @endif
     </div>
     @if($selectedProgram)
-    <button type="button" class="dtc-btn dtc-btn-primary dtc-header-btn" data-toggle="modal" data-target="#addSubjectModal">
+    <button type="button" class="dtc-btn dtc-btn-primary dtc-header-btn" aria-label="Add subject" data-toggle="modal" data-target="#addSubjectModal">
         <i data-lucide="plus"></i>
         <span class="dtc-header-btn-label">Add Subject</span>
     </button>
     @endif
 </div>
 
-<style>
-/* Desktop/tablet: single line, shrinks with clamp(), truncates if truly
-   too long. Mobile: instead of truncating a long program name into an
-   unreadable fragment, let it wrap onto 2 lines and stack the button
-   below it (same placement behavior requested earlier on mobile). */
-.dtc-subjects-title {
-    font-size: clamp(15px, 4.2vw, 22px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-@media (max-width: 575.98px) {
-    .dtc-subjects-header {
-        flex-direction: column;
-        align-items: flex-start !important;
-    }
-    .dtc-subjects-title {
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-        font-size: 18px;
-        line-height: 1.3;
-    }
-}
-</style>
-
 <div class="card mb-0">
     @if($selectedProgram)
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0">
+        <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="Subjects for selected program" tabindex="0">
+            <table class="table mb-0 dtc-subjects-table">
                 <thead>
                     <tr>
                         <th>Code</th>

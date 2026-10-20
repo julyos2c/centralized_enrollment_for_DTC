@@ -4,7 +4,8 @@
     var form = document.getElementById('bkForm');
     if (!form) return;
 
-    var fee = parseFloat(form.getAttribute('data-fee')) || 0;
+    var fees = {};
+    try { fees = JSON.parse(form.getAttribute('data-fees') || '{}'); } catch (e) { fees = {}; }
     var step = 1;
     var reached = 1;
     var nextBtn = document.getElementById('bkNext');
@@ -21,6 +22,9 @@
     var checked = function (name) { return $('input[name="' + name + '"]:checked'); };
     var show = function (el, on) { if (el) el.classList.toggle('is-shown', !!on); };
     var errFor = function (key) { return $('[data-step-error="' + key + '"]'); };
+    var peso = function (amount) {
+        return '₱' + Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     /* ---------- summary (slip + review) ---------- */
     var setText = function (sel, text, empty) {
@@ -44,6 +48,17 @@
         setText('[data-review="time"]', slot ? slot.getAttribute('data-time') : '—');
         setText('[data-review="pay"]', pay ? (pay.value === 'gcash' ? 'GCash (receipt will be verified)' : 'Cashier’s Office') : '—');
         setText('[data-review="purpose"]', purpose && purpose.value.trim() ? purpose.value.trim() : '—');
+
+        var documentFee = doc ? Number(fees[doc.value]) || 0 : null;
+        var feeText = documentFee === null ? 'Choose a document first' : peso(documentFee);
+        form.querySelectorAll('[data-document-fee], [data-gcash-fee]').forEach(function (el) {
+            el.textContent = documentFee === null ? (el.hasAttribute('data-gcash-fee') ? 'the document fee' : feeText) : feeText;
+        });
+        var slipFee = $('[data-slip-fee]');
+        if (slipFee) {
+            slipFee.textContent = documentFee === null ? 'Choose a document' : feeText;
+            slipFee.classList.toggle('is-free', documentFee === null);
+        }
 
         if (picked) {
             picked.textContent = slot

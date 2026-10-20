@@ -21,14 +21,6 @@
         ->map(fn($p) => strtoupper(substr($p, 0, 1)))->implode('');
 @endphp
 
-{{-- ── Flash alerts ─────────────────────────────────────────────────────── --}}
-@if (session('success'))
-<div class="alert dtc-alert-success d-flex align-items-center gap-2 mb-4" role="alert">
-    <i data-lucide="check-circle" style="width:18px;height:18px;flex-shrink:0;"></i>
-    <span>{{ session('success') }}</span>
-</div>
-@endif
-
 @if ($errors->any() && !$errors->has('current_password') && !$errors->has('password'))
 <div class="alert dtc-alert-danger d-flex align-items-center gap-2 mb-4" role="alert">
     <i data-lucide="alert-circle" style="width:18px;height:18px;flex-shrink:0;"></i>

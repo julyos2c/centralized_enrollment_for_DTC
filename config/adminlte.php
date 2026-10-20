@@ -157,7 +157,7 @@ return [
     'layout_boxed' => null,
     'layout_fixed_sidebar' => true,
     'layout_fixed_navbar' => true,
-    'layout_fixed_footer' => true,
+    'layout_fixed_footer' => false,
     'layout_dark_mode' => null,
     
     /*
@@ -191,7 +191,7 @@ return [
     |
     */
 
-    'classes_body' => 'layout-footer-fixed',
+    'classes_body' => '',
     'classes_brand' => '',
     'classes_brand_text' => '',
     'classes_content_wrapper' => '',

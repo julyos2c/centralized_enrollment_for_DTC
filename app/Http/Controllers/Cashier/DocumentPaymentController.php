@@ -22,6 +22,7 @@ class DocumentPaymentController extends Controller
 
         $search = trim((string) $request->query('search', ''));
         $query = DocumentRequest::with('user')
+            ->where('status', '!=', 'cancelled')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('id', ctype_digit($search) ? (int) $search : -1)
@@ -39,6 +40,7 @@ class DocumentPaymentController extends Controller
 
         $requests = $query->paginate(15)->withQueryString();
         $counts = DocumentRequest::query()
+            ->where('status', '!=', 'cancelled')
             ->selectRaw('payment_status, COUNT(*) as total')
             ->groupBy('payment_status')
             ->pluck('total', 'payment_status');
@@ -71,16 +73,19 @@ class DocumentPaymentController extends Controller
         ]);
 
         $this->verifyPayment($request, $documentRequest, 'walk_in', $validated);
+        $documentRequest->refresh();
 
-        NotificationService::send(
+        $message = $documentRequest->status === 'ready'
+            ? 'Your payment was recorded and your document is ready for pickup at the Registrar’s Office.'
+            : 'The Cashier recorded your walk-in payment for document request #' . $documentRequest->id . '.';
+        NotificationService::sendSafely(
             $documentRequest->user,
             'Document Fee Recorded',
-            $documentRequest->status === 'ready'
-                ? 'Your payment was recorded and your document is ready for pickup at the Registrar’s Office.'
-                : 'The Cashier recorded your walk-in payment for document request #' . $documentRequest->id . '.',
+            $message,
             'success',
-            route('portal.documents.index')
+            $this->requesterDestination($documentRequest)
         );
+        NotificationService::emailDocumentRequestSafely($documentRequest->user, $documentRequest, $message);
 
         return redirect()->route('cashier.document-payments.show', $documentRequest)
             ->with('success', 'Walk-in payment recorded and verified.');
@@ -94,16 +99,19 @@ class DocumentPaymentController extends Controller
         ]);
 
         $this->verifyPayment($request, $documentRequest, 'gcash_qr', $validated);
+        $documentRequest->refresh();
 
-        NotificationService::send(
+        $message = $documentRequest->status === 'ready'
+            ? 'Your GCash payment is verified and your document is ready for pickup at the Registrar’s Office.'
+            : 'The Cashier verified your GCash payment for document request #' . $documentRequest->id . '.';
+        NotificationService::sendSafely(
             $documentRequest->user,
             'Document GCash Payment Verified',
-            $documentRequest->status === 'ready'
-                ? 'Your GCash payment is verified and your document is ready for pickup at the Registrar’s Office.'
-                : 'The Cashier verified your GCash payment for document request #' . $documentRequest->id . '.',
+            $message,
             'success',
-            route('portal.documents.index')
+            $this->requesterDestination($documentRequest)
         );
+        NotificationService::emailDocumentRequestSafely($documentRequest->user, $documentRequest, $message);
 
         return redirect()->route('cashier.document-payments.show', $documentRequest)
             ->with('success', 'GCash payment verified against the received funds.');
@@ -115,7 +123,7 @@ class DocumentPaymentController extends Controller
             $locked = DocumentRequest::whereKey($documentRequest->id)->lockForUpdate()->firstOrFail();
             $expectedStatus = $method === 'gcash_qr' ? 'pending_verification' : 'unpaid';
 
-            if ($locked->payment_method !== $method || $locked->payment_status !== $expectedStatus || $locked->is_paid) {
+            if ($locked->status === 'cancelled' || $locked->payment_method !== $method || $locked->payment_status !== $expectedStatus || $locked->is_paid) {
                 throw ValidationException::withMessages([
                     'payment' => 'This document payment is no longer eligible for verification.',
                 ]);
@@ -145,6 +153,7 @@ class DocumentPaymentController extends Controller
             ]);
 
             $this->audit($request, $locked, 'document_payment.verified', "Verified {$method} payment of PHP {$received} for document request #{$locked->id}.");
+            NotificationService::enqueueDocumentPaymentVerified($locked);
         });
     }
 
@@ -156,7 +165,7 @@ class DocumentPaymentController extends Controller
 
         DB::transaction(function () use ($request, $documentRequest, $validated) {
             $locked = DocumentRequest::whereKey($documentRequest->id)->lockForUpdate()->firstOrFail();
-            if ($locked->payment_method !== 'gcash_qr' || $locked->payment_status !== 'pending_verification' || $locked->is_paid) {
+            if ($locked->status === 'cancelled' || $locked->payment_method !== 'gcash_qr' || $locked->payment_status !== 'pending_verification' || $locked->is_paid) {
                 throw ValidationException::withMessages(['payment' => 'Only a pending GCash claim can be rejected.']);
             }
 
@@ -176,13 +185,17 @@ class DocumentPaymentController extends Controller
             );
         });
 
-        NotificationService::send(
+        $documentRequest->refresh();
+        $requestPage = $documentRequest->user->hasRole('alumni') ? 'My Requests' : 'My Appointments';
+        $message = 'The Cashier could not verify payment for document request #' . $documentRequest->id . '. Reason: ' . $validated['rejection_reason'] . ' You may submit corrected payment details from ' . $requestPage . '.';
+        NotificationService::sendSafely(
             $documentRequest->user,
             'Document GCash Payment Needs Attention',
-            'The Cashier could not verify payment for document request #' . $documentRequest->id . '. Reason: ' . $validated['rejection_reason'] . ' You may submit corrected payment details from My Requests.',
+            $message,
             'danger',
-            route('portal.documents.index')
+            $this->requesterDestination($documentRequest)
         );
+        NotificationService::emailDocumentRequestSafely($documentRequest->user, $documentRequest, $message);
 
         return redirect()->route('cashier.document-payments.show', $documentRequest)
             ->with('success', 'GCash claim rejected. The requester has been notified.');
@@ -204,5 +217,12 @@ class DocumentPaymentController extends Controller
                 'receipt_no' => $documentRequest->receipt_no,
             ], $extraMetadata),
         ]);
+    }
+
+    private function requesterDestination(DocumentRequest $documentRequest): string
+    {
+        return $documentRequest->user->hasRole('alumni')
+            ? route('portal.documents.index')
+            : route('portal.appointments.index');
     }
 }

@@ -22,7 +22,7 @@
 @section('content')
 
 
-<div class="row">
+<div class="row dtc-subjects-page">
     {{-- Add Subject Form --}}
     <div class="col-lg-4 mb-3">
         <div class="card">
@@ -76,7 +76,7 @@
     </div>
 
     {{-- Subjects List --}}
-    <div class="col-lg-8 mb-3">
+    <div class="col-lg-8">
         @foreach([1,2,3,4] as $year)
             @foreach([1,2] as $sem)
                 @php
@@ -93,7 +93,8 @@
                         </span>
                     </div>
                     <div class="card-body p-0">
-                        <table class="table mb-0">
+                        <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="Subjects by year and semester" tabindex="0">
+                        <table class="table mb-0 dtc-program-subject-table">
                             <thead>
                                 <tr>
                                     <th>Code</th>
@@ -134,6 +135,7 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
                 @endif

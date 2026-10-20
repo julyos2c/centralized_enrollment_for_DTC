@@ -7,7 +7,7 @@
     <div class="dr dr-head">
         <div>
             <h1>My document requests</h1>
-            <p>See where each request is, what you owe, and when it’s ready to collect.</p>
+            <p>Track status, payment and pickup.</p>
         </div>
         <a href="{{ route('portal.documents.create') }}" class="dr-btn dr-btn--primary">
             <i data-lucide="plus" aria-hidden="true"></i> Request a document
@@ -36,22 +36,11 @@
 @section('content')
 <div class="dr dr-index" id="request-history">
 
-    @if (session('success'))
-        <div class="dr-alert dr-alert--ok" role="status">
-            <i data-lucide="circle-check" aria-hidden="true"></i><div>{{ session('success') }}</div>
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="dr-alert dr-alert--error" role="alert">
-            <i data-lucide="circle-alert" aria-hidden="true"></i><div>{{ session('error') }}</div>
-        </div>
-    @endif
 
     <div class="dtc-dashboard-overview dtc-dashboard-overview--four mb-3" aria-label="Document request summary">
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Total requests</span>
             <strong>{{ $totalRequests }}</strong>
-            <span class="dtc-overview-note">All document requests</span>
         </div>
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Ready for pickup</span>
@@ -61,12 +50,10 @@
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Released</span>
             <strong>{{ $releasedDocs }}</strong>
-            <span class="dtc-overview-note">Collected documents</span>
         </div>
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Total fees</span>
             <strong>&#8369;{{ number_format($totalFees, 2) }}</strong>
-            <span class="dtc-overview-note">Across all requests</span>
         </div>
     </div>
 
@@ -75,7 +62,7 @@
     @if ($items->isEmpty())
         <div class="dr-empty">
             <h2>No requests yet</h2>
-            <p>Request a Transcript of Records, Diploma, Certification or True Copy. You can track every request here.</p>
+            <p>Your requests will appear here.</p>
             <a href="{{ route('portal.documents.create') }}" class="dr-btn dr-btn--primary">
                 <i data-lucide="plus" aria-hidden="true"></i> Request a document
             </a>
@@ -116,9 +103,6 @@
                                 <p class="dr-req-purpose">Purpose: {{ $req->purpose }}</p>
                             @endif
                         </div>
-                        <span class="dtc-status-badge is-{{ $badgeTone[$req->status] ?? 'neutral' }}" data-doc-status="{{ $req->status }}">
-                            {{ $badgeText[$req->status] ?? ucfirst($req->status) }}
-                        </span>
                     </div>
 
                     <ol class="dr-track" aria-label="Progress: step {{ $stage + 1 }} of 4, {{ $stageName[$stage] }}">
@@ -130,18 +114,57 @@
 
                     <p class="dr-step-note">
                         @if ($req->status === 'submitted')
-                            Waiting for the Registrar to review your request.
+                            Waiting for Registrar review.
                         @elseif ($req->status === 'processing')
-                            The Registrar is preparing your document. We’ll notify you when it’s ready.
+                            Being prepared. We’ll notify you when it’s ready.
                         @elseif ($collect)
-                            Ready at the Registrar’s Office. Bring your receipt and a valid ID.
-                            <a href="{{ route('portal.appointments.create') }}">Book a pickup time</a>
+                            @if ($req->appointment?->status === 'confirmed')
+                                Ready and paid.
+                            @elseif ($req->appointment?->status === 'pending')
+                                Ready and paid.
+                            @else
+                                Ready at the Registrar’s Office.
+                                @if ($req->appointment?->status === 'cancelled')
+                                    Your pickup time was cancelled.
+                                @endif
+                                @if ($pickupSlots->isNotEmpty())
+                                    <form method="POST" action="{{ route('portal.documents.pickup-appointment', $req) }}" class="dr-pickup-booking" data-pickup-form>
+                                        @csrf
+                                        <span class="dr-label">{{ $req->appointment?->status === 'cancelled' ? 'Choose a new pickup time' : 'Choose a pickup time' }}</span>
+                                        @include('alumni.requests._pickup-picker', ['slots' => $pickupSlots, 'uid' => $req->id])
+                                        <button type="submit" class="dr-btn dr-btn--primary dr-btn--sm" data-pp-submit disabled>Request pickup time</button>
+                                    </form>
+                                @else
+                                    <span>No pickup times open. Check back later or contact the Registrar.</span>
+                                @endif
+                            @endif
                         @elseif ($req->status === 'ready')
-                            The document is ready, but the Cashier hasn’t verified your payment yet. You can collect it once payment is verified.
+                            Ready. You can collect it once the Cashier verifies your payment.
                         @else
-                            This request has been released to you.
+                            Released to you.
                         @endif
                     </p>
+
+                    @if ($req->appointment && $req->appointment->slot)
+                        <div class="dr-remark" style="margin-top:12px;" aria-label="Pickup appointment">
+                            <i data-lucide="calendar-days" aria-hidden="true"></i>
+                            <span>
+                                <strong>Pickup:</strong>
+                                {{ \Carbon\Carbon::parse($req->appointment->slot->date)->format('M j, Y') }}
+                                at {{ \Carbon\Carbon::parse($req->appointment->slot->start_time)->format('g:i A') }}
+                                — {{ ucfirst($req->appointment->status) }}.
+                                @if ($req->appointment->status === 'pending')
+                                    @if ($collect)
+                                        Awaiting Registrar confirmation.
+                                    @else
+                                        Slot reserved. Confirmed once your document is ready and paid.
+                                    @endif
+                                @elseif ($req->appointment->status === 'cancelled')
+                                    Contact the Registrar to rebook.
+                                @endif
+                            </span>
+                        </div>
+                    @endif
 
                     @if ($req->remarks)
                         <div class="dr-remark" style="margin-top:12px;">
@@ -157,10 +180,10 @@
                         </div>
 
                         @if ($req->payment_status === 'unpaid')
-                            <p class="dr-pay-text">Pay &#8369;{{ number_format($req->fee, 2) }} at the Cashier’s Office. Your payment counts once the Cashier records it.</p>
+                            <p class="dr-pay-text">Pay &#8369;{{ number_format($req->fee, 2) }} at the Cashier’s Office.</p>
                         @elseif ($req->payment_status === 'pending_verification')
                             <p class="dr-pay-text">
-                                Your proof is a claim until the Cashier confirms the funds arrived.
+                                The Cashier is verifying your payment.
                                 @if ($req->proof_of_payment)
                                     <a href="{{ route('portal.documents.payment.proof', $req) }}" target="_blank" rel="noopener">View submitted proof</a>
                                 @endif
@@ -177,7 +200,7 @@
                                     <summary>Resubmit your payment proof</summary>
                                     <form method="POST" action="{{ route('portal.documents.payment.submit', $req) }}" enctype="multipart/form-data" class="dr-resubmit-body">
                                         @csrf
-                                        <p class="dr-help">Pay exactly &#8369;{{ number_format($req->fee, 2) }}, then enter the new reference and upload the receipt.</p>
+                                        <p class="dr-help">Pay exactly &#8369;{{ number_format($req->fee, 2) }}, then add the new reference and receipt.</p>
                                         <div class="dr-resubmit-qr"><img src="{{ route('portal.documents.gcash.qr') }}" alt="Official DTC GCash QR code" loading="lazy"></div>
                                         <div class="dr-field">
                                             <label class="dr-label" for="payment-reference-{{ $req->id }}">GCash reference number</label>
@@ -202,7 +225,7 @@
         </ul>
 
         <div class="dr-empty dr-empty--filter" id="drFilterEmpty" role="status">
-            <p>Nothing here yet. Try another filter.</p>
+            <p>No requests in this filter.</p>
         </div>
 
         @if (method_exists($requests, 'links'))
@@ -214,6 +237,7 @@
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/pickup-picker.css') }}">
 @endsection
 
 @section('js')

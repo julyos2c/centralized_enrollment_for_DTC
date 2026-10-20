@@ -50,6 +50,23 @@ class EnrollmentNotificationRoutingTest extends TestCase
             ->assertRedirect(route('registrar.enrollments.index', ['review' => $enrollment->id]));
     }
 
+    public function test_document_request_notification_opens_the_registrar_document_requests_page(): void
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $notification = $this->notificationFor($registrar->id, route('registrar.documents.index'));
+        $notification->update(['title' => 'New Document Request']);
+
+        $this->actingAs($registrar)
+            ->get(route('notifications.read', $notification))
+            ->assertRedirect(route('registrar.documents.index'));
+
+        $this->assertNotNull($notification->fresh()->read_at);
+
+        $this->get(route('registrar.documents.index'))
+            ->assertOk()
+            ->assertSee('Document Requests');
+    }
+
     public function test_stale_and_external_notification_links_fall_back_to_safe_pages(): void
     {
         $registrar = $this->makeUserWithRole('registrar');

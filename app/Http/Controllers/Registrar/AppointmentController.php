@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\AppointmentPayment;
 use App\Models\AppointmentSlot;
+use App\Models\DocumentRequest;
+use App\Models\Setting;
+use App\Models\User;
 use App\Services\NotificationService;
+use App\Services\AppointmentScheduleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +142,7 @@ class AppointmentController extends Controller
         $pendingPayments = AppointmentPayment::with(['appointment.user', 'appointment.slot'])
             ->where('status', 'pending')
             ->where('payment_method', 'gcash')
+            ->whereHas('appointment', fn ($query) => $query->where('status', '!=', 'cancelled'))
             ->latest()
             ->get();
 
@@ -154,22 +159,139 @@ class AppointmentController extends Controller
 
     public function confirm(Appointment $appointment)
     {
-        $appointment->update(['status' => 'confirmed']);
+        $result = DB::transaction(function () use ($appointment) {
+            $slotId = Appointment::whereKey($appointment->id)->value('appointment_slot_id');
+            $slot = AppointmentSlot::whereKey($slotId)->lockForUpdate()->firstOrFail();
+            $locked = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
 
-        NotificationService::send(
+            if ((int) $locked->appointment_slot_id !== (int) $slot->id) {
+                return 'slot_unavailable';
+            }
+
+            if ($locked->status === 'confirmed') {
+                return 'already_confirmed';
+            }
+            if ($locked->status !== 'pending') {
+                return 'invalid_status';
+            }
+
+            $linkedRequest = DocumentRequest::where('appointment_id', $locked->id)->lockForUpdate()->first();
+            if (! $linkedRequest) {
+                // Safely connect a legacy standalone booking only when there is
+                // exactly one eligible document request it could belong to.
+                $documentTypes = match ($locked->document_type) {
+                    'transcript' => ['tor'],
+                    'tor' => ['tor', 'true_copy'],
+                    default => [$locked->document_type],
+                };
+                $eligibleRequests = DocumentRequest::where('user_id', $locked->user_id)
+                    ->whereIn('document_type', $documentTypes)
+                    ->where('status', 'ready')
+                    ->where('is_paid', true)
+                    ->where('payment_status', 'verified')
+                    ->whereNull('appointment_id')
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($eligibleRequests->count() === 1) {
+                    $linkedRequest = $eligibleRequests->first();
+                    $linkedRequest->update(['appointment_id' => $locked->id]);
+                }
+            }
+            $studentBooking = $linkedRequest
+                && User::whereKey($locked->user_id)->first()?->hasRole(['student', 'new_applicant']);
+            $requestInProgress = $studentBooking && in_array($linkedRequest->status, ['submitted', 'processing'], true);
+            $requestReadyAndPaid = $linkedRequest
+                && $linkedRequest->status === 'ready'
+                && $linkedRequest->is_paid
+                && $linkedRequest->payment_status === 'verified';
+            if ($linkedRequest && ! $requestInProgress && ! $requestReadyAndPaid) {
+                return 'request_not_ready';
+            }
+
+            $schedule = app(AppointmentScheduleService::class);
+            $isPast = $slot->date < today()->toDateString()
+                || ($slot->date === today()->toDateString() && $slot->start_time <= now()->format('H:i:s'));
+            $activeBookings = $slot->appointments()->whereIn('status', ['pending', 'confirmed'])->count();
+            if (($slot->status ?? 'open') !== 'open' || $isPast || $schedule->isClosed($slot->date, $slot->start_time, $slot->end_time)
+                || $activeBookings > $slot->max_bookings) {
+                return 'slot_unavailable';
+            }
+
+            if (! $linkedRequest) {
+                $requestType = match ($locked->document_type) {
+                    'transcript' => 'tor',
+                    'tor' => 'true_copy',
+                    default => $locked->document_type,
+                };
+                $baseFee = (float) Setting::get('document_fee_' . $requestType, match ($requestType) {
+                    'tor' => 50,
+                    'diploma' => 100,
+                    'certification' => 30,
+                    'true_copy' => 50,
+                });
+
+                $linkedRequest = DocumentRequest::create([
+                    'user_id' => $locked->user_id,
+                    'appointment_id' => $locked->id,
+                    'document_type' => $requestType,
+                    'copies' => 1,
+                    'purpose' => $locked->purpose,
+                    'status' => 'submitted',
+                    'fee' => $baseFee,
+                    'payment_method' => 'walk_in',
+                    'payment_status' => 'unpaid',
+                ]);
+            }
+
+            $locked->update(['status' => 'confirmed']);
+            return 'confirmed';
+        });
+
+        if ($result !== 'confirmed') {
+            $message = [
+                'already_confirmed' => 'This appointment is already confirmed.',
+                'invalid_status' => 'Only a pending appointment can be confirmed.',
+                'request_not_ready' => 'This appointment can be confirmed while the document request is being processed, or when a ready request has verified payment.',
+                'slot_unavailable' => 'This appointment slot is closed, in the past, or no longer within capacity. Please arrange another slot.',
+            ][$result];
+            return back()->with('error', $message);
+        }
+
+        $appointment->refresh()->load(['slot', 'user']);
+        $linkedRequest = DocumentRequest::where('appointment_id', $appointment->id)->first();
+        $pickupDate = \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y');
+        $pickupTime = \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A');
+        if ($linkedRequest && in_array($linkedRequest->status, ['submitted', 'processing'], true)) {
+            $notificationMessage = 'Your request for ' . $linkedRequest->document_label . ' and appointment on ' . $pickupDate . ' at ' . $pickupTime . ' are confirmed. The Registrar will process your document request. Bring a valid ID when you visit.';
+            $applicantDestination = route('portal.appointments.index');
+        } elseif ($linkedRequest) {
+            $notificationMessage = 'Your pickup appointment for ' . $linkedRequest->document_label . ' is confirmed for ' . $pickupDate . ' at ' . $pickupTime . '. Bring a valid ID and your payment receipt. After pickup, the Registrar will mark your request as released.';
+            $applicantDestination = $appointment->user->hasRole('alumni')
+                ? route('portal.documents.index')
+                : route('portal.appointments.index');
+        } else {
+            $notificationMessage = 'Your appointment for ' . ucfirst($appointment->document_type) . ' has been confirmed on ' . $pickupDate . ' at ' . $pickupTime . '. Bring a valid ID.';
+            $applicantDestination = route('portal.appointments.index');
+        }
+
+        $notified = NotificationService::sendSafely(
             $appointment->user,
             'Appointment Confirmed',
-            'Your appointment for ' . ucfirst($appointment->document_type) .
-            ' has been confirmed on ' .
-            \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y') .
-            ' at ' .
-            \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A') . '.',
+            $notificationMessage,
             'success',
-            route('portal.appointments.index')
+            $applicantDestination
         );
 
-        return redirect()->route('registrar.appointments.index')
-            ->with('success', 'Appointment confirmed and student notified.');
+        $destination = $linkedRequest
+            ? route('registrar.documents.index')
+            : route('registrar.appointments.index');
+        $nextStep = $linkedRequest && $linkedRequest->status === 'ready'
+            ? ' The linked document request is ready for pickup and remains available in Document Requests to mark as released after handover.'
+            : ($linkedRequest ? ' The linked document request is in Document Requests for processing and status updates.' : '');
+
+        return redirect($destination)
+            ->with('success', 'Appointment confirmed.' . $nextStep . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
     }
 
     public function cancel(Request $request, Appointment $appointment)
@@ -177,38 +299,15 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'remarks' => ['required', 'string', 'max:500'],
         ]);
+        $result = app(\App\Services\AppointmentCancellationService::class)
+            ->cancel($appointment, Auth::user(), $request, $validated['remarks']);
 
-        $result = DB::transaction(function () use ($appointment, $validated) {
-            $lockedAppointment = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
-            $hasVerifiedPayment = AppointmentPayment::where('appointment_id', $lockedAppointment->id)
-                ->where('status', 'verified')
-                ->lockForUpdate()
-                ->exists();
-            if ($hasVerifiedPayment) {
-                return false;
-            }
-
-            $lockedAppointment->update([
-                'status'  => 'cancelled',
-                'remarks' => $validated['remarks'],
-            ]);
-            return true;
-        });
-
-        if (! $result) {
-            return back()->with('error', 'This appointment has a verified payment. Resolve it with the Cashier before cancellation.');
-        }
-
-        NotificationService::send(
-            $appointment->user,
-            'Appointment Cancelled',
-            'Your appointment was cancelled. Reason: ' . $validated['remarks'],
-            'danger',
-            route('portal.appointments.index')
-        );
-
-        return redirect()->route('registrar.appointments.index')
-            ->with('success', 'Appointment cancelled and student notified.');
+        return match ($result['result']) {
+            'already_cancelled' => back()->with('error', 'This appointment has already been cancelled.'),
+            'invalid_status' => back()->with('error', 'Only pending or confirmed appointments can be cancelled.'),
+            'verified_legacy_payment' => back()->with('error', 'This appointment has a verified payment. Resolve it with the Cashier before cancellation.'),
+            default => redirect()->route('registrar.appointments.index')->with('success', 'Appointment cancelled. The linked document request and payment were handled according to their current status.'),
+        };
     }
 
     // ── GCash Payment Verification ────────────────────────────────────────
@@ -239,7 +338,7 @@ class AppointmentController extends Controller
 
         $payment = $payment->fresh();
 
-        NotificationService::send(
+        $notified = NotificationService::sendSafely(
             $payment->appointment->user,
             'GCash Payment Verified',
             'Your GCash payment for your ' .
@@ -250,7 +349,7 @@ class AppointmentController extends Controller
         );
 
         return redirect()->route('registrar.appointments.index')
-            ->with('success', 'GCash payment verified and student notified.');
+            ->with('success', 'GCash payment verified.' . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
     }
 
     public function rejectPayment(Request $request, AppointmentPayment $payment)
@@ -274,7 +373,7 @@ class AppointmentController extends Controller
 
         $payment = $payment->fresh();
 
-        NotificationService::send(
+        $notified = NotificationService::sendSafely(
             $payment->appointment->user,
             'GCash Payment Rejected',
             'Your GCash payment was rejected. Reason: ' . $validated['rejection_reason'] .
@@ -284,7 +383,7 @@ class AppointmentController extends Controller
         );
 
         return redirect()->route('registrar.appointments.index')
-            ->with('success', 'Payment rejected and student notified.');
+            ->with('success', 'Payment rejected.' . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
     }
 
     public function viewProof(AppointmentPayment $payment)

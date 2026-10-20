@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\UserNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\SeedsRoles;
 use Tests\TestCase;
@@ -38,6 +39,23 @@ class CashierPaymentFlowTest extends TestCase
             'status'         => 'verified',
             'processed_by'   => $cashier->id,
         ]);
+    }
+
+    /** @test */
+    public function walk_in_payment_notifications_link_to_pages_each_staff_role_can_open()
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $registrar = $this->makeUserWithRole('registrar');
+        $admin = $this->makeUserWithRole('admin');
+        $enrollment = Enrollment::factory()->create(['status' => 'approved', 'is_paid' => false]);
+
+        $this->actingAs($cashier)->post(route('cashier.payments.store', $enrollment));
+
+        $registrarNotice = UserNotification::where('user_id', $registrar->id)->where('title', 'Payment Recorded')->firstOrFail();
+        $this->assertSame(route('registrar.enrollments.show', $enrollment), $registrarNotice->link);
+        $this->actingAs($registrar)->get($registrarNotice->link)->assertOk();
+
+        $this->assertSame(1, UserNotification::where('user_id', $admin->id)->where('title', 'Payment Recorded')->count());
     }
 
     /** @test */

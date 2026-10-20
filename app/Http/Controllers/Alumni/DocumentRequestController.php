@@ -21,9 +21,20 @@ class DocumentRequestController extends Controller
 {
     public function index()
     {
-        $requests = DocumentRequest::where('user_id', Auth::id())
+        $requests = DocumentRequest::with('appointment.slot')->where('user_id', Auth::id())
             ->latest()
             ->get();
+
+        $schedule = app(AppointmentScheduleService::class);
+        $pickupSlots = AppointmentSlot::where('date', '>=', today())
+            ->where('status', 'open')
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get()
+            ->filter(fn ($slot) => $slot->isAvailable()
+                && ! $schedule->isClosed($slot->date, $slot->start_time, $slot->end_time)
+                && ($slot->date !== today()->toDateString() || $slot->start_time > now()->format('H:i:s')))
+            ->values();
 
         $totalRequests  = $requests->count();
         $readyRequests  = $requests->filter(fn ($item) => $item->status === 'ready' && $item->is_paid && $item->payment_status === 'verified')->count();
@@ -32,8 +43,61 @@ class DocumentRequestController extends Controller
 
         return view('alumni.requests.index', compact(
             'requests', 'totalRequests', 'readyRequests',
-            'releasedDocs', 'totalFees'
+            'releasedDocs', 'totalFees', 'pickupSlots'
         ));
+    }
+
+    public function bookPickup(Request $request, DocumentRequest $documentRequest)
+    {
+        abort_if($documentRequest->user_id !== Auth::id(), 403);
+
+        $validated = $request->validate([
+            'appointment_slot_id' => ['required', 'integer', 'exists:appointment_slots,id'],
+        ]);
+
+        $appointment = DB::transaction(function () use ($documentRequest, $validated) {
+            $lockedRequest = DocumentRequest::whereKey($documentRequest->id)->lockForUpdate()->firstOrFail();
+            if ($lockedRequest->status !== 'ready' || ! $lockedRequest->is_paid || $lockedRequest->payment_status !== 'verified') {
+                throw ValidationException::withMessages(['appointment_slot_id' => 'Pickup can be booked after the document is ready and payment is verified.']);
+            }
+
+            if ($lockedRequest->appointment && $lockedRequest->appointment->status !== 'cancelled') {
+                throw ValidationException::withMessages(['appointment_slot_id' => 'This request already has a pickup appointment.']);
+            }
+
+            $slot = AppointmentSlot::whereKey($validated['appointment_slot_id'])->lockForUpdate()->firstOrFail();
+            $schedule = app(AppointmentScheduleService::class);
+            if (! $slot->isAvailable() || $slot->status !== 'open' || $schedule->isClosed($slot->date, $slot->start_time, $slot->end_time)
+                || $slot->date < today()->toDateString()
+                || ($slot->date === today()->toDateString() && $slot->start_time <= now()->format('H:i:s'))) {
+                throw ValidationException::withMessages(['appointment_slot_id' => 'That pickup time is no longer available. Please choose another slot.']);
+            }
+
+            $appointment = Appointment::create([
+                'user_id' => $lockedRequest->user_id,
+                'appointment_slot_id' => $slot->id,
+                'document_type' => $lockedRequest->document_type,
+                'purpose' => $lockedRequest->purpose,
+                'status' => 'pending',
+            ]);
+            $lockedRequest->update(['appointment_id' => $appointment->id]);
+
+            return $appointment->load('slot');
+        });
+
+        foreach (User::role(['registrar', 'admin'])->get() as $staff) {
+            NotificationService::sendSafely(
+                $staff,
+                'Pickup Appointment Requested',
+                Auth::user()->name . ' booked a pickup for ' . $documentRequest->document_label . ' on '
+                    . \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y') . ' at '
+                    . \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A') . '.',
+                'info',
+                route('registrar.appointments.index')
+            );
+        }
+
+        return redirect()->route('portal.documents.index')->with('success', 'Pickup time requested. The Registrar will confirm it.');
     }
 
     public function create()
@@ -131,11 +195,17 @@ class DocumentRequestController extends Controller
 
                 AuditLog::create([
                     'user_id' => Auth::id(),
-                    'action' => 'document_payment.submitted',
-                    'description' => "Document request #{$documentRequest->id} created with {$validated['payment_method']} payment; status {$documentRequest->payment_status}.",
+                    'action' => 'document_request.created',
+                    'description' => "Document request #{$documentRequest->id} created; request status {$documentRequest->status}, payment status {$documentRequest->payment_status}.",
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                    'metadata' => ['document_request_id' => $documentRequest->id, 'amount_due' => $fee],
+                    'metadata' => [
+                        'document_request_id' => $documentRequest->id,
+                        'request_status' => $documentRequest->status,
+                        'payment_method' => $documentRequest->payment_method,
+                        'payment_status' => $documentRequest->payment_status,
+                        'amount_due' => $fee,
+                    ],
                 ]);
 
                 return $documentRequest;
@@ -150,7 +220,7 @@ class DocumentRequestController extends Controller
         // ── Notify Registrars ──────────────────────────────────────────
         $registrars = User::role(['registrar', 'admin'])->get();
         foreach ($registrars as $registrar) {
-            NotificationService::send(
+            NotificationService::sendSafely(
                 $registrar,
                 'New Document Request',
                 Auth::user()->name . ' requested ' .
@@ -163,20 +233,9 @@ class DocumentRequestController extends Controller
         }
 
         // ── Notify Admins ──────────────────────────────────────────────
-        $admins = User::role('admin')->get();
-        foreach ($admins as $admin) {
-            NotificationService::send(
-                $admin,
-                'New Document Request',
-                Auth::user()->name . ' (Alumni) submitted a document request.',
-                'info',
-                route('registrar.documents.index')
-            );
-        }
-
         if ($docRequest->payment_status === 'pending_verification') {
             foreach (User::role(['cashier', 'admin'])->get() as $cashier) {
-                NotificationService::send(
+                NotificationService::sendSafely(
                     $cashier,
                     'Document Payment Needs Verification',
                     Auth::user()->name . ' submitted GCash proof for document request #' . $docRequest->id . '.',
@@ -185,6 +244,14 @@ class DocumentRequestController extends Controller
                 );
             }
         }
+
+        NotificationService::emailDocumentRequestSafely(
+            Auth::user(),
+            $docRequest,
+            $docRequest->payment_status === 'pending_verification'
+                ? 'We received your request and payment proof. Your payment is awaiting Cashier verification.'
+                : 'We received your document request. Please pay the fee at the Cashier; your request will continue after payment is recorded.'
+        );
 
         return redirect()->route('portal.documents.index')
             ->with('success', $docRequest->payment_status === 'pending_verification'
@@ -195,7 +262,7 @@ class DocumentRequestController extends Controller
     public function submitPayment(Request $request, DocumentRequest $documentRequest)
     {
         abort_unless($documentRequest->user_id === Auth::id(), 403);
-        abort_if($documentRequest->is_paid || $documentRequest->payment_status === 'verified', 403);
+        abort_if($documentRequest->status === 'cancelled' || $documentRequest->is_paid || $documentRequest->payment_status === 'verified', 403);
 
         if ($documentRequest->payment_method !== 'gcash_qr' || $documentRequest->payment_status !== 'rejected') {
             return back()->with('error', 'Payment details can only be resubmitted after a GCash claim was rejected.');
@@ -211,7 +278,7 @@ class DocumentRequestController extends Controller
         try {
             DB::transaction(function () use ($documentRequest, $validated, $path, $request) {
                 $locked = DocumentRequest::whereKey($documentRequest->id)->lockForUpdate()->firstOrFail();
-                if ($locked->is_paid || $locked->payment_status !== 'rejected') {
+                if ($locked->status === 'cancelled' || $locked->is_paid || $locked->payment_status !== 'rejected') {
                     throw ValidationException::withMessages(['payment' => 'This payment can no longer be changed.']);
                 }
 
@@ -244,8 +311,14 @@ class DocumentRequestController extends Controller
         }
 
         foreach (User::role(['cashier', 'admin'])->get() as $cashier) {
-            NotificationService::send($cashier, 'Document Payment Needs Verification', Auth::user()->name . ' resubmitted GCash proof for document request #' . $documentRequest->id . '.', 'info', route('cashier.document-payments.show', $documentRequest));
+            NotificationService::sendSafely($cashier, 'Document Payment Needs Verification', Auth::user()->name . ' resubmitted GCash proof for document request #' . $documentRequest->id . '.', 'info', route('cashier.document-payments.show', $documentRequest));
         }
+
+        NotificationService::emailDocumentRequestSafely(
+            Auth::user(),
+            $documentRequest->fresh(),
+            'We received your updated GCash proof. Your payment is awaiting Cashier verification.'
+        );
 
         return redirect()->route('portal.documents.index')->with('success', 'Payment proof resubmitted and awaiting Cashier verification.');
     }

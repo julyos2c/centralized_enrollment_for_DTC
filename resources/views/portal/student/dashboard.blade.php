@@ -43,12 +43,6 @@
 @endphp
 
 <div class="dtc-portal-dashboard">
-@if (session('success'))
-    <div class="alert alert-success" role="status"><i data-lucide="circle-check" class="mr-2"></i>{{ session('success') }}</div>
-@endif
-@if (session('error'))
-    <div class="alert alert-danger" role="alert"><i data-lucide="circle-alert" class="mr-2"></i>{{ session('error') }}</div>
-@endif
 <div class="dtc-dashboard-overview mb-3" aria-label="Enrollment overview">
     <div class="dtc-overview-item">
         <span class="dtc-overview-label">Enrollment</span>
@@ -172,10 +166,11 @@
         {{-- Enrollment Progress Stepper --}}
         @if($timeline)
         @php
+            // The track spans first-to-last marker, so fill it 0–100% up to the last finished step.
             $timelineCount = max(count($timeline), 2);
-            $timelineProgress = $completedSteps > 0
-                ? (($completedSteps - 1) / ($timelineCount - 1)) * 80
-                : 0;
+            $lastDone = -1;
+            foreach (array_values($timeline) as $idx => $st) { if (! empty($st['done'])) { $lastDone = $idx; } }
+            $timelineProgress = $lastDone > 0 ? ($lastDone / ($timelineCount - 1)) * 100 : 0;
         @endphp
         <section class="card mb-3 dtc-enrollment-card" aria-labelledby="enrollment-progress-title">
             <div class="card-header dtc-enrollment-card-header">
@@ -183,7 +178,6 @@
                     <h2 id="enrollment-progress-title">First enrollment progress</h2>
                     <p>Your admission and first enrollment milestones.</p>
                 </div>
-                <span class="dtc-enrollment-status">{{ $appStatusLabel }}</span>
             </div>
             <div class="card-body dtc-enrollment-card-body">
                 <ol class="dtc-enrollment-steps" style="--enrollment-progress: {{ $timelineProgress }}%; --enrollment-step-count: {{ count($timeline) }};">
@@ -210,24 +204,24 @@
                     @endforeach
                 </ol>
 
-                {{-- Current step info --}}
                 @php $activeStep = collect($timeline)->firstWhere('active', true); @endphp
                 @if($activeStep)
-                <div class="dtc-enrollment-notice is-active" role="status">
-                    <i data-lucide="arrow-right" aria-hidden="true"></i>
-                    <div><strong>Current Step: {{ $activeStep['label'] }}</strong><span>{{ $activeStep['sublabel'] }}</span></div>
-                </div>
+                    <div class="dtc-enrollment-notice is-active" role="status">
+                        <i data-lucide="arrow-right" aria-hidden="true"></i>
+                        <div><strong>Current Step: {{ $activeStep['label'] }}</strong><span>{{ $activeStep['sublabel'] }}</span></div>
+                    </div>
                 @elseif($latestEnrollment && $latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
-                <div class="dtc-enrollment-notice is-complete" role="status">
-                    <i data-lucide="circle-check" aria-hidden="true"></i>
-                    <div><strong>Enrollment complete</strong><span>All steps completed! You are officially enrolled.</span></div>
-                </div>
+                    <div class="dtc-enrollment-notice is-complete" role="status">
+                        <i data-lucide="circle-check" aria-hidden="true"></i>
+                        <div><strong>Enrollment complete</strong><span>All steps completed! You are officially enrolled.</span></div>
+                    </div>
                 @elseif($latestEnrollment && $latestEnrollment->status === 'rejected')
-                <div class="dtc-enrollment-notice is-rejected" role="alert">
-                    <i data-lucide="circle-alert" aria-hidden="true"></i>
-                    <div><strong>Enrollment needs attention</strong><span>{{ $latestEnrollment->remarks ?: 'No additional feedback was provided. Review the available next steps or contact the Registrar for guidance.' }}</span></div>
-                </div>
+                    <div class="dtc-enrollment-notice is-rejected" role="alert">
+                        <i data-lucide="circle-alert" aria-hidden="true"></i>
+                        <div><strong>Enrollment needs attention</strong><span>{{ filled($latestEnrollment->remarks) ? $latestEnrollment->remarks : 'No additional feedback was provided. Review the available next steps or contact the Registrar for guidance.' }}</span></div>
+                    </div>
                 @endif
+
             </div>
         </section>
         @endif

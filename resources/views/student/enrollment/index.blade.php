@@ -19,12 +19,6 @@
 
 @section('content')
 
-@if (session('success'))
-    <div class="alert alert-success" role="status"><i data-lucide="circle-check" class="mr-2"></i>{{ session('success') }}</div>
-@endif
-@if (session('error'))
-    <div class="alert alert-danger" role="alert"><i data-lucide="circle-alert" class="mr-2"></i>{{ session('error') }}</div>
-@endif
 @if ($errors->any())
     <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
 @endif

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserNotification extends Model
 {
-    protected $fillable = ['user_id', 'title', 'message', 'type', 'link', 'read_at'];
+    protected $fillable = ['user_id', 'title', 'message', 'type', 'link', 'event_key', 'read_at'];
 
     protected $casts = [
         'read_at' => 'datetime',
