@@ -23,11 +23,9 @@
         </div>
         <div class="dtc-review-header-right">
             @if ($enrollment->is_paid)
-                <span class="dtc-status-badge is-success"><span class="dtc-status-dot"></span> Paid</span>
+                {{-- Paid state is already shown by the receipt action below; no badge needed. --}}
             @elseif ($latestPayment && $latestPayment->isGcash() && $latestPayment->isPending())
                 <span class="dtc-status-badge is-warning"><span class="dtc-status-dot"></span> GCash Pending</span>
-            @else
-                <span class="dtc-status-badge is-neutral"><span class="dtc-status-dot"></span> Unpaid</span>
             @endif
             <button type="button" class="dtc-review-close" data-dismiss="modal" aria-label="Close">
                 <i data-lucide="x"></i>
@@ -63,7 +61,7 @@
                     <span class="dtc-review-info-label">Payment Type</span>
                     <span class="dtc-review-info-value">
                         @if ($latestPayment && $latestPayment->isGcash() && $latestPayment->isPending())
-                            GCash (pending review)
+                            GCash
                         @elseif ($enrollment->is_paid && $latestPayment)
                             {{ $latestPayment->isWalkIn() ? 'Walk-in / Cash' : 'GCash' }}
                         @else
@@ -85,8 +83,7 @@
         @if (! $enrollment->is_paid)
             <div class="dtc-payment-info-notice">
                 <i data-lucide="info" class="dtc-notice-icon" aria-hidden="true"></i>
-                <span>Upon confirmation, the student's account will be upgraded to
-                <strong>Student</strong> status and they will be officially enrolled.</span>
+                <span>Confirming payment will officially enroll the student.</span>
             </div>
         @endif
 

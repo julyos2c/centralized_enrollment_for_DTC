@@ -98,16 +98,6 @@
             </div>
         </div>
 
-        <div class="dtc-receipt-confirmed">
-            <i data-lucide="check-circle" style="color:#22C55E; margin-bottom:6px;"></i>
-            <div class="dtc-receipt-confirmed-title">
-                Payment Confirmed — Officially Enrolled
-            </div>
-            <div style="font-size:11.5px; color:var(--dtc-text-secondary); margin-top:2px;">
-                This serves as your official receipt. Please keep this for your records.
-            </div>
-        </div>
-
     </div>
 
     <div class="dtc-review-footer dtc-receipt-footer">
