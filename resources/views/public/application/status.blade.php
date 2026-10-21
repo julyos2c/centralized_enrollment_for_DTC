@@ -46,7 +46,7 @@
             </div>
             <div class="wiz-panel-body">
                 <dl class="status-facts">
-                    <div><dt>Applicant</dt><dd>{{ $application->first_name }} {{ $application->middle_name ? $application->middle_name . ' ' : '' }}{{ $application->last_name }}</dd></div>
+                    <div><dt>Applicant</dt><dd>{{ $application->full_name }}</dd></div>
                     <div><dt>Applicant type</dt><dd>{{ ucwords(str_replace('_', ' ', $application->academic_status)) }}</dd></div>
                     <div><dt>Program</dt><dd>{{ $application->program->name ?? '—' }}</dd></div>
                     <div><dt>Email</dt><dd>{{ $application->email }}</dd></div>

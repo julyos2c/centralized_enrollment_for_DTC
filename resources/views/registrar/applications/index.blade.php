@@ -143,9 +143,7 @@
                         <tr>
                             <td>{{ $application->reference_no }}</td>
                             <td>
-                                {{ $application->first_name }}
-                                {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                                {{ $application->last_name }}
+                                {{ $application->full_name }}
                             </td>
                             <td>{{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}</td>
                             <td>{{ $application->program->name ?? '—' }}</td>
@@ -184,9 +182,7 @@
                     <div>
                         <div class="dtc-app-card-ref">{{ $application->reference_no }}</div>
                         <div class="dtc-app-card-name">
-                            {{ $application->first_name }}
-                            {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                            {{ $application->last_name }}
+                            {{ $application->full_name }}
                         </div>
                     </div>
                     <x-dtc.status-badge :status="$application->status" :variant="$statusVariants[$application->status] ?? 'neutral'" />

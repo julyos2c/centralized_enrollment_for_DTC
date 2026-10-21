@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\Program;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Tests\SeedsRoles;
 use Tests\TestCase;
 
@@ -108,6 +109,45 @@ class PublicApplicationEducationTest extends TestCase
                 $this->assertSame($isAllowed ? $expected : null, $application->{$field}, $type . ' ' . $field);
             }
         }
+    }
+
+    public function test_applicant_and_family_names_are_normalized_before_storage_and_rendered_in_confirmation(): void
+    {
+        $program = Program::factory()->create();
+        $this->get(route('public.application.create'))
+            ->assertOk()
+            ->assertSee(asset('js/dtc-name-normalizer.js'), false)
+            ->assertSee(asset('js/application-wizard.js'), false);
+
+        $this->post(route('public.application.store'), [
+            'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
+            'academic_status' => 'new_student',
+            'program_id' => $program->id,
+            'first_name' => 'jUAN',
+            'middle_name' => '  aNGEL   pAUL  ',
+            'last_name' => 'DELA   CRUZ',
+            'suffix' => 'III',
+            'father_name' => "O'CONNOR",
+            'mother_name' => 'ANNE-MARIE',
+            'gender' => 'male',
+            'birthdate' => '2005-01-01',
+            'email' => 'MiXeD@example.test',
+            'ack_enrollment' => 'on',
+        ])->assertRedirect(route('public.application.success'));
+
+        $application = Application::where('email', 'MiXeD@example.test')->firstOrFail();
+        $stored = DB::table('applications')->where('id', $application->id)->first();
+        $this->assertSame('Juan', $stored->first_name);
+        $this->assertSame('Angel Paul', $stored->middle_name);
+        $this->assertSame('Dela Cruz', $stored->last_name);
+        $this->assertSame("O'Connor", $stored->father_name);
+        $this->assertSame('Anne-Marie', $stored->mother_name);
+        $this->assertSame('MiXeD@example.test', $stored->email, 'Email casing must remain untouched.');
+        $this->assertSame('III', $stored->suffix);
+
+        $this->get(route('public.application.success'))
+            ->assertOk()
+            ->assertSee('Juan Angel Paul Dela Cruz III');
     }
 
     public function test_education_details_are_optional_for_all_five_types_and_submission_requires_the_acknowledgment(): void

@@ -815,6 +815,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     restoreDraft();
+    const NAME_FIELDS = ['first_name', 'middle_name', 'last_name', 'father_name', 'mother_name', 'spouse_name'];
+    NAME_FIELDS.forEach(function (name) {
+        const input = document.querySelector('[name="' + name + '"]');
+        if (!input) return;
+        input.addEventListener('blur', function () {
+            input.value = normalizeName(input.value);
+            saveField(input);
+        });
+    });
     updateApplicantType();
     updateMaritalStatus();
     updateDisability();
@@ -828,6 +837,10 @@ document.addEventListener('DOMContentLoaded', function () {
        Reads every named field from the form and renders a
        read-only summary so the applicant can verify before submitting.
     ════════════════════════════════════════════════════════════ */
+
+    function normalizeName(value) {
+        return window.dtcNormalizeName(value);
+    }
 
     function buildReview() {
         const form = document.getElementById('applicationForm');
@@ -843,6 +856,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return (opt && opt.text && opt.value) ? opt.text : '—';
             }
             return el.value.trim() || '—';
+        }
+
+        function nameVal(name) {
+            const value = val(name);
+            return value === '—' ? value : normalizeName(value);
         }
 
         /* Helper: get program name from select */
@@ -908,9 +926,9 @@ document.addEventListener('DOMContentLoaded', function () {
         /* Assemble display full name */
         function fullName() {
             const honorific = val('honorific') !== '—' ? val('honorific') : '';
-            const first  = val('first_name')  !== '—' ? val('first_name')  : '';
-            const middle = val('middle_name') !== '—' ? val('middle_name') : '';
-            const last   = val('last_name')   !== '—' ? val('last_name')   : '';
+            const first  = nameVal('first_name')  !== '—' ? nameVal('first_name')  : '';
+            const middle = nameVal('middle_name') !== '—' ? nameVal('middle_name') : '';
+            const last   = nameVal('last_name')   !== '—' ? nameVal('last_name')   : '';
             const suffix = val('suffix')      !== '—' ? val('suffix')      : '';
             const mi = middle ? middle.charAt(0).toUpperCase() + '.' : '';
             const name = [first, mi, last].filter(Boolean).join(' ');
@@ -967,7 +985,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 ['Nationality',    val('nationality')],
                 ['LRN',            val('lrn')],
                 ['Marital Status', val('marital_status')],
-                ['Spouse Name',    val('spouse_name')],
+                ['Spouse Name',    nameVal('spouse_name')],
             ], 2) +
             section('Contact & Address', 'map-pin', [
                 ['Email',    val('email')],
@@ -976,9 +994,9 @@ document.addEventListener('DOMContentLoaded', function () {
             ], 3) +
             section('Educational Background', 'school', educationRows, 4) +
             section('Family Information', 'users', [
-                ["Father's Name",       val('father_name')],
+                ["Father's Name",       nameVal('father_name')],
                 ["Father's Occupation", val('father_occupation')],
-                ["Mother's Name",       val('mother_name')],
+                ["Mother's Name",       nameVal('mother_name')],
                 ["Mother's Occupation", val('mother_occupation')],
                 ["Parent's Address",    val('parent_address')],
                 ["Parent's Contact",    val('parent_contact')],

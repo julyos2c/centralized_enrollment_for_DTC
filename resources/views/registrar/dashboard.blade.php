@@ -202,7 +202,7 @@
                                                 color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
                                         {{ strtoupper(substr($application->first_name, 0, 1)) }}
                                     </div>
-                                    <span style="font-size:13px; font-weight:500;">{{ $application->first_name }} {{ $application->last_name }}</span>
+                                    <span style="font-size:13px; font-weight:500;">{{ $application->full_name }}</span>
                                 </div>
                             </td>
                             <td  class="u-text-sm">{{ $application->reference_no }}</td>

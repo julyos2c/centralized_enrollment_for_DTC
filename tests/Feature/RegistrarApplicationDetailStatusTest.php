@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\Program;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\SeedsRoles;
 use Tests\TestCase;
 
@@ -34,6 +35,31 @@ class RegistrarApplicationDetailStatusTest extends TestCase
             ->assertDontSee(route('registrar.applications.approve', $application))
             ->assertDontSee(route('registrar.applications.revision', $application))
             ->assertDontSee(route('registrar.applications.reject', $application));
+    }
+
+    public function test_registrar_detail_formats_legacy_name_values_without_rewriting_them(): void
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $application = $this->makeApplication('submitted');
+        DB::table('applications')->where('id', $application->id)->update([
+            'first_name' => 'jUAN',
+            'middle_name' => 'aNGEL',
+            'last_name' => 'DELA CRUZ',
+        ]);
+
+        $this->actingAs($registrar)
+            ->get(route('registrar.applications.show', $application))
+            ->assertOk()
+            ->assertSee('Juan')
+            ->assertSee('Angel')
+            ->assertSee('Dela Cruz');
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $application->id,
+            'first_name' => 'jUAN',
+            'middle_name' => 'aNGEL',
+            'last_name' => 'DELA CRUZ',
+        ]);
     }
 
     public function test_under_review_application_shows_permitted_review_actions(): void

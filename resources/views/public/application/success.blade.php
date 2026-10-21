@@ -50,7 +50,7 @@
                     <div><h2 id="application-summary-title">Application summary</h2><p>Review the details submitted for this application.</p></div>
                 </div>
                 <dl class="application-summary-list">
-                    <div><dt>Applicant</dt><dd>{{ $application->first_name }} {{ $application->middle_name ? $application->middle_name . ' ' : '' }}{{ $application->last_name }}</dd></div>
+                    <div><dt>Applicant</dt><dd>{{ $application->full_name }}</dd></div>
                     <div><dt>Applicant type</dt><dd>{{ $applicantType }}</dd></div>
                     <div><dt>Email address</dt><dd>{{ $application->email }}</dd></div>
                     <div><dt>Current status</dt><dd><span class="application-submitted-badge">Submitted</span></dd></div>

@@ -9,6 +9,7 @@ use App\Models\ApplicationDocument;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Support\NameNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -406,6 +407,12 @@ class ApplicationController extends Controller
             'province_code.in' => 'Select a province that belongs to the chosen region.',
             'city_code.in' => 'Select a city or municipality that belongs to the chosen area.',
         ]);
+
+        foreach (['first_name', 'middle_name', 'last_name', 'father_name', 'mother_name', 'spouse_name'] as $nameField) {
+            if (array_key_exists($nameField, $validated)) {
+                $validated[$nameField] = NameNormalizer::normalize($validated[$nameField]);
+            }
+        }
 
         // Never treat browser-submitted geographic labels as authoritative.
         if (strcasecmp(trim($validated['country'] ?? 'Philippines'), 'Philippines') === 0) {
