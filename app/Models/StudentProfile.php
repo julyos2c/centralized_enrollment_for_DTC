@@ -54,6 +54,11 @@ class StudentProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function portalInvitation()
+    {
+        return $this->hasOne(PortalAccountInvitation::class);
+    }
+
     public function program()
     {
         return $this->belongsTo(Program::class);

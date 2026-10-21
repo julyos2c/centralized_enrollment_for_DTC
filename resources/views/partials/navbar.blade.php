@@ -8,6 +8,7 @@
         ->whereNull('read_at')->count();
     $recentNotifs = \App\Models\UserNotification::where('user_id', auth()->id())
         ->latest()->take(5)->get();
+    $lastNotificationId = (int) ($recentNotifs->max('id') ?? 0);
 @endphp
 <li class="nav-item navbar-search-item">
     <div class="navbar-search-wrapper">
@@ -115,7 +116,7 @@
                 <div class="notify-header-title">
                     Notifications
                 </div>
-                <div class="notify-header-subtitle">
+                <div class="notify-header-subtitle" id="notif-subtitle">
                     @if($unread > 0)
                         {{ $unread }} unread notification{{ $unread > 1 ? 's' : '' }}
                     @else
@@ -124,17 +125,22 @@
                 </div>
             </div>
             @if($unread > 0)
-            <a href="{{ route('notifications.index') }}" class="notify-mark-read">
+            <a href="{{ route('notifications.index') }}" class="notify-mark-read" id="notif-mark-read">
+                Mark all read
+            </a>
+            @else
+            <a href="{{ route('notifications.index') }}" class="notify-mark-read" id="notif-mark-read" hidden>
                 Mark all read
             </a>
             @endif
         </div>
 
         {{-- Notification List --}}
-        <div class="notify-list">
+        <div class="notify-list" id="notify-list" data-last-notification-id="{{ $lastNotificationId }}">
             @forelse($recentNotifs as $notif)
             <a href="{{ route('notifications.read', $notif) }}"
-               class="notif-item {{ $notif->isRead() ? 'is-read' : 'is-unread' }}">
+               class="notif-item {{ $notif->isRead() ? 'is-read' : 'is-unread' }}"
+               data-notification-id="{{ $notif->id }}">
 
                 {{-- Icon --}}
                 <div class="notif-icon notif-icon-{{ $notif->type }}">
@@ -176,14 +182,16 @@
         </div>
 
         {{-- Footer --}}
-        @if($recentNotifs->isNotEmpty())
-        <div class="notify-footer">
+        <div class="notify-footer" id="notify-footer" @if($recentNotifs->isEmpty()) hidden @endif>
             <a href="{{ route('notifications.index') }}" class="notify-view-all">
                 View all notifications →
             </a>
         </div>
-        @endif
     </div>
 </li>
+
+@if(auth()->user()->hasRole('cashier'))
+<script src="{{ asset('js/cashier-notification-polling.js') }}" data-endpoint="{{ route('cashier.notifications.poll') }}" defer></script>
+@endif
 
 @endsection

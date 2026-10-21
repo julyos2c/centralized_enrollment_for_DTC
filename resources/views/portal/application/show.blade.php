@@ -199,9 +199,7 @@
                     <div class="col-md-6 mb-3">
                         <div class="text-muted small">Full Name</div>
                         <div>
-                            {{ $application->first_name }}
-                            {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                            {{ $application->last_name }}
+                            {{ $application->full_name }}
                         </div>
                     </div>
                     <div class="col-md-3 mb-3">

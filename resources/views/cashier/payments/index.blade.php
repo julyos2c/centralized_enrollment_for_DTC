@@ -12,36 +12,60 @@
     </div>
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+@endpush
+
 @section('content')
 
-
-{{-- Search (filters the rows on this page instantly) --}}
-<div class="dtc-pay-search">
-    <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
-    <input type="search" id="paymentSearch" class="dtc-pay-search-input"
-           placeholder="Search name, email, program…" autocomplete="off"
-           aria-label="Search enrollments">
-    <button type="button" id="paymentSearchClear" class="dtc-pay-search-clear" aria-label="Clear search" hidden>
-        <i data-lucide="x"></i>
-    </button>
-</div>
-
-{{-- Filter Tabs --}}
-<div class="dtc-filter-bar">
-    @foreach ([
-        'all'           => 'All',
+{{-- Search + Filters (same toolbar as Applications) --}}
+@php
+    $payFilterLabels = [
+        'all'           => 'All statuses',
         'unpaid'        => 'Unpaid',
         'gcash_pending' => 'GCash Pending',
         'verified'      => 'Verified',
         'walk_in'       => 'Walk-in',
         'rejected'      => 'Rejected',
-    ] as $key => $label)
-        <a href="{{ request()->fullUrlWithQuery(['filter' => $key]) }}"
-           class="dtc-filter-pill {{ $filter === $key ? 'is-active' : '' }}">
-            {{ $label }}
-        </a>
-    @endforeach
-</div>
+    ];
+    $payFilterCount = ($filter && $filter !== 'all') ? 1 : 0;
+@endphp
+<form method="GET" action="{{ route('cashier.payments.index') }}" id="payments-filter-form" class="dtc-fl" aria-label="Filter payments">
+    <div class="dtc-fl-toolbar">
+        <div class="dtc-pay-search dtc-fl-search">
+            <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+            <input type="search" id="paymentSearch" class="dtc-pay-search-input"
+                   placeholder="Search name, email, program…" autocomplete="off"
+                   aria-label="Search enrollments">
+            <button type="button" id="paymentSearchClear" class="dtc-pay-search-clear" aria-label="Clear search" hidden>
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <button type="button" class="dtc-fl-toggle {{ $payFilterCount ? 'has-filters' : '' }}" data-toggle="collapse" data-target="#paymentsFilterPanel"
+                aria-expanded="{{ $payFilterCount ? 'true' : 'false' }}" aria-controls="paymentsFilterPanel">
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+            <span>Filters</span>
+            <span class="dtc-fl-count" id="paymentFilterCount" @if(!$payFilterCount) hidden @endif>{{ $payFilterCount }}</span>
+        </button>
+    </div>
+
+    <div class="collapse {{ $payFilterCount ? 'show' : '' }}" id="paymentsFilterPanel">
+        <div class="dtc-fl-panel">
+            <div class="dtc-fl-field">
+                <label for="filter-pay-status">Status</label>
+                <select name="filter" id="filter-pay-status" class="form-control">
+                    @foreach ($payFilterLabels as $key => $label)
+                        <option value="{{ $key }}" {{ $filter === $key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-actions">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <a href="{{ route('cashier.payments.index') }}" class="dtc-fl-clear" id="paymentFilterClear" @if(!$payFilterCount) hidden @endif>Clear all</a>
+            </div>
+        </div>
+    </div>
+</form>
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -185,6 +209,18 @@
     var counter = document.getElementById('paymentCount');
     if (!input || !rows.length) { return; }
 
+    var sel       = document.getElementById('filter-pay-status');
+    var fBadge    = document.getElementById('paymentFilterCount');
+    var fToggle   = document.querySelector('[data-target="#paymentsFilterPanel"]');
+    var fClear    = document.getElementById('paymentFilterClear');
+    function syncFilterUi() {
+        var n = sel && sel.value && sel.value !== 'all' ? 1 : 0;
+        if (fBadge)  { fBadge.textContent = n; fBadge.hidden = n === 0; }
+        if (fToggle) { fToggle.classList.toggle('has-filters', n > 0); }
+        if (fClear)  { fClear.hidden = n === 0 && !input.value.trim(); }
+    }
+    if (sel) { sel.addEventListener('change', syncFilterUi); }
+
     var index = rows.map(function (r) { return r.textContent.replace(/\s+/g, ' ').toLowerCase(); });
 
     function apply() {
@@ -199,6 +235,7 @@
         none.hidden = shown !== 0;
         none.style.display = shown !== 0 ? 'none' : '';
         clear.hidden = !input.value;
+        syncFilterUi();
         counter.textContent = terms.length
             ? shown + ' of ' + rows.length + ' shown'
             : counter.getAttribute('data-total') + ' total';

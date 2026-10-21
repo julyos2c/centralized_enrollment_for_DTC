@@ -11,77 +11,90 @@
     </div>
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+@endpush
+
+@push('js')
+    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+@endpush
+
 @section('content')
 
 {{-- Search & Filter --}}
-<div class="card mb-3">
-    <div class="card-body p-3">
-        <form method="GET" action="{{ route('registrar.applications.index') }}" id="applications-filter-form">
-            <div class="row" style="gap:0; align-items:flex-end;">
-                <div class="col-12 col-md-6 col-lg-4 mb-2">
-                    <div class="dtc-input-icon-group">
-                        <i data-lucide="search" class="dtc-input-icon"></i>
-                        <input type="text" name="search" class="form-control dtc-input-with-icon"
-                               placeholder="Search name, email or reference…"
-                               value="{{ request('search') }}">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 col-lg-2 mb-2">
-                    <select name="type" class="form-control" style="font-size:13px;" aria-label="Applicant type">
-                        <option value="">All Types</option>
-                        @foreach([
-                            'new_student'    => 'New Student / First Year',
-                            'transferee'     => 'Transferee',
-                            'shiftee'        => 'Shiftee',
-                            'returnee'       => 'Returnee / Readmitted',
-                            'cross_enrollee' => 'Cross-Enrollee',
-                        ] as $val => $label)
-                            <option value="{{ $val }}" {{ request('type') === $val ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-12 col-md-6 col-lg-3 mb-2">
-                    <select name="program_id" class="form-control" style="font-size:13px;" aria-label="Academic program">
-                        <option value="">All Programs</option>
-                        @foreach($programs as $program)
-                            <option value="{{ $program->id }}" {{ (string) request('program_id') === (string) $program->id ? 'selected' : '' }}>
-                                {{ $program->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-12 col-md-6 col-lg-2 mb-2">
-                    <select name="status" class="form-control" style="font-size:13px;" aria-label="Application status">
-                        <option value="">All Statuses</option>
-                        @foreach([
-                            'submitted'         => 'Submitted',
-                            'under_review'      => 'Under Review',
-                            'revision_required' => 'Revision Required',
-                            'approved'          => 'Approved',
-                            'rejected'          => 'Rejected',
-                        ] as $val => $label)
-                            <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-lg-1 col-12 mb-2 d-flex" style="gap:6px;">
-                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                        <i data-lucide="filter" style="width:13px;height:13px;margin-right:3px;"></i>Filter
-                    </button>
-                    @if(request()->anyFilled(['search','type','status','program_id']))
-                        <a href="{{ route('registrar.applications.index') }}" class="btn btn-secondary btn-sm">
-                            <i data-lucide="x" style="width:13px;height:13px;"></i>
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </form>
+@php
+    $appFilterCount = collect(['type', 'program_id', 'status'])->filter(fn ($k) => filled(request($k)))->count();
+    $appHasFilters  = $appFilterCount > 0 || filled(request('search'));
+@endphp
+<form method="GET" action="{{ route('registrar.applications.index') }}" id="applications-filter-form" class="dtc-fl" data-dtc-filters aria-label="Filter applications">
+    <div class="dtc-fl-toolbar">
+        <div class="dtc-pay-search dtc-fl-search">
+            <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+            <input type="search" name="search" class="dtc-pay-search-input" value="{{ request('search') }}"
+                   placeholder="Search name, email or reference…" autocomplete="off" aria-label="Search applications" data-dtc-filter-search>
+        </div>
+        <button type="button" class="dtc-fl-toggle {{ $appFilterCount ? 'has-filters' : '' }}" data-toggle="collapse" data-target="#applicationsFilterPanel"
+                aria-expanded="{{ $appFilterCount ? 'true' : 'false' }}" aria-controls="applicationsFilterPanel" data-dtc-filter-toggle>
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+            <span>Filters</span>
+            <span class="dtc-fl-count" data-dtc-filter-count @if(!$appFilterCount) hidden @endif>{{ $appFilterCount }}</span>
+        </button>
     </div>
-</div>
+
+    <div class="collapse {{ $appFilterCount ? 'show' : '' }}" id="applicationsFilterPanel">
+        <div class="dtc-fl-panel">
+            <div class="dtc-fl-field">
+                <label for="filter-type">Applicant type</label>
+                <select name="type" id="filter-type" class="form-control" data-dtc-filter>
+                    <option value="">All types</option>
+                    @foreach([
+                        'new_student'    => 'New Student / First Year',
+                        'transferee'     => 'Transferee',
+                        'shiftee'        => 'Shiftee',
+                        'returnee'       => 'Returnee / Readmitted',
+                        'cross_enrollee' => 'Cross-Enrollee',
+                    ] as $val => $label)
+                        <option value="{{ $val }}" {{ request('type') === $val ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-field">
+                <label for="filter-program">Program</label>
+                <select name="program_id" id="filter-program" class="form-control" data-dtc-filter>
+                    <option value="">All programs</option>
+                    @foreach($programs as $program)
+                        <option value="{{ $program->id }}" {{ (string) request('program_id') === (string) $program->id ? 'selected' : '' }}>
+                            {{ $program->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-field">
+                <label for="filter-app-status">Status</label>
+                <select name="status" id="filter-app-status" class="form-control" data-dtc-filter>
+                    <option value="">All statuses</option>
+                    @foreach([
+                        'submitted'         => 'Submitted',
+                        'under_review'      => 'Under Review',
+                        'revision_required' => 'Revision Required',
+                        'approved'          => 'Approved',
+                        'rejected'          => 'Rejected',
+                    ] as $val => $label)
+                        <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>
+                            {{ $label }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-actions">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <a href="{{ route('registrar.applications.index') }}" class="dtc-fl-clear" data-dtc-clear @if(!$appHasFilters) hidden @endif>Clear all</a>
+            </div>
+        </div>
+    </div>
+</form>
 
 {{-- Applications Table --}}
 <div class="card">
@@ -130,9 +143,7 @@
                         <tr>
                             <td>{{ $application->reference_no }}</td>
                             <td>
-                                {{ $application->first_name }}
-                                {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                                {{ $application->last_name }}
+                                {{ $application->full_name }}
                             </td>
                             <td>{{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}</td>
                             <td>{{ $application->program->name ?? '—' }}</td>
@@ -171,9 +182,7 @@
                     <div>
                         <div class="dtc-app-card-ref">{{ $application->reference_no }}</div>
                         <div class="dtc-app-card-name">
-                            {{ $application->first_name }}
-                            {{ $application->middle_name ? $application->middle_name . ' ' : '' }}
-                            {{ $application->last_name }}
+                            {{ $application->full_name }}
                         </div>
                     </div>
                     <x-dtc.status-badge :status="$application->status" :variant="$statusVariants[$application->status] ?? 'neutral'" />

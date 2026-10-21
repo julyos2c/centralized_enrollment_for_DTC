@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicImportBatch;
+use App\Models\StudentProfile;
 use App\Services\AcademicRecordImportService;
+use App\Services\PortalAccountProvisioningService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -35,7 +37,68 @@ class AcademicImportController extends Controller
     {
         $this->authorizeBatch($batch);
         $rows = $batch->status === 'previewed' ? $service->previewRows($batch) : [];
-        return view('registrar.imports.show', compact('batch', 'rows'));
+        $importedProfiles = $batch->status === 'completed' || $batch->status === 'partial'
+            ? $batch->studentProfiles()->with(['portalInvitation', 'user'])->orderBy('last_name')->orderBy('student_number')->get()
+            : collect();
+        $emails = $importedProfiles->pluck('email')->filter()->unique()->values();
+        $duplicateEmails = $emails->isEmpty() ? collect() : StudentProfile::query()
+            ->select('email')->selectRaw('COUNT(*) as records_count')->whereIn('email', $emails)
+            ->groupBy('email')->havingRaw('COUNT(*) > 1')->pluck('email')
+            ->mapWithKeys(static fn ($email) => [mb_strtolower($email) => true]);
+        $accountEmails = $emails->isEmpty() ? collect() : \App\Models\User::whereIn('email', $emails)->pluck('email')
+            ->mapWithKeys(static fn ($email) => [mb_strtolower($email) => true]);
+        return view('registrar.imports.show', compact('batch', 'rows', 'importedProfiles', 'duplicateEmails', 'accountEmails'));
+    }
+
+    public function provisionSelected(Request $request, AcademicImportBatch $batch, PortalAccountProvisioningService $provisioning)
+    {
+        $this->authorizeBatch($batch);
+        abort_unless(in_array($batch->status, ['completed', 'partial'], true), 409);
+        $data = $request->validate([
+            'confirm' => ['required', 'accepted'],
+            'role' => ['prohibited'],
+            'student_profile_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'student_profile_ids.*' => ['required', 'integer', 'distinct'],
+        ]);
+        $profiles = $batch->studentProfiles()->whereIn('student_profiles.id', $data['student_profile_ids'])->get();
+        abort_unless($profiles->count() === count($data['student_profile_ids']), 422, 'One or more selected records are not part of this import.');
+
+        $counts = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
+        foreach ($profiles as $profile) {
+            if (! filter_var($profile->email, FILTER_VALIDATE_EMAIL) || ! $profile->student_number
+                || ! $profile->first_name || ! $profile->last_name
+                || StudentProfile::where('email', $profile->email)->where('id', '!=', $profile->id)->exists()) {
+                $counts['skipped']++;
+                continue;
+            }
+            try {
+                $existingInvitation = $profile->portalInvitation;
+                $staleSending = $existingInvitation && $existingInvitation->status === 'sending'
+                    && (! $existingInvitation->updated_at || $existingInvitation->updated_at->lte(
+                        now()->subMinutes(max(1, (int) config('portal_accounts.sending_lease_minutes', 15)))
+                    ));
+                if ($existingInvitation && (in_array($existingInvitation->status, ['delivery_failed', 'expired', 'revoked'], true) || $staleSending)
+                    && $profile->user && $profile->user->status === 'pending') {
+                    $invitation = $provisioning->resend($existingInvitation, $request->user());
+                } else {
+                    $invitation = $provisioning->provision($profile, $request->user());
+                }
+                $counts[$invitation->status === 'pending' ? 'sent' : 'failed']++;
+            } catch (\Illuminate\Validation\ValidationException $exception) {
+                $counts['skipped']++;
+            }
+        }
+
+        \App\Models\AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'portal_account.bulk_provisioning_completed',
+            'description' => 'Academic import portal provisioning batch processed.',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'metadata' => ['batch_id' => $batch->id, 'selected' => $profiles->count()] + $counts,
+        ]);
+
+        return redirect()->route('registrar.imports.show', $batch)->with('provisioning_results', $counts);
     }
 
     public function commit(Request $request, AcademicImportBatch $batch, AcademicRecordImportService $service)

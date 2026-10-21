@@ -9,6 +9,7 @@ use App\Models\DocumentPaymentNotificationOutbox;
 use App\Mail\DocumentRequestUpdate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 
 class NotificationService
 {
@@ -48,10 +49,24 @@ class NotificationService
     /** Create an event-keyed alert once, even if a worker retries after an uncertain acknowledgement. */
     public static function sendForEvent(User $user, string $eventKey, string $title, string $message, string $type, ?string $link): UserNotification
     {
-        return UserNotification::firstOrCreate(
-            ['user_id' => $user->id, 'event_key' => $eventKey],
-            ['title' => $title, 'message' => $message, 'type' => $type, 'link' => $link]
-        );
+        try {
+            return UserNotification::firstOrCreate(
+                ['user_id' => $user->id, 'event_key' => $eventKey],
+                ['title' => $title, 'message' => $message, 'type' => $type, 'link' => $link]
+            );
+        } catch (QueryException $exception) {
+            // The unique (user_id, event_key) index is the final deduplication
+            // guard if two request retries race to create the same event.
+            $existing = UserNotification::where('user_id', $user->id)
+                ->where('event_key', $eventKey)
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            throw $exception;
+        }
     }
 
     /** Persist an in-app alert without turning an already-committed action into an error page. */

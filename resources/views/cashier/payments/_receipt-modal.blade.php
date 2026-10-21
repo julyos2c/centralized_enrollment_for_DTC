@@ -86,7 +86,6 @@
         var dateIssued = txt(q('.dtc-receipt-date'));
         var total = txt(q('.dtc-receipt-total-amount'));
         var confirmTitle = txt(q('.dtc-receipt-confirmed-title'));
-        var confirmNote = txt(q('.dtc-receipt-confirmed div:last-child'));
 
         var sectionsHtml = '';
         root.querySelectorAll('.dtc-review-section').forEach(function (sec) {
@@ -149,7 +148,7 @@
                     '<td class="r"><span class="lbl">Date Issued</span><span class="dt">' + esc(dateIssued) + '</span></td>' +
                 '</tr></table>' +
                 sectionsHtml +
-                '<div class="ok"><b>' + esc(confirmTitle) + '</b><span>' + esc(confirmNote) + '</span></div>' +
+                '<div class="ok"><b>' + esc(confirmTitle) + '</b></div>' +
             '</div></body></html>';
 
         var win = window.open('', '_blank');

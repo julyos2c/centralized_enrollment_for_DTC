@@ -1,9 +1,8 @@
 /* ==========================================================================
-   DTC EMS — Landing + Sign In combined stylesheet (v3)
+   DTC Nexus — Landing + Sign In combined stylesheet (v3)
    Public landing page + sign-in view
    DTC blue / yellow / white palette
    ========================================================================== */
-
 
 /* ==========================================================================
    VARIABLES
@@ -14,22 +13,22 @@
    so a color only ever needs to change in one place. Local
    names are kept as-is to avoid touching every usage below. */
 :root {
-    --blue-900: var(--dtc-blue-900, #0A3399);
-    --blue-800: var(--dtc-primary, #0F4CDB);
-    --blue-700: var(--dtc-blue-700, #1A5FEB);
+    --blue-900: var(--dtc-blue-900, #0a3399);
+    --blue-800: var(--dtc-primary, #0f4cdb);
+    --blue-700: var(--dtc-blue-700, #1a5feb);
 
-    --yellow: var(--dtc-accent, #FFC72C);
-    --yellow-dark: var(--dtc-accent-dark, #F0B800);
+    --yellow: var(--dtc-accent, #ffc72c);
+    --yellow-dark: var(--dtc-accent-dark, #f0b800);
 
-    --bg: var(--dtc-bg, #F4F8FC);
-    --white: var(--dtc-surface, #FFFFFF);
+    --bg: var(--dtc-bg, #f4f8fc);
+    --white: var(--dtc-surface, #ffffff);
 
-    --border: var(--dtc-border, #E2E8F0);
+    --border: var(--dtc-border, #e2e8f0);
 
-    --text-900: var(--dtc-text, #1E293B);
+    --text-900: var(--dtc-text, #1e293b);
     --text-700: var(--dtc-text-700, #334155);
-    --text-500: var(--dtc-text-secondary, #64748B);
-    --text-400: var(--dtc-text-muted, #94A3B8);
+    --text-500: var(--dtc-text-secondary, #64748b);
+    --text-400: var(--dtc-text-muted, #94a3b8);
 }
 
 /* --dtc-text-700 is never defined by dtc-theme.css (only --dtc-text,
@@ -37,7 +36,7 @@
    silently stuck on its hardcoded light-mode fallback (#334155) in
    dark mode too — nearly invisible on the dark background. */
 body.dtc-dark {
-    --text-700: var(--dtc-text, #F8FAFC);
+    --text-700: var(--dtc-text, #f8fafc);
 }
 
 html,
@@ -67,7 +66,7 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 }
 
 html {
@@ -89,9 +88,8 @@ button,
 input,
 select,
 textarea {
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 }
-
 
 /* ==========================================================================
    VIEW SWITCHING
@@ -105,24 +103,27 @@ textarea {
     display: block;
 }
 
-
 /* ==========================================================================
    GLOBAL CONTAINER
    ========================================================================== */
 
 /* welcome.css — single rule, matches navbar at every width */
 .container {
-    width: min(1280px, calc(100% - 160px)) !important;  /* same as navbar */
+    width: min(1280px, calc(100% - 160px)) !important; /* same as navbar */
     margin: 0 auto;
-    padding: 0 !important;  /* width already accounts for the inset */
+    padding: 0 !important; /* width already accounts for the inset */
 }
 
 /* Remove the breakpoint overrides for .container padding — no longer needed */
 @media (max-width: 1200px) {
-    .container { padding: 0 !important; }
+    .container {
+        padding: 0 !important;
+    }
 }
 @media (max-width: 1024px) {
-    .container { padding: 0 !important; }
+    .container {
+        padding: 0 !important;
+    }
 }
 
 /* ==========================================================================
@@ -140,7 +141,6 @@ textarea {
     overflow-x: clip;
     z-index: 1000;
 }
-
 
 /* ==========================================================================
    HERO
@@ -162,7 +162,7 @@ textarea {
             rgba(244, 248, 252, 0.08) 88%,
             rgba(244, 248, 252, 0) 100%
         ),
-        url('/images/dtc-building.webp') right center / cover no-repeat;
+        url("/images/dtc-building.webp") right center / cover no-repeat;
 
     isolation: isolate;
 }
@@ -174,13 +174,12 @@ textarea {
 
     inset: 0;
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.08) 0%,
-            rgba(255, 255, 255, 0) 50%,
-            rgba(15, 76, 219, 0.03) 100%
-        );
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(15, 76, 219, 0.03) 100%
+    );
 
     pointer-events: none;
 
@@ -202,17 +201,16 @@ body.dtc-dark .hero {
             rgba(15, 23, 42, 0.08) 88%,
             rgba(15, 23, 42, 0) 100%
         ),
-        url('/images/dtc-building.webp') right center / cover no-repeat;
+        url("/images/dtc-building.webp") right center / cover no-repeat;
 }
 
 body.dtc-dark .hero::after {
-    background:
-        linear-gradient(
-            180deg,
-            rgba(15, 23, 42, 0.15) 0%,
-            rgba(15, 23, 42, 0) 50%,
-            rgba(15, 76, 219, 0.08) 100%
-        );
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.15) 0%,
+        rgba(15, 23, 42, 0) 50%,
+        rgba(15, 76, 219, 0.08) 100%
+    );
 }
 
 .hero .container {
@@ -225,7 +223,6 @@ body.dtc-dark .hero::after {
     gap: 40px;
     align-items: center;
 }
-
 
 /* ==========================================================================
    HERO LEFT CONTENT
@@ -276,7 +273,6 @@ body.dtc-dark .hero::after {
     margin-bottom: 34px;
 }
 
-
 /* ==========================================================================
    HERO CTA
    ========================================================================== */
@@ -303,8 +299,7 @@ body.dtc-dark .hero::after {
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
-    box-shadow:
-        0 10px 26px rgba(255, 199, 44, 0.32);
+    box-shadow: 0 10px 26px rgba(255, 199, 44, 0.32);
     transition:
         background 0.25s ease,
         transform 0.25s ease,
@@ -315,8 +310,7 @@ body.dtc-dark .hero::after {
     background: var(--yellow-dark);
     color: var(--text-900);
     transform: translateY(-2px);
-    box-shadow:
-        0 14px 32px rgba(255, 199, 44, 0.42);
+    box-shadow: 0 14px 32px rgba(255, 199, 44, 0.42);
 }
 
 .btn-secondary-cta {
@@ -334,8 +328,7 @@ body.dtc-dark .hero::after {
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    box-shadow:
-        0 6px 20px rgba(15, 76, 219, 0.06);
+    box-shadow: 0 6px 20px rgba(15, 76, 219, 0.06);
     transition:
         border-color 0.2s ease,
         background 0.2s ease,
@@ -364,7 +357,6 @@ body.dtc-dark .btn-secondary-cta:hover {
     color: var(--dtc-text);
 }
 
-
 /* ==========================================================================
    HERO FEATURES
    ========================================================================== */
@@ -384,7 +376,7 @@ body.dtc-dark .btn-secondary-cta:hover {
 
     background: rgba(255, 255, 255, 0.82);
 
-    border: 1px solid rgba(226, 232, 240, 0.90);
+    border: 1px solid rgba(226, 232, 240, 0.9);
 
     border-radius: 999px;
 
@@ -396,8 +388,7 @@ body.dtc-dark .btn-secondary-cta:hover {
 
     font-weight: 500;
 
-    box-shadow:
-        0 4px 14px rgba(15, 76, 219, 0.05);
+    box-shadow: 0 4px 14px rgba(15, 76, 219, 0.05);
 
     backdrop-filter: blur(4px);
 }
@@ -414,7 +405,6 @@ body.dtc-dark .feature-pill {
     color: var(--dtc-text-secondary);
 }
 
-
 /* ==========================================================================
    OLD HERO VISUAL
    Hidden because the DTC building is now the hero background.
@@ -426,7 +416,6 @@ body.dtc-dark .feature-pill {
 .mockup-card {
     display: none;
 }
-
 
 /* ==========================================================================
    SERVICES
@@ -672,8 +661,7 @@ body.dtc-dark .feature-pill {
 }
 
 .service-card:hover {
-    box-shadow:
-        0 12px 32px rgba(15, 76, 219, 0.10);
+    box-shadow: 0 12px 32px rgba(15, 76, 219, 0.1);
 
     transform: translateY(-3px);
 }
@@ -715,7 +703,6 @@ body.dtc-dark .feature-pill {
     line-height: 1.55;
 }
 
-
 /* ==========================================================================
    PROCESS
    ========================================================================== */
@@ -727,8 +714,7 @@ body.dtc-dark .feature-pill {
 .process-steps {
     display: grid;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
 
     gap: 24px;
 }
@@ -774,7 +760,6 @@ body.dtc-dark .feature-pill {
     color: var(--text-500);
 }
 
-
 /* ==========================================================================
    FAQ
    ========================================================================== */
@@ -805,8 +790,7 @@ body.dtc-dark .feature-pill {
 
     overflow: hidden;
 
-    transition:
-        border-color 0.2s ease;
+    transition: border-color 0.2s ease;
 }
 
 .faq-item.active {
@@ -831,7 +815,7 @@ body.dtc-dark .feature-pill {
 
     padding: 18px 22px;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 
     font-size: 15px;
 
@@ -847,8 +831,7 @@ body.dtc-dark .feature-pill {
 
     font-size: 13px;
 
-    transition:
-        transform 0.25s ease;
+    transition: transform 0.25s ease;
 
     flex-shrink: 0;
 }
@@ -883,7 +866,6 @@ body.dtc-dark .feature-pill {
     color: var(--text-500);
 }
 
-
 /* ==========================================================================
    FOOTER
    ========================================================================== */
@@ -902,7 +884,6 @@ body.dtc-dark .feature-pill {
     background: var(--white);
 }
 
-
 /* ==========================================================================
    LOGIN VIEW
    ========================================================================== */
@@ -912,8 +893,7 @@ body.dtc-dark .feature-pill {
 
     display: grid;
 
-    grid-template-columns:
-        1fr 1fr;
+    grid-template-columns: 1fr 1fr;
 }
 
 .login-branding {
@@ -923,8 +903,7 @@ body.dtc-dark .feature-pill {
             rgba(10, 51, 153, 0.88),
             rgba(15, 76, 219, 0.88)
         ),
-        url('/images/dtc-building.webp')
-        center center / cover no-repeat;
+        url("/images/dtc-building.webp") center center / cover no-repeat;
 
     color: var(--white);
 
@@ -946,8 +925,7 @@ body.dtc-dark .feature-pill {
 
     border-radius: 50%;
 
-    background:
-        rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .login-branding .circle.c1 {
@@ -965,8 +943,7 @@ body.dtc-dark .feature-pill {
     bottom: -80px;
     right: -60px;
 
-    background:
-        rgba(255, 199, 44, 0.1);
+    background: rgba(255, 199, 44, 0.1);
 }
 
 .login-branding .brand-row {
@@ -1001,8 +978,7 @@ body.dtc-dark .feature-pill {
 .login-branding .brand-row p {
     font-size: 12px;
 
-    color:
-        rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .login-branding h2 {
@@ -1024,8 +1000,7 @@ body.dtc-dark .feature-pill {
 .login-branding p.tagline {
     font-size: 15px;
 
-    color:
-        rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.75);
 
     max-width: 380px;
 
@@ -1057,11 +1032,9 @@ body.dtc-dark .feature-pill {
 
     gap: 6px;
 
-    background:
-        rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
 
-    border:
-        1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 
     border-radius: 999px;
 
@@ -1069,8 +1042,7 @@ body.dtc-dark .feature-pill {
 
     font-size: 12px;
 
-    color:
-        rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .login-branding .role-pill i {
@@ -1096,7 +1068,6 @@ body.dtc-dark .feature-pill {
 
     max-width: 400px;
 }
-
 
 /* ==========================================================================
    LOGIN STEPS
@@ -1160,7 +1131,6 @@ body.dtc-dark .feature-pill {
     font-size: 11px;
 }
 
-
 /* ==========================================================================
    LOGIN FORMS
    ========================================================================== */
@@ -1206,8 +1176,7 @@ body.dtc-dark .feature-pill {
 
     padding: 0 14px 0 40px;
 
-    border:
-        1.5px solid var(--border);
+    border: 1.5px solid var(--border);
 
     border-radius: 10px;
 
@@ -1219,10 +1188,9 @@ body.dtc-dark .feature-pill {
 
     outline: none;
 
-    transition:
-        all 0.2s;
+    transition: all 0.2s;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 }
 
 .input-wrap input:focus {
@@ -1230,8 +1198,7 @@ body.dtc-dark .feature-pill {
 
     background: var(--white);
 
-    box-shadow:
-        0 0 0 3px rgba(15, 76, 219, 0.1);
+    box-shadow: 0 0 0 3px rgba(15, 76, 219, 0.1);
 }
 
 .input-wrap .toggle-pwd {
@@ -1249,8 +1216,7 @@ body.dtc-dark .feature-pill {
 
     font-size: 14px;
 
-    transition:
-        color 0.2s;
+    transition: color 0.2s;
 }
 
 .input-wrap .toggle-pwd:hover {
@@ -1262,13 +1228,11 @@ body.dtc-dark .feature-pill {
    ========================================================================== */
 
 .error-box {
-    background: #FEF2F2;
+    background: #fef2f2;
 
-    border:
-        1px solid #FECACA;
+    border: 1px solid #fecaca;
 
-    border-left:
-        4px solid #EF4444;
+    border-left: 4px solid #ef4444;
 
     border-radius: 10px;
 
@@ -1276,7 +1240,7 @@ body.dtc-dark .feature-pill {
 
     font-size: 13px;
 
-    color: #DC2626;
+    color: #dc2626;
 
     margin-bottom: 16px;
 
@@ -1286,7 +1250,6 @@ body.dtc-dark .feature-pill {
 
     gap: 8px;
 }
-
 
 /* ==========================================================================
    REMEMBER ME
@@ -1323,7 +1286,6 @@ body.dtc-dark .feature-pill {
     height: 16px;
 }
 
-
 /* ==========================================================================
    LOGIN BUTTONS
    ========================================================================== */
@@ -1348,13 +1310,11 @@ body.dtc-dark .feature-pill {
 
     cursor: pointer;
 
-    transition:
-        all 0.2s;
+    transition: all 0.2s;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 
-    box-shadow:
-        0 8px 20px rgba(255, 199, 44, 0.35);
+    box-shadow: 0 8px 20px rgba(255, 199, 44, 0.35);
 
     display: flex;
 
@@ -1373,8 +1333,7 @@ body.dtc-dark .feature-pill {
 
     transform: translateY(-2px);
 
-    box-shadow:
-        0 12px 28px rgba(255, 199, 44, 0.45);
+    box-shadow: 0 12px 28px rgba(255, 199, 44, 0.45);
 }
 
 .btn-back {
@@ -1398,10 +1357,9 @@ body.dtc-dark .feature-pill {
 
     margin-top: 10px;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
 
-    transition:
-        all 0.2s;
+    transition: all 0.2s;
 
     display: flex;
 
@@ -1417,7 +1375,6 @@ body.dtc-dark .feature-pill {
 
     color: var(--text-900);
 }
-
 
 /* ==========================================================================
    LOGIN UTILITIES
@@ -1438,8 +1395,7 @@ body.dtc-dark .feature-pill {
 
     border: none;
 
-    border-top:
-        1px solid var(--border);
+    border-top: 1px solid var(--border);
 }
 
 .divider span {
@@ -1467,8 +1423,7 @@ body.dtc-dark .feature-pill {
 
     background: var(--bg);
 
-    border:
-        1px solid var(--border);
+    border: 1px solid var(--border);
 
     border-radius: 20px;
 
@@ -1495,13 +1450,11 @@ body.dtc-dark .feature-pill {
     color: var(--text-400);
 }
 
-
 /* ==========================================================================
    RESPONSIVE — TABLET
    ========================================================================== */
 
 @media (max-width: 1200px) {
-
     .container {
         padding: 0 48px;
     }
@@ -1514,13 +1467,12 @@ body.dtc-dark .feature-pill {
                 90deg,
                 rgba(244, 248, 252, 1) 0%,
                 rgba(244, 248, 252, 0.98) 28%,
-                rgba(244, 248, 252, 0.90) 46%,
-                rgba(244, 248, 252, 0.60) 65%,
+                rgba(244, 248, 252, 0.9) 46%,
+                rgba(244, 248, 252, 0.6) 65%,
                 rgba(244, 248, 252, 0.18) 84%,
                 rgba(244, 248, 252, 0) 100%
             ),
-            url('/images/dtc-building.webp')
-            right center / cover no-repeat;
+            url("/images/dtc-building.webp") right center / cover no-repeat;
     }
 
     body.dtc-dark .hero {
@@ -1529,13 +1481,12 @@ body.dtc-dark .feature-pill {
                 90deg,
                 rgba(15, 23, 42, 1) 0%,
                 rgba(15, 23, 42, 0.98) 28%,
-                rgba(15, 23, 42, 0.90) 46%,
-                rgba(15, 23, 42, 0.60) 65%,
+                rgba(15, 23, 42, 0.9) 46%,
+                rgba(15, 23, 42, 0.6) 65%,
                 rgba(15, 23, 42, 0.18) 84%,
                 rgba(15, 23, 42, 0) 100%
             ),
-            url('/images/dtc-building.webp')
-            right center / cover no-repeat;
+            url("/images/dtc-building.webp") right center / cover no-repeat;
     }
 
     .hero .container {
@@ -1551,13 +1502,11 @@ body.dtc-dark .feature-pill {
     }
 }
 
-
 /* ==========================================================================
    RESPONSIVE — TABLET / SMALL LAPTOP
    ========================================================================== */
 
 @media (max-width: 1024px) {
-
     .container {
         padding: 0 32px;
     }
@@ -1570,11 +1519,10 @@ body.dtc-dark .feature-pill {
                 180deg,
                 rgba(244, 248, 252, 0.98) 0%,
                 rgba(244, 248, 252, 0.94) 44%,
-                rgba(244, 248, 252, 0.70) 72%,
-                rgba(244, 248, 252, 0.30) 100%
+                rgba(244, 248, 252, 0.7) 72%,
+                rgba(244, 248, 252, 0.3) 100%
             ),
-            url('/images/dtc-building.webp')
-            center bottom / cover no-repeat;
+            url("/images/dtc-building.webp") center bottom / cover no-repeat;
     }
 
     body.dtc-dark .hero {
@@ -1583,11 +1531,10 @@ body.dtc-dark .feature-pill {
                 180deg,
                 rgba(15, 23, 42, 0.98) 0%,
                 rgba(15, 23, 42, 0.94) 44%,
-                rgba(15, 23, 42, 0.70) 72%,
-                rgba(15, 23, 42, 0.30) 100%
+                rgba(15, 23, 42, 0.7) 72%,
+                rgba(15, 23, 42, 0.3) 100%
             ),
-            url('/images/dtc-building.webp')
-            center bottom / cover no-repeat;
+            url("/images/dtc-building.webp") center bottom / cover no-repeat;
     }
 
     .hero .container {
@@ -1603,8 +1550,7 @@ body.dtc-dark .feature-pill {
     }
 
     .process-steps {
-        grid-template-columns:
-            repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .login-screen {
@@ -1622,13 +1568,11 @@ body.dtc-dark .feature-pill {
     }
 }
 
-
 /* ==========================================================================
    RESPONSIVE — SERVICES CAROUSEL (TABLET)
    ========================================================================== */
 
 @media (max-width: 991.98px) {
-
     .carousel-track {
         height: 300px;
     }
@@ -1642,14 +1586,11 @@ body.dtc-dark .feature-pill {
     }
 }
 
-
 /* ==========================================================================
    RESPONSIVE — MOBILE
    ========================================================================== */
 
 @media (max-width: 640px) {
-
-
     /* Match the navbar's mobile container: calc(100% - 40px) = 20px each side */
     .container {
         width: calc(100% - 40px) !important;
@@ -1657,12 +1598,14 @@ body.dtc-dark .feature-pill {
     }
 
     .carousel-track .service-card.is-prev {
-    transform: translateX(-38%) translateZ(-120px) rotateY(22deg) scale(0.78);
-    opacity: 0.5;
+        transform: translateX(-38%) translateZ(-120px) rotateY(22deg)
+            scale(0.78);
+        opacity: 0.5;
     }
 
     .carousel-track .service-card.is-next {
-        transform: translateX(38%) translateZ(-120px) rotateY(-22deg) scale(0.78);
+        transform: translateX(38%) translateZ(-120px) rotateY(-22deg)
+            scale(0.78);
         opacity: 0.5;
     }
 
@@ -1676,13 +1619,13 @@ body.dtc-dark .feature-pill {
         transform-style: flat;
     }
 
-   .carousel-track .service-card {
-    width: min(240px, 72%);
+    .carousel-track .service-card {
+        width: min(240px, 72%);
     }
-    
+
     .carousel-track .service-card.is-center {
         transform: none;
-        position: relative;   
+        position: relative;
         margin: 0 auto;
     }
 
@@ -1714,10 +1657,9 @@ body.dtc-dark .feature-pill {
                 rgba(244, 248, 252, 1) 0%,
                 rgba(244, 248, 252, 0.97) 48%,
                 rgba(244, 248, 252, 0.76) 70%,
-                rgba(244, 248, 252, 0.20) 100%
+                rgba(244, 248, 252, 0.2) 100%
             ),
-            url('/images/dtc-building.webp')
-            center bottom / auto 55% no-repeat;
+            url("/images/dtc-building.webp") center bottom / auto 55% no-repeat;
     }
 
     body.dtc-dark .hero {
@@ -1727,10 +1669,9 @@ body.dtc-dark .feature-pill {
                 rgba(15, 23, 42, 1) 0%,
                 rgba(15, 23, 42, 0.97) 48%,
                 rgba(15, 23, 42, 0.76) 70%,
-                rgba(15, 23, 42, 0.20) 100%
+                rgba(15, 23, 42, 0.2) 100%
             ),
-            url('/images/dtc-building.webp')
-            center bottom / auto 55% no-repeat;
+            url("/images/dtc-building.webp") center bottom / auto 55% no-repeat;
     }
 
     .hero-left {
@@ -1783,7 +1724,6 @@ body.dtc-dark .feature-pill {
     }
 }
 
-
 /* ==========================================================================
    HERO — ENTRANCE ANIMATION
    ========================================================================== */
@@ -1799,12 +1739,24 @@ body.dtc-dark .feature-pill {
     animation: heroEnter 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.hero-eyebrow           { animation-delay: 0.05s; }
-.hero-left h1            { animation-delay: 0.15s; }
-.hero-left p.hero-desc   { animation-delay: 0.25s; }
-.hero-left p.hero-support { animation-delay: 0.33s; }
-.hero-cta-group          { animation-delay: 0.41s; }
-.hero-explore-link       { animation-delay: 0.49s; }
+.hero-eyebrow {
+    animation-delay: 0.05s;
+}
+.hero-left h1 {
+    animation-delay: 0.15s;
+}
+.hero-left p.hero-desc {
+    animation-delay: 0.25s;
+}
+.hero-left p.hero-support {
+    animation-delay: 0.33s;
+}
+.hero-cta-group {
+    animation-delay: 0.41s;
+}
+.hero-explore-link {
+    animation-delay: 0.49s;
+}
 
 @keyframes heroEnter {
     to {
@@ -1816,7 +1768,6 @@ body.dtc-dark .feature-pill {
 .hero {
     will-change: background-position;
 }
-
 
 /* ==========================================================================
    SCROLL REVEAL
@@ -1831,15 +1782,20 @@ body.dtc-dark .feature-pill {
         transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.reveal.reveal-left  { transform: translateX(-28px); }
-.reveal.reveal-right { transform: translateX(28px); }
-.reveal.reveal-scale { transform: scale(0.94); }
+.reveal.reveal-left {
+    transform: translateX(-28px);
+}
+.reveal.reveal-right {
+    transform: translateX(28px);
+}
+.reveal.reveal-scale {
+    transform: scale(0.94);
+}
 
 .reveal.revealed {
     opacity: 1;
     transform: none;
 }
-
 
 /* ==========================================================================
    BACK TO TOP BUTTON
@@ -1901,13 +1857,11 @@ body.dtc-dark .feature-pill {
     outline-offset: 3px;
 }
 
-
 /* ==========================================================================
    REDUCED MOTION
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
-
     .hero-eyebrow,
     .hero-left h1,
     .hero-left p.hero-desc,
@@ -1930,7 +1884,9 @@ body.dtc-dark .feature-pill {
     }
 
     .back-to-top {
-        transition: opacity 0.2s ease, visibility 0.2s ease;
+        transition:
+            opacity 0.2s ease,
+            visibility 0.2s ease;
     }
 }
 
@@ -1966,8 +1922,12 @@ body.dtc-dark .feature-pill {
 }
 
 @keyframes dtcSvcBackdropIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 /* ── Box ── */
@@ -1981,12 +1941,12 @@ body.dtc-dark .feature-pill {
     background: var(--white);
     border-radius: 22px;
     padding: 32px 28px;
-    box-shadow: 0 28px 72px rgba(10, 22, 50, 0.30);
+    box-shadow: 0 28px 72px rgba(10, 22, 50, 0.3);
     animation: dtcSvcBoxIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 body.dtc-dark .dtc-svc-box {
-    background: #1E293B;
+    background: #1e293b;
     color: var(--dtc-text);
 }
 
@@ -2028,7 +1988,10 @@ body.dtc-dark .dtc-svc-box {
     color: var(--text-500);
     cursor: pointer;
     font-size: 15px;
-    transition: background 0.2s, color 0.2s, transform 0.2s;
+    transition:
+        background 0.2s,
+        color 0.2s,
+        transform 0.2s;
 }
 
 .dtc-svc-close:hover {
@@ -2039,7 +2002,7 @@ body.dtc-dark .dtc-svc-box {
 }
 
 body.dtc-dark .dtc-svc-close {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     border-color: var(--dtc-border);
     color: var(--dtc-text-secondary);
 }
@@ -2081,7 +2044,7 @@ body.dtc-dark .dtc-svc-close {
 
 body.dtc-dark .dtc-svc-badge {
     background: rgba(15, 76, 219, 0.22);
-    color: #93BBFD;
+    color: #93bbfd;
 }
 
 .dtc-svc-title {
@@ -2132,7 +2095,7 @@ body.dtc-dark .dtc-svc-desc {
 }
 
 body.dtc-dark .dtc-svc-highlights-label {
-    color: #93BBFD;
+    color: #93bbfd;
 }
 
 /* ── Highlights list ── */
@@ -2174,7 +2137,7 @@ body.dtc-dark .dtc-svc-highlight-item {
 
 body.dtc-dark .dtc-svc-hi-icon {
     background: rgba(15, 76, 219, 0.22);
-    color: #93BBFD;
+    color: #93bbfd;
 }
 
 /* ── Who is this for ── */
@@ -2192,7 +2155,7 @@ body.dtc-dark .dtc-svc-hi-icon {
 }
 
 body.dtc-dark .dtc-svc-who {
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border-color: var(--dtc-border);
     color: var(--dtc-text-muted);
 }
@@ -2204,7 +2167,7 @@ body.dtc-dark .dtc-svc-who {
 }
 
 body.dtc-dark .dtc-svc-who i {
-    color: #93BBFD;
+    color: #93bbfd;
 }
 
 /* ── Carousel card: clickable center card indicator ── */
@@ -2213,7 +2176,7 @@ body.dtc-dark .dtc-svc-who i {
 }
 
 .carousel-track .service-card.is-center::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     border-radius: 20px;
@@ -2238,7 +2201,9 @@ body.dtc-dark .dtc-svc-who i {
     letter-spacing: 0.4px;
     opacity: 0;
     transform: translateY(4px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 
 .carousel-track .service-card.is-center .card-hint {
@@ -2256,7 +2221,7 @@ body.dtc-dark .dtc-svc-who i {
 }
 
 body.dtc-dark .service-card .card-hint {
-    color: #93BBFD;
+    color: #93bbfd;
 }
 
 /* Focus ring for keyboard nav */
@@ -2264,7 +2229,6 @@ body.dtc-dark .service-card .card-hint {
     outline: 2px solid var(--blue-800);
     outline-offset: 3px;
 }
-
 
 /* ==========================================================================
    ENRICHED FAQ BULLETS (dtc-faq-*)
@@ -2318,8 +2282,8 @@ body.dtc-dark .dtc-faq-bullet {
 }
 
 body.dtc-dark .dtc-faq-bullet-icon {
-    background: rgba(15, 76, 219, 0.20);
-    color: #93BBFD;
+    background: rgba(15, 76, 219, 0.2);
+    color: #93bbfd;
 }
 
 .dtc-faq-note {
@@ -2348,7 +2312,6 @@ body.dtc-dark .dtc-faq-note {
 .faq-item.active .faq-answer {
     max-height: 600px !important; /* override the 220px cap for bullet lists */
 }
-
 
 /* ==========================================================================
    MODAL — RESPONSIVE

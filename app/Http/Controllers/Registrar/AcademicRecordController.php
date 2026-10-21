@@ -49,7 +49,11 @@ class AcademicRecordController extends Controller
 
     public function show(StudentProfile $student)
     {
-        $student->load(['user', 'program']);
+        $student->load(['user', 'program', 'portalInvitation']);
+        $invitation = $student->portalInvitation;
+        if ($invitation && $invitation->status === 'pending' && $invitation->expires_at && $invitation->expires_at->isPast()) {
+            $invitation->update(['status' => 'expired', 'token_hash' => null]);
+        }
         return view('registrar.students.show', [
             'record' => $student,
             'enrollments' => $student->user ? Enrollment::with('program')->where('user_id', $student->user_id)->latest('id')->get() : collect(),
@@ -68,6 +72,11 @@ class AcademicRecordController extends Controller
         if ($student->user_id && $data['academic_status'] !== $student->academic_status) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'academic_status' => 'Use the established student-to-alumni promotion workflow for account-linked students.',
+            ]);
+        }
+        if ($student->user_id && ($data['email'] ?? null) !== $student->email) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => 'This academic record is linked to a portal account. Resolve email changes through the protected account process.',
             ]);
         }
         unset($data['student_number']);

@@ -874,6 +874,7 @@
 
 
 @section('scripts')
+<script src="{{ asset('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset('js/application-wizard.js') }}" defer></script>
 @php
     $firstErrorKey = $errors->keys()[0] ?? '';

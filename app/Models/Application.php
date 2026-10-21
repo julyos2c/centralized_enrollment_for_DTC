@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Support\NameNormalizer;
 
 class Application extends Model
 {
@@ -67,6 +68,81 @@ class Application extends Model
         'home_program',
         'acknowledged_at',
     ];
+
+    // Normalize names on both reads and writes. Existing rows are not rewritten;
+    // their displayed values are normalized through these accessors.
+    public function getFirstNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setFirstNameAttribute($value): void
+    {
+        $this->attributes['first_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getMiddleNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setMiddleNameAttribute($value): void
+    {
+        $this->attributes['middle_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getLastNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setLastNameAttribute($value): void
+    {
+        $this->attributes['last_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getFatherNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setFatherNameAttribute($value): void
+    {
+        $this->attributes['father_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getMotherNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setMotherNameAttribute($value): void
+    {
+        $this->attributes['mother_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getSpouseNameAttribute($value): ?string
+    {
+        return NameNormalizer::normalize($value);
+    }
+
+    public function setSpouseNameAttribute($value): void
+    {
+        $this->attributes['spouse_name'] = NameNormalizer::normalize($value);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return implode(' ', array_values(array_filter([
+            $this->honorific,
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+            $this->suffix,
+        ], function ($part) {
+            return is_string($part) && trim($part) !== '';
+        })));
+    }
 
     protected $casts = [
         'birthdate'   => 'date',

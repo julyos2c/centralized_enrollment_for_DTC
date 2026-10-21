@@ -18,4 +18,10 @@ class AcademicImportBatch extends Model
     {
         return $this->belongsTo(User::class, 'imported_by');
     }
+
+    public function studentProfiles()
+    {
+        return $this->belongsToMany(StudentProfile::class, 'academic_import_batch_profiles')
+            ->withTimestamps();
+    }
 }

@@ -82,6 +82,7 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Cashier Dashboard', 'url' => route('cashier.dashboard'),      'icon' => 'gauge'],
                         ['text' => 'Process Payments',  'url' => route('cashier.payments.index'), 'icon' => 'banknote'],
                         ['text' => 'Document Fees',    'url' => route('cashier.document-payments.index'), 'icon' => 'file-check'],
+                        ['text' => 'Payment History', 'url' => route('admin.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^admin/transactions(?:/|$)#']],
 
                         ['header' => 'SYSTEM'],
                         $notifItem,
@@ -102,6 +103,7 @@ class ViewServiceProvider extends ServiceProvider
                     ['text' => 'Appointment Requests', 'url' => route('registrar.appointments.index'), 'icon' => 'calendar-check'],
                     ['text' => 'Manage Slots',         'url' => route('registrar.appointments.slots'), 'icon' => 'clock'],
                     ['text' => 'Document Requests',    'url' => route('registrar.documents.index'),    'icon' => 'folder-open'],
+                    ['text' => 'Payment History',      'url' => route('registrar.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^registrar/transactions(?:/|$)#']],
                     ['header' => 'SYSTEM'],
                     $notifItem,
                 ];
@@ -113,6 +115,7 @@ class ViewServiceProvider extends ServiceProvider
                     ['header' => 'CASHIER PANEL'],
                     ['text' => 'Dashboard',       'url' => route('cashier.dashboard'),      'icon' => 'gauge'],
                     ['text' => 'Process Payments','url' => route('cashier.payments.index'), 'icon' => 'banknote'],
+                    ['text' => 'Payment History','url' => route('cashier.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^cashier/transactions(?:/|$)#']],
                     ['text' => 'Document Fees',  'url' => route('cashier.document-payments.index'), 'icon' => 'file-check'],
                     ['header' => 'SYSTEM'],
                     $notifItem,
@@ -128,6 +131,8 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'plus'],
                         ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'list'],
                     ]],
+                    ['text' => 'Payment History', 'url' => route('portal.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^portal/transactions(?:/|$)#']],
+
                     ['text' => 'Appointments', 'icon' => 'calendar', 'submenu' => [
                         ['text' => 'Book Appointment', 'url' => route('portal.appointments.create'), 'icon' => 'plus'],
                         ['text' => 'My Appointments',  'url' => route('portal.appointments.index'),  'icon' => 'list'],
@@ -148,6 +153,7 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'plus'],
                         ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'list'],
                     ]],
+                    ['text' => 'Payment History', 'url' => route('portal.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^portal/transactions(?:/|$)#']],
                     ['header' => 'SYSTEM'],
                     $notifItem,
                 ];
@@ -162,6 +168,7 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Request Document', 'url' => route('portal.documents.create'), 'icon' => 'plus'],
                         ['text' => 'My Requests',      'url' => route('portal.documents.index'),  'icon' => 'list'],
                     ]],
+                    ['text' => 'Payment History', 'url' => route('portal.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^portal/transactions(?:/|$)#']],
                     ['header' => 'SYSTEM'],
                     $notifItem,
                 ];
