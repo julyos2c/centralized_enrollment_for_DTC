@@ -84,7 +84,8 @@ class AcademicRecordImportService
             foreach ($check['rows'] as $entry) {
                 if (! $entry['valid'] || $entry['existing']) { $skipped++; continue; }
                 try {
-                    StudentProfile::create($entry['data']);
+                    $profile = StudentProfile::create($entry['data']);
+                    $batch->studentProfiles()->attach($profile->id);
                     $created++;
                 } catch (\Illuminate\Database\QueryException $e) {
                     // A concurrent import may claim the unique student number after preview.

@@ -18,20 +18,43 @@
     </div>
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+@endpush
+
+@push('js')
+    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+@endpush
+
 @section('content')
 <div class="row">
     <div class="col-12">
 
         {{-- Filters --}}
-        <div class="card mb-3">
-            <div class="card-body">
-                <form method="GET" action="{{ route('admin.settings.audit') }}" class="row" style="row-gap:12px;">
-                    <div class="col-12 col-md-6">
-                        <input type="text" name="search" class="form-control" placeholder="Search description or action..."
-                               value="{{ request('search') }}">
-                    </div>
-                    <div class="col-8 col-md-4">
-                        <select name="action" class="form-control">
+        @php
+            $auditFilterCount = filled(request('action')) ? 1 : 0;
+            $auditHasFilters  = $auditFilterCount > 0 || filled(request('search'));
+        @endphp
+        <form method="GET" action="{{ route('admin.settings.audit') }}" class="dtc-fl" data-dtc-filters aria-label="Filter audit logs">
+            <div class="dtc-fl-toolbar">
+                <div class="dtc-pay-search dtc-fl-search">
+                    <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+                    <input type="search" name="search" class="dtc-pay-search-input" value="{{ request('search') }}"
+                           placeholder="Search description or action…" autocomplete="off" aria-label="Search audit logs" data-dtc-filter-search>
+                </div>
+                <button type="button" class="dtc-fl-toggle {{ $auditFilterCount ? 'has-filters' : '' }}" data-toggle="collapse" data-target="#auditFilterPanel"
+                        aria-expanded="{{ $auditFilterCount ? 'true' : 'false' }}" aria-controls="auditFilterPanel" data-dtc-filter-toggle>
+                    <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+                    <span>Filters</span>
+                    <span class="dtc-fl-count" data-dtc-filter-count @if(!$auditFilterCount) hidden @endif>{{ $auditFilterCount }}</span>
+                </button>
+            </div>
+
+            <div class="collapse {{ $auditFilterCount ? 'show' : '' }}" id="auditFilterPanel">
+                <div class="dtc-fl-panel">
+                    <div class="dtc-fl-field">
+                        <label for="filter-action">Action</label>
+                        <select name="action" id="filter-action" class="form-control" data-dtc-filter>
                             <option value="">All actions</option>
                             @foreach ($actionTypes as $action)
                                 <option value="{{ $action }}" {{ request('action') === $action ? 'selected' : '' }}>
@@ -40,19 +63,13 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-4 col-md-2 d-flex" style="gap:8px;">
-                        <button type="submit" class="btn btn-primary flex-fill">
-                            <i data-lucide="filter"></i>
-                        </button>
-                        @if (request('search') || request('action'))
-                            <a href="{{ route('admin.settings.audit') }}" class="btn btn-secondary flex-fill">
-                                <i data-lucide="x"></i>
-                            </a>
-                        @endif
+                    <div class="dtc-fl-actions">
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        <a href="{{ route('admin.settings.audit') }}" class="dtc-fl-clear" data-dtc-clear @if(!$auditHasFilters) hidden @endif>Clear all</a>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
 
         {{-- Logs Table --}}
         <div class="card">

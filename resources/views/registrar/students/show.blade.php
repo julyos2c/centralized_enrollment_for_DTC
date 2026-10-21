@@ -37,6 +37,34 @@
 
     <section class="card ar-record-card" aria-label="Student academic details">
         <div class="card-body">
+            @if (session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
+            @if (session('error'))<div class="alert alert-danger" role="alert">{{ session('error') }}</div>@endif
+            @if ($errors->has('account'))<div class="alert alert-danger" role="alert">{{ $errors->first('account') }}</div>@endif
+            @php
+                $linkedUser = $record->user;
+                $invite = $record->portalInvitation;
+                $portalState = ! $linkedUser ? 'No portal account' : ($linkedUser->status === 'locked' ? 'Disabled' : ($linkedUser->email_verified_at ? ucfirst($linkedUser->status) : ($invite ? ucfirst(str_replace('_', ' ', $invite->status)) : 'Account pending')));
+            @endphp
+            <section class="mb-4" aria-labelledby="portal-account-heading">
+                <h2 class="h5" id="portal-account-heading">Portal account</h2>
+                <p class="mb-2"><strong>{{ $portalState }}</strong>
+                    @if ($linkedUser) <span class="text-muted">{{ $linkedUser->email }}{{ $linkedUser->email_verified_at ? ' · email verified' : ' · email not verified' }}</span>
+                    @else <span class="text-muted">Account setup requires eligibility checks and recipient email verification.</span> @endif
+                </p>
+                @if (! $linkedUser)
+                    <a class="btn btn-primary btn-sm" href="{{ route('registrar.students.provision', $record) }}">{{ $record->academic_status === 'alumni' ? 'Set Up Alumni Access' : 'Create Portal Account' }}</a>
+                @elseif ($invite && in_array($invite->status, ['pending', 'sending', 'delivery_failed', 'expired', 'revoked'], true) && $linkedUser->status === 'pending')
+                    @php $sendingLeaseExpired = $invite->status === 'sending' && (! $invite->updated_at || $invite->updated_at->lte(now()->subMinutes(max(1, (int) config('portal_accounts.sending_lease_minutes', 15))))); @endphp
+                    @if ($invite->status !== 'sending' || $sendingLeaseExpired)
+                        <form class="d-inline" method="POST" action="{{ route('registrar.students.invitation.resend', $record) }}" onsubmit="if (!confirm('Send a portal setup invitation to this record’s email address?')) return false; this.querySelector('button[type=submit]').disabled = true;">@csrf<button type="submit" class="btn btn-outline-primary btn-sm">{{ $sendingLeaseExpired ? 'Retry Invitation' : ($invite->status === 'pending' ? 'Resend Invitation' : 'Send New Invitation') }}</button></form>
+                    @else
+                        <span class="text-muted small">Invitation delivery in progress</span>
+                    @endif
+                    @if (in_array($invite->status, ['pending', 'sending', 'delivery_failed', 'expired'], true))
+                        <form class="d-inline" method="POST" action="{{ route('registrar.students.invitation.revoke', $record) }}" onsubmit="if (!confirm('Revoke this unused invitation? The pending account will remain unable to sign in.')) return false; this.querySelector('button[type=submit]').disabled = true;">@csrf<input type="hidden" name="confirm" value="1"><button type="submit" class="btn btn-outline-danger btn-sm">Revoke Invitation</button></form>
+                    @endif
+                @endif
+            </section>
             <dl class="ar-record-grid">
                 @foreach ($details as $label => $value)
                     <div class="ar-record-field">

@@ -20,6 +20,38 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'unreadCount'));
     }
 
+    /** Return only this Cashier's notification deltas for navbar polling. */
+    public function cashierPoll(Request $request)
+    {
+        abort_unless($request->user()->hasRole('cashier'), 403);
+
+        $data = $request->validate([
+            'after_id' => ['nullable', 'integer', 'min:0'],
+        ]);
+        $query = UserNotification::where('user_id', $request->user()->id)
+            ->where('id', '>', (int) ($data['after_id'] ?? 0))
+            ->orderBy('id');
+        $batch = $query->limit(51)->get();
+        $hasMore = $batch->count() > 50;
+        $notifications = $batch->take(50)->map(function (UserNotification $notification) {
+            return [
+                'id' => $notification->id,
+                'title' => $notification->title,
+                'message' => $notification->message,
+                'type' => $notification->type,
+                'is_read' => $notification->isRead(),
+                'relative_time' => $notification->created_at->diffForHumans(),
+                'read_url' => route('notifications.read', $notification),
+            ];
+        })->values();
+
+        return response()->json([
+            'notifications' => $notifications,
+            'unread_count' => $request->user()->unreadNotificationsCount(),
+            'has_more' => $hasMore,
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
     /** Mark one notification as read and redirect to its link. */
     public function markRead(UserNotification $notification)
     {

@@ -20,6 +20,14 @@
     </div>
 @endsection
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+@endpush
+
+@push('js')
+    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+@endpush
+
 @section('content')
 
 
@@ -50,52 +58,56 @@
 </div>
 
 {{-- Search & Filter --}}
-<div class="card mb-3">
-    <div class="card-body p-3">
-        <form method="GET" action="{{ route('admin.users.index') }}" id="users-filter-form">
-            <div class="row" style="gap:0; align-items:flex-end;">
-                <div class="col-md-5 mb-2 mb-md-0">
-                    <div class="dtc-input-icon-group">
-                        <i data-lucide="search" class="dtc-input-icon"></i>
-                        <input type="text" name="search" class="form-control dtc-input-with-icon"
-                               placeholder="Search name or email…"
-                               value="{{ request('search') }}">
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <select name="role" class="form-control" style="font-size:13px;">
-                        <option value="">All Roles</option>
-                        @foreach(['admin','registrar','cashier','student','alumni','new_applicant'] as $r)
-                            <option value="{{ $r }}" {{ request('role') === $r ? 'selected' : '' }}>
-                                {{ ucwords(str_replace('_',' ', $r)) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2 mb-md-0">
-                    <select name="status" class="form-control" style="font-size:13px;">
-                        <option value="">All Statuses</option>
-                        @foreach(['active','pending','locked'] as $s)
-                            <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
-                                {{ ucfirst($s) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex" style="gap:6px;">
-                    <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                        <i data-lucide="filter" style="width:13px;height:13px;margin-right:3px;"></i>Filter
-                    </button>
-                    @if(request()->hasAny(['search','role','status']))
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm">
-                            <i data-lucide="x" style="width:13px;height:13px;"></i>
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </form>
+@php
+    $userFilterCount = collect(['role', 'status'])->filter(fn ($k) => filled(request($k)))->count();
+    $userHasFilters  = $userFilterCount > 0 || filled(request('search'));
+@endphp
+<form method="GET" action="{{ route('admin.users.index') }}" id="users-filter-form" class="dtc-fl" data-dtc-filters aria-label="Filter users">
+    <div class="dtc-fl-toolbar">
+        <div class="dtc-pay-search dtc-fl-search">
+            <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+            <input type="search" name="search" class="dtc-pay-search-input" value="{{ request('search') }}"
+                   placeholder="Search name or email…" autocomplete="off" aria-label="Search users" data-dtc-filter-search>
+        </div>
+        <button type="button" class="dtc-fl-toggle {{ $userFilterCount ? 'has-filters' : '' }}" data-toggle="collapse" data-target="#usersFilterPanel"
+                aria-expanded="{{ $userFilterCount ? 'true' : 'false' }}" aria-controls="usersFilterPanel" data-dtc-filter-toggle>
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+            <span>Filters</span>
+            <span class="dtc-fl-count" data-dtc-filter-count @if(!$userFilterCount) hidden @endif>{{ $userFilterCount }}</span>
+        </button>
     </div>
-</div>
+
+    <div class="collapse {{ $userFilterCount ? 'show' : '' }}" id="usersFilterPanel">
+        <div class="dtc-fl-panel">
+            <div class="dtc-fl-field">
+                <label for="filter-role">Role</label>
+                <select name="role" id="filter-role" class="form-control" data-dtc-filter>
+                    <option value="">All roles</option>
+                    @foreach(['admin','registrar','cashier','student','alumni','new_applicant'] as $r)
+                        <option value="{{ $r }}" {{ request('role') === $r ? 'selected' : '' }}>
+                            {{ ucwords(str_replace('_',' ', $r)) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-field">
+                <label for="filter-status">Status</label>
+                <select name="status" id="filter-status" class="form-control" data-dtc-filter>
+                    <option value="">All statuses</option>
+                    @foreach(['active','pending','locked'] as $s)
+                        <option value="{{ $s }}" {{ request('status') === $s ? 'selected' : '' }}>
+                            {{ ucfirst($s) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="dtc-fl-actions">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <a href="{{ route('admin.users.index') }}" class="dtc-fl-clear" data-dtc-clear @if(!$userHasFilters) hidden @endif>Clear all</a>
+            </div>
+        </div>
+    </div>
+</form>
 
 {{-- Users Table --}}
 <div class="card">

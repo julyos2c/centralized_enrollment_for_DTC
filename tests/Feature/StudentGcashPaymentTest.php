@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\UserNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -25,11 +26,14 @@ class StudentGcashPaymentTest extends TestCase
     public function a_student_can_submit_a_gcash_proof_for_their_own_approved_unpaid_enrollment()
     {
         $student    = $this->makeUserWithRole('new_applicant');
+        $cashier    = $this->makeUserWithRole('cashier');
+        $secondCashier = $this->makeUserWithRole('cashier');
         $enrollment = Enrollment::factory()->create([
             'user_id' => $student->id,
             'status'  => 'approved',
             'is_paid' => false,
         ]);
+        $this->assertSame(0, UserNotification::whereIn('user_id', [$cashier->id, $secondCashier->id])->count(), 'Cashiers must not be alerted before payment proof is submitted.');
 
         $response = $this->actingAs($student)->post(
             route('portal.enrollment.payment.gcash', $enrollment),
@@ -56,6 +60,18 @@ class StudentGcashPaymentTest extends TestCase
         $this->assertNull($payment->processed_by);
         $this->assertNull($payment->verified_by);
         $this->assertNull($payment->receipt_no);
+
+        $notification = UserNotification::where('user_id', $cashier->id)
+            ->where('title', 'New GCash Payment Pending Verification')
+            ->firstOrFail();
+        $this->assertSame(route('cashier.payments.show', $enrollment), $notification->link);
+        $this->assertSame('enrollment-gcash-payment-pending:'.$payment->id, $notification->event_key);
+        $this->actingAs($cashier)->get($notification->link)->assertOk();
+        $this->assertDatabaseHas('user_notifications', [
+            'user_id' => $secondCashier->id,
+            'event_key' => 'enrollment-gcash-payment-pending:'.$payment->id,
+            'link' => route('cashier.payments.show', $enrollment),
+        ]);
     }
 
     /** @test */

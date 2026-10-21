@@ -33,6 +33,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Portal\ProfileController;
 use App\Http\Controllers\TransactionHistoryController;
+use App\Http\Controllers\PortalActivationController;
+use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
 
     // ── AUTH ──────────────────────────────────────────────────────────────────────
     Route::get('/', [AuthController::class, 'showLanding'])->name('landing');
@@ -76,6 +78,9 @@ use App\Http\Controllers\TransactionHistoryController;
     // (how long a minted token stays valid). 5 requests per minute per IP is
     // a reasonable anti-abuse ceiling for a "resend my link" form.
     Route::post('/resend-activation', [PasswordSetupController::class, 'resend'])->name('password.activation.resend')->middleware('throttle:5,1');
+
+    Route::get('/portal-activation/{token}', [PortalActivationController::class, 'show'])->where('token', '[A-Fa-f0-9]{64}')->middleware('throttle:20,1')->name('portal.activation.show');
+    Route::post('/portal-activation', [PortalActivationController::class, 'store'])->middleware('throttle:10,1')->name('portal.activation.store');
 
     // ── PUBLIC APPLICATION / PRE-ENROLLMENT ─────────────────────────────────────
     Route::prefix('apply')->name('public.application.')->group(function () {
@@ -169,10 +174,15 @@ use App\Http\Controllers\TransactionHistoryController;
     Route::get('/students/{student}', [AcademicRecordController::class, 'show'])->name('students.show');
     Route::get('/students/{student}/edit', [AcademicRecordController::class, 'edit'])->name('students.edit');
     Route::put('/students/{student}', [AcademicRecordController::class, 'update'])->name('students.update');
+    Route::get('/students/{student}/provision', [PortalAccountProvisioningController::class, 'confirm'])->name('students.provision');
+    Route::post('/students/{student}/provision', [PortalAccountProvisioningController::class, 'store'])->middleware('throttle:10,1')->name('students.provision.store');
+    Route::post('/students/{student}/invitation/resend', [PortalAccountProvisioningController::class, 'resend'])->middleware('throttle:5,1')->name('students.invitation.resend');
+    Route::post('/students/{student}/invitation/revoke', [PortalAccountProvisioningController::class, 'revoke'])->name('students.invitation.revoke');
     Route::get('/imports', [AcademicImportController::class, 'index'])->name('imports.index');
     Route::get('/imports/template/{type}', [AcademicImportController::class, 'template'])->name('imports.template');
     Route::post('/imports', [AcademicImportController::class, 'upload'])->middleware('throttle:10,1')->name('imports.upload');
     Route::get('/imports/{batch}', [AcademicImportController::class, 'show'])->name('imports.show');
+    Route::post('/imports/{batch}/provision-selected', [AcademicImportController::class, 'provisionSelected'])->middleware('throttle:5,1')->name('imports.provision-selected');
     Route::post('/imports/{batch}/commit', [AcademicImportController::class, 'commit'])->middleware('throttle:10,1')->name('imports.commit');
     Route::post('/imports/{batch}/cancel', [AcademicImportController::class, 'cancel'])->name('imports.cancel');
     Route::get('/imports/{batch}/report', [AcademicImportController::class, 'report'])->name('imports.report');
@@ -221,6 +231,7 @@ use App\Http\Controllers\TransactionHistoryController;
     // ── CASHIER ───────────────────────────────────────────────────────────────────
     Route::middleware(['auth', 'role:cashier|admin'])->prefix('cashier')->name('cashier.')->group(function () {
     Route::get('/dashboard', [CashierDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/notifications/poll', [NotificationController::class, 'cashierPoll'])->middleware('throttle:120,1')->name('notifications.poll');
     Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
     Route::get('/payments', [CashierPaymentController::class, 'index'])->name('payments.index');

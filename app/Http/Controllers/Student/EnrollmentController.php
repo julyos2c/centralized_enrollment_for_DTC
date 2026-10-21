@@ -247,7 +247,7 @@ class EnrollmentController extends Controller
                 }
 
                 $proofPath = $request->file('proof_of_payment')->store('payment-proofs', 'local');
-                Payment::create([
+                $payment = Payment::create([
                     'enrollment_id'    => $lockedEnrollment->id,
                     'payment_method'   => 'gcash',
                     'reference_number' => $validated['reference_number'],
@@ -260,6 +260,17 @@ class EnrollmentController extends Controller
                     'receipt_no'       => null,
                     'paid_at'          => null,
                 ]);
+
+                foreach (\App\Models\User::role('cashier')->get() as $cashier) {
+                    \App\Services\NotificationService::sendForEvent(
+                        $cashier,
+                        'enrollment-gcash-payment-pending:'.$payment->id,
+                        'New GCash Payment Pending Verification',
+                        "A GCash payment has been submitted for Enrollment #{$lockedEnrollment->id} and is awaiting your review.",
+                        'info',
+                        route('cashier.payments.show', $lockedEnrollment)
+                    );
+                }
 
                 return 'created';
             });
@@ -280,16 +291,6 @@ class EnrollmentController extends Controller
 
             return back()->with('error', $message);
         }
-
-    foreach (\App\Models\User::role('cashier')->get() as $cashier) {
-        \App\Services\NotificationService::send(
-            $cashier,
-            'New GCash Payment Pending Verification',
-            "A GCash payment has been submitted for Enrollment #{$enrollment->id} and is awaiting your review.",
-            'info',
-            route('cashier.payments.show', $enrollment)
-        );
-    }
 
         return back()->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
     }

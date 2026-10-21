@@ -131,12 +131,12 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Enroll Now',           'url' => route('portal.enrollment.create'), 'icon' => 'plus'],
                         ['text' => 'My Enrollment Status', 'url' => route('portal.enrollment.index'),  'icon' => 'list'],
                     ]],
+                    ['text' => 'Payment History', 'url' => route('portal.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^portal/transactions(?:/|$)#']],
 
                     ['text' => 'Appointments', 'icon' => 'calendar', 'submenu' => [
                         ['text' => 'Book Appointment', 'url' => route('portal.appointments.create'), 'icon' => 'plus'],
                         ['text' => 'My Appointments',  'url' => route('portal.appointments.index'),  'icon' => 'list'],
                     ]],
-                    ['text' => 'Payment History', 'url' => route('portal.transactions.index'), 'icon' => 'receipt', 'active' => ['regex:#^portal/transactions(?:/|$)#']],
                     ['text' => 'Certificate of Registration', 'url' => route('portal.cor.show'), 'icon' => 'file-badge'],
                     ['header' => 'SYSTEM'],
                     $notifItem,

@@ -1,0 +1,60 @@
+/* DTC shared filter toolbar: search + "Filters" toggle + collapsible panel.
+   Same look as Payment History. Uses the shared --dtc-* tokens so it follows light/dark theme.
+   Markup: .dtc-fl > .dtc-fl-toolbar (search + .dtc-fl-toggle) + .collapse > .dtc-fl-panel. */
+
+.dtc-fl { min-width: 0; margin-bottom: 16px; }
+
+.dtc-fl-toolbar { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.dtc-fl-toolbar .dtc-fl-search { flex: 1 1 auto; margin-bottom: 0; max-width: 420px; }
+
+.dtc-fl-toggle {
+    display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; height: 44px; padding: 0 14px;
+    border: 1px solid var(--dtc-border); border-radius: var(--dtc-radius-md, 10px);
+    background: var(--dtc-surface); color: var(--dtc-text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.dtc-fl-toggle svg { width: 16px; height: 16px; }
+.dtc-fl-toggle:hover,
+.dtc-fl-toggle[aria-expanded="true"],
+.dtc-fl-toggle.has-filters { color: var(--dtc-primary); border-color: #BFDBFE; background: var(--dtc-primary-soft); }
+body.dtc-dark .dtc-fl-toggle:hover,
+body.dtc-dark .dtc-fl-toggle[aria-expanded="true"],
+body.dtc-dark .dtc-fl-toggle.has-filters { border-color: rgba(108, 155, 255, .45); }
+.dtc-fl-toggle:focus-visible,
+.dtc-fl-clear:focus-visible { outline: 3px solid rgba(15, 76, 219, .25); outline-offset: 2px; }
+
+.dtc-fl-count {
+    min-width: 18px; height: 18px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 999px; background: var(--dtc-primary); color: #fff; font-size: 10px; font-weight: 700;
+}
+.dtc-fl-count[hidden] { display: none; }
+
+.dtc-fl-panel {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;
+    margin-bottom: 4px; padding: 14px; border: 1px solid var(--dtc-border-soft); border-radius: var(--dtc-radius-lg); background: var(--dtc-surface);
+}
+.dtc-fl-field { min-width: 0; }
+.dtc-fl-field label { display: block; margin-bottom: 6px; color: var(--dtc-text-secondary); font-size: 12px; font-weight: 600; }
+.dtc-fl-field .form-control { width: 100%; min-height: 42px; font-size: 13px; }
+.dtc-fl-actions { display: flex; align-items: center; gap: 14px; }
+.dtc-fl-actions .btn { min-height: 42px; }
+.dtc-fl-clear { color: var(--dtc-primary); font-size: 13px; font-weight: 600; text-decoration: none; }
+.dtc-fl-clear:hover { text-decoration: underline; }
+.dtc-fl-clear[hidden] { display: none; }
+
+@media (max-width: 767.98px) {
+    .dtc-fl-toolbar .dtc-fl-search { max-width: none; }
+    .dtc-fl-toggle { padding: 0 12px; }
+    .dtc-fl-panel { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+    .dtc-fl-actions { grid-column: 1 / -1; }
+    .dtc-fl-actions .btn { flex: 1 1 auto; min-height: 44px; }
+}
+
+@media (max-width: 380px) {
+    .dtc-fl-toggle span:not(.dtc-fl-count) { display: none; }
+    .dtc-fl-panel { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dtc-fl-toggle { transition: none; }
+}
