@@ -1,0 +1,122 @@
+/* Payment History (list + details). Uses the shared --dtc-* tokens so it follows light/dark theme. */
+.dtc-payment-history { min-width: 0; }
+.dtc-payment-reference { overflow-wrap: anywhere; font-weight: 600; }
+.dtc-payment-amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ph-sub { display: block; margin-top: 2px; color: var(--dtc-text-secondary); font-size: 11.5px; line-height: 1.4; }
+
+/* ── Filters ─────────────────────────────────────────────── */
+.ph-toolbar { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.ph-toolbar .ph-search { flex: 1 1 auto; margin-bottom: 0; max-width: 420px; }
+.ph-filter-toggle {
+    display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; height: 44px; padding: 0 14px;
+    border: 1px solid var(--dtc-border); border-radius: var(--dtc-radius-md, 10px);
+    background: var(--dtc-surface); color: var(--dtc-text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.ph-filter-toggle svg { width: 16px; height: 16px; }
+.ph-filter-toggle:hover, .ph-filter-toggle[aria-expanded="true"], .ph-filter-toggle.has-filters { color: var(--dtc-primary); border-color: #BFDBFE; background: var(--dtc-primary-soft); }
+.ph-filter-toggle:focus-visible, .ph-view:focus-visible, .ph-ref-link:focus-visible, .ph-clear:focus-visible, .ph-back:focus-visible { outline: 3px solid rgba(15, 76, 219, .25); outline-offset: 2px; }
+.ph-filter-count { min-width: 18px; height: 18px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--dtc-primary); color: #fff; font-size: 10px; font-weight: 700; }
+
+.ph-advanced {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end;
+    margin-bottom: 16px; padding: 14px; border: 1px solid var(--dtc-border-soft); border-radius: var(--dtc-radius-lg); background: var(--dtc-surface);
+}
+.ph-field { min-width: 0; }
+.ph-field label { display: block; margin-bottom: 6px; color: var(--dtc-text-secondary); font-size: 12px; font-weight: 600; }
+.ph-field .form-control { width: 100%; min-height: 42px; }
+.ph-advanced-actions { display: flex; align-items: center; gap: 14px; }
+.ph-advanced-actions .btn { min-height: 42px; }
+.ph-clear { color: var(--dtc-primary); font-size: 13px; font-weight: 600; text-decoration: none; }
+.ph-clear:hover { text-decoration: underline; }
+
+/* Status pills reuse .dtc-filter-bar (swipeable row on mobile) */
+.ph-status-bar { margin-bottom: 14px; }
+
+/* ── List ────────────────────────────────────────────────── */
+.ph-list { border: 1px solid var(--dtc-border-soft); border-radius: var(--dtc-radius-lg); background: var(--dtc-surface); box-shadow: var(--dtc-shadow-sm); overflow: hidden; }
+.ph-table { min-width: 0; table-layout: auto; font-size: 13px; }
+.ph-table th { text-align: left; }
+.ph-table th.ph-num, .ph-table td.ph-amount { text-align: right; }
+.ph-table .ph-action-col { width: 44px; }
+.ph-ref-link { color: var(--dtc-text); text-decoration: none; }
+.ph-ref-link:hover { color: var(--dtc-primary); }
+.ph-amount { font-weight: 700; color: var(--dtc-text); }
+.ph-date { color: var(--dtc-text-secondary); white-space: nowrap; }
+.ph-related, .ph-payer { max-width: 240px; overflow-wrap: anywhere; }
+.ph-related { color: var(--dtc-text-secondary); }
+.ph-action { text-align: right; }
+.ph-view { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; color: var(--dtc-text-muted); }
+.ph-view svg { width: 18px; height: 18px; }
+.ph-table tbody tr:hover .ph-view { color: var(--dtc-primary); background: var(--dtc-surface); }
+
+.ph-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--dtc-border-soft); background: var(--dtc-surface-soft); }
+.ph-footer .pagination { margin: 0; flex-wrap: wrap; }
+
+/* ── Details ─────────────────────────────────────────────── */
+.ph-detail { max-width: 720px; }
+.ph-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; color: var(--dtc-text-secondary); font-size: 13px; font-weight: 600; text-decoration: none; }
+.ph-back:hover { color: var(--dtc-primary); }
+.ph-back svg { width: 16px; height: 16px; }
+.ph-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px; margin-bottom: 14px; border: 1px solid var(--dtc-border-soft); border-radius: var(--dtc-radius-lg); background: var(--dtc-surface); box-shadow: var(--dtc-shadow-sm); }
+.ph-summary-main { min-width: 0; }
+.ph-summary-amount { margin-top: 4px; color: var(--dtc-text); font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ph-summary-ref { margin-top: 4px; color: var(--dtc-text-secondary); font-size: 12.5px; }
+.ph-summary .dtc-status-badge { flex: 0 0 auto; }
+.ph-note { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--dtc-border); border-left-width: 3px; border-radius: 10px; background: var(--dtc-surface-soft); color: var(--dtc-text-secondary); font-size: 13px; line-height: 1.5; }
+.ph-note svg { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 1px; }
+.ph-note.is-danger { border-left-color: var(--dtc-danger); }
+.ph-note.is-danger svg { color: var(--dtc-danger); }
+.ph-facts { margin: 0; border: 1px solid var(--dtc-border-soft); border-radius: var(--dtc-radius-lg); background: var(--dtc-surface); box-shadow: var(--dtc-shadow-sm); overflow: hidden; }
+.ph-facts > div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--dtc-border-soft); }
+.ph-facts > div:last-child { border-bottom: 0; }
+.ph-facts dt { color: var(--dtc-text-secondary); font-size: 12.5px; font-weight: 500; }
+.ph-facts dd { margin: 0; min-width: 0; color: var(--dtc-text); font-size: 13.5px; overflow-wrap: anywhere; }
+.ph-facts dd small { display: block; margin-top: 2px; color: var(--dtc-text-secondary); font-size: 11.5px; }
+
+/* ── Mobile: each payment becomes one tappable card ─────── */
+@media (max-width: 767.98px) {
+    .ph-toolbar .ph-search { max-width: none; }
+    .ph-filter-toggle { padding: 0 12px; }
+    .ph-advanced { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+    .ph-advanced-actions { grid-column: 1 / -1; }
+    .ph-advanced-actions .btn { flex: 1 1 auto; min-height: 44px; }
+
+    .ph-list { border-radius: var(--dtc-radius-lg); }
+    .ph-table, .ph-table tbody { display: block; width: 100%; }
+    .ph-table thead { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+    .ph-table tbody tr {
+        position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px;
+        align-items: center; padding: 13px 14px; border-bottom: 1px solid var(--dtc-border-soft);
+    }
+    .ph-table tbody tr:last-child { border-bottom: 0; }
+    .ph-table tbody tr:active { background: var(--dtc-primary-soft); }
+    .ph-table tbody td { display: block; min-width: 0; padding: 0; border: 0; background: transparent !important; }
+
+    .ph-ref { order: 1; }
+    .ph-amount { order: 2; font-size: 15px; }
+    .ph-payer { order: 3; grid-column: 1 / -1; max-width: none; margin-top: 6px; font-size: 13px; font-weight: 600; }
+    .ph-related { order: 4; grid-column: 1 / -1; max-width: none; font-size: 12.5px; }
+    .ph-status { order: 5; margin-top: 8px; }
+    .ph-date { order: 6; margin-top: 8px; text-align: right; font-size: 12px; }
+    .ph-action { display: none !important; }
+    /* whole card is the tap target */
+    .ph-ref-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+
+    .ph-footer { padding: 12px 14px; justify-content: center; text-align: center; }
+    .ph-footer .pagination { justify-content: center; gap: 2px; }
+    .ph-footer .page-link { padding: .4rem .6rem; }
+
+    .ph-summary { padding: 14px; }
+    .ph-summary-amount { font-size: 22px; }
+    .ph-facts > div { grid-template-columns: 1fr; gap: 2px; padding: 11px 14px; }
+}
+
+@media (max-width: 380px) {
+    .ph-filter-toggle span:not(.ph-filter-count) { display: none; }
+    .ph-advanced { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ph-filter-toggle { transition: none; }
+}

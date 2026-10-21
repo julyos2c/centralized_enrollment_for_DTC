@@ -32,6 +32,7 @@ use App\Http\Controllers\Portal\CorController as PortalCorController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Portal\ProfileController;
+use App\Http\Controllers\TransactionHistoryController;
 
     // ── AUTH ──────────────────────────────────────────────────────────────────────
     Route::get('/', [AuthController::class, 'showLanding'])->name('landing');
@@ -111,6 +112,8 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── ADMIN ─────────────────────────────────────────────────────────────────────
     Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
     Route::resource('users', UserController::class)->except(['show']);
     Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::get('/settings/payment/qr-preview', [EnrollmentController::class, 'showGcashQr'])->name('settings.payment.qr.preview');
@@ -157,6 +160,8 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── REGISTRAR ─────────────────────────────────────────────────────────────────
     Route::middleware(['auth', 'role:registrar|admin'])->prefix('registrar')->name('registrar.')->group(function () {
     Route::get('/dashboard', [RegistrarDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
 
     Route::get('/students', [AcademicRecordController::class, 'index'])->name('students.index');
     Route::get('/students/create', [AcademicRecordController::class, 'create'])->name('students.create');
@@ -216,6 +221,8 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── CASHIER ───────────────────────────────────────────────────────────────────
     Route::middleware(['auth', 'role:cashier|admin'])->prefix('cashier')->name('cashier.')->group(function () {
     Route::get('/dashboard', [CashierDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
     Route::get('/payments', [CashierPaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/{enrollment}', [CashierPaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{enrollment}', [CashierPaymentController::class, 'store'])->name('payments.store');
@@ -236,6 +243,8 @@ use App\Http\Controllers\Portal\ProfileController;
     // ── PORTAL (Student / Alumni / New Applicant) ─────────────────────────────────
     Route::middleware(['auth', 'role:student|alumni|new_applicant'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [PortalDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
     Route::get('/application', [PortalApplicationController::class, 'show'])->name('application.show');
 
     Route::get('/enrollment/create', [EnrollmentController::class, 'create'])->name('enrollment.create');
