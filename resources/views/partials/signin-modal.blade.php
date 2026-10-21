@@ -80,7 +80,7 @@
                             name="email"
                             class="dtc-modal-input @error('email') dtc-modal-input--error @enderror"
                             value="{{ old('email') }}"
-                            placeholder="you@dtc.edu.ph"
+                            placeholder="you@example.com"
                             autocomplete="email"
                             required
                         >
