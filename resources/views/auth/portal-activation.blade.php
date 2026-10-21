@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up portal account — DTC EMS</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/auth-pages.css') }}"></head>
-<body><main class="auth-card"><header class="auth-card-header"><div class="auth-brand"><img src="{{ asset('images/DTC-LOGO.webp') }}" alt="DTC Logo"><div><p class="auth-brand-name">DTC EMS</p><p class="auth-brand-sub">Danao Technological College</p></div></div><p class="auth-card-tagline">Set up your <span>portal account.</span></p></header>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up portal account — DTC Nexus</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="{{ asset('css/auth-pages.css') }}"></head>
+<body><main class="auth-card"><header class="auth-card-header"><div class="auth-brand"><img src="{{ asset('images/DTC-LOGO.webp') }}" alt="DTC Logo"><div><p class="auth-brand-name">DTC Nexus</p><p class="auth-brand-sub">Danao Technological College</p></div></div><p class="auth-card-tagline">Set up your <span>portal account.</span></p></header>
 <section class="auth-card-body"><h1 class="auth-card-title">Choose your password</h1>
 @if ($valid)
     <p class="auth-card-subtitle">Completing this form verifies this email address and activates your portal account.</p>

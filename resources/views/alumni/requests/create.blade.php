@@ -343,7 +343,7 @@
 
 @section('js')
 <script>
-/* DTC EMS — alumni document request wizard (4 steps). Mirrors the student booking flow. */
+/* DTC Nexus — alumni document request wizard (4 steps). Mirrors the student booking flow. */
 (function () {
     'use strict';
     var form = document.getElementById('drForm');

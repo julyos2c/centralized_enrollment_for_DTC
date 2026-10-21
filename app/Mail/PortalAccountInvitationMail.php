@@ -19,7 +19,7 @@ class PortalAccountInvitationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Set up your DTC EMS portal account')
+        return $this->subject('Set up your DTC Nexus portal account')
             ->view('emails.portal-account-invitation');
     }
 }

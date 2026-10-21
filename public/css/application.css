@@ -1,5 +1,5 @@
 /* =========================================================
-   DTC EMS — PUBLIC APPLICATION
+   DTC Nexus — PUBLIC APPLICATION
    ========================================================= */
 
 * {
@@ -10,7 +10,7 @@ body {
     margin: 0;
     background: #f5f8fc;
     color: #17233c;
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -47,7 +47,7 @@ body > .public-main {
 
 .application-header h1 {
     margin: 0 0 8px;
-    color: #0F4CDB;
+    color: #0f4cdb;
     font-size: 30px;
     font-weight: 700;
 }
@@ -118,7 +118,7 @@ body > .public-main {
 }
 
 .application-section-title i {
-    color: #0F4CDB;
+    color: #0f4cdb;
 }
 
 .application-section-description {
@@ -193,14 +193,14 @@ body > .public-main {
 
     color: #17233c;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 14px;
 
     outline: none;
 
     transition:
-        border-color .2s ease,
-        box-shadow .2s ease;
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .application-card textarea {
@@ -213,8 +213,8 @@ body > .public-main {
 .application-card input:focus,
 .application-card select:focus,
 .application-card textarea:focus {
-    border-color: #0F4CDB;
-    box-shadow: 0 0 0 3px rgba(15, 76, 219, 0.10);
+    border-color: #0f4cdb;
+    box-shadow: 0 0 0 3px rgba(15, 76, 219, 0.1);
 }
 
 /* ---------------------------------------------------------
@@ -240,7 +240,7 @@ body > .public-main {
 
 .application-alert i {
     margin-top: 3px;
-    color: #0F4CDB;
+    color: #0f4cdb;
 }
 
 /* ---------------------------------------------------------
@@ -278,16 +278,16 @@ body > .public-main {
     border: 0;
     border-radius: 10px;
 
-    background: #0F4CDB;
+    background: #0f4cdb;
     color: #ffffff;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 14px;
     font-weight: 600;
 
     cursor: pointer;
 
-    transition: .2s ease;
+    transition: 0.2s ease;
 }
 
 .btn-application-primary:hover {
@@ -309,7 +309,7 @@ body > .public-main {
     background: #ffffff;
     color: #344054;
 
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     font-size: 14px;
     font-weight: 600;
 
@@ -325,41 +325,41 @@ body > .public-main {
    --------------------------------------------------------- */
 
 body.dtc-dark {
-    background: #0F172A;
-    color: #F8FAFC;
+    background: #0f172a;
+    color: #f8fafc;
 }
 
 body.dtc-dark .application-header h1 {
-    color: #6E93F7;
+    color: #6e93f7;
 }
 
 body.dtc-dark .application-header p,
 body.dtc-dark .application-card-header p,
 body.dtc-dark .application-section-description {
-    color: #94A3B8;
+    color: #94a3b8;
 }
 
 body.dtc-dark .public-main {
-    background: #0F172A;
+    background: #0f172a;
 }
 
 body.dtc-dark .application-card {
     background: #111827;
-    border-color: #1E293B;
+    border-color: #1e293b;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 
 body.dtc-dark .application-card-header h2,
 body.dtc-dark .application-section-title {
-    color: #F8FAFC;
+    color: #f8fafc;
 }
 
 body.dtc-dark .application-section-title i {
-    color: #6E93F7;
+    color: #6e93f7;
 }
 
 body.dtc-dark .form-group label {
-    color: #CBD5E1;
+    color: #cbd5e1;
 }
 
 body.dtc-dark .form-control,
@@ -371,15 +371,15 @@ body.dtc-dark .application-card input[type="tel"],
 body.dtc-dark .application-card input[type="number"],
 body.dtc-dark .application-card select,
 body.dtc-dark .application-card textarea {
-    background: #1E293B;
+    background: #1e293b;
     border-color: #334155;
-    color: #F8FAFC;
+    color: #f8fafc;
 }
 
 body.dtc-dark .form-control::placeholder,
 body.dtc-dark .application-card input::placeholder,
 body.dtc-dark .application-card textarea::placeholder {
-    color: #64748B;
+    color: #64748b;
 }
 
 body.dtc-dark .form-control:focus,
@@ -387,7 +387,7 @@ body.dtc-dark .form-select:focus,
 body.dtc-dark .application-card input:focus,
 body.dtc-dark .application-card select:focus,
 body.dtc-dark .application-card textarea:focus {
-    border-color: #6E93F7;
+    border-color: #6e93f7;
     box-shadow: 0 0 0 3px rgba(110, 147, 247, 0.18);
 }
 
@@ -411,26 +411,25 @@ body.dtc-dark .form-control:-webkit-autofill:focus,
 body.dtc-dark input:-webkit-autofill,
 body.dtc-dark input:-webkit-autofill:hover,
 body.dtc-dark input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #F8FAFC !important;
-    -webkit-box-shadow: 0 0 0px 1000px #1E293B inset !important;
-    box-shadow: 0 0 0px 1000px #1E293B inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1e293b inset !important;
+    box-shadow: 0 0 0px 1000px #1e293b inset !important;
     transition: background-color 5000s ease-in-out 0s !important;
 }
 
 body.dtc-dark .application-alert {
-    background: #1E293B;
+    background: #1e293b;
     border-color: #334155;
-    color: #CBD5E1;
+    color: #cbd5e1;
 }
 
 body.dtc-dark .btn-application-secondary {
-    background: #1E293B;
+    background: #1e293b;
     border-color: #334155;
-    color: #E2E8F0;
+    color: #e2e8f0;
 }
 
 @media (max-width: 768px) {
-
     .application-page {
         padding: 25px 15px 50px;
     }
