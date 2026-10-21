@@ -8,4 +8,4 @@
 <p><strong>Current status:</strong> {{ ucfirst($documentRequest->status) }}</p>
 <p><strong>Payment status:</strong> {{ ucfirst(str_replace('_', ' ', $documentRequest->payment_status)) }}</p>
 
-<p>Sign in to DTC EMS to view your request details.</p>
+<p>Sign in to DTC Nexus to view your request details.</p>

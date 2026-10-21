@@ -21,7 +21,7 @@ class DocumentRequestUpdate extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('DTC EMS document request update')
+        return $this->subject('DTC Nexus document request update')
             ->view('emails.document-request-update');
     }
 }

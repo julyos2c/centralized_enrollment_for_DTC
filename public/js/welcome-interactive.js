@@ -1,5 +1,5 @@
 /**
- * DTC EMS — Welcome Page Interactive
+ * DTC Nexus — Welcome Page Interactive
  * ─────────────────────────────────────────────────────────────────
  * 1. Clickable service carousel cards → detail modal
  * 2. Enriched FAQ accordion with bullet lists + sub-details
@@ -23,7 +23,7 @@
             title: 'Online Enrollment',
             tagline: 'Enroll anytime, anywhere — no long queues.',
             description:
-                'The DTC EMS Online Enrollment module lets students complete their entire enrollment process digitally. From subject selection to section assignment, everything is handled in one place — no need to line up at the Registrar\'s Office.',
+                'The DTC Nexus Online Enrollment module lets students complete their entire enrollment process digitally. From subject selection to section assignment, everything is handled in one place — no need to line up at the Registrar\'s Office.',
             highlights: [
                 { icon: 'list-checks',  text: 'Step-by-step guided enrollment wizard' },
                 { icon: 'calendar',     text: 'Real-time subject & section availability' },
@@ -91,7 +91,7 @@
             title: 'Role-Based Access',
             tagline: 'Every user gets the right tools — nothing more, nothing less.',
             description:
-                'The DTC EMS uses a secure role-based access system. Each user type — student, alumni, registrar, cashier, or admin — sees only the features and data relevant to their role, keeping the system organised and your information protected.',
+                'The DTC Nexus uses a secure role-based access system. Each user type — student, alumni, registrar, cashier, or admin — sees only the features and data relevant to their role, keeping the system organised and your information protected.',
             highlights: [
                 { icon: 'graduation-cap',   text: 'Students — enroll, pay fees, and request documents' },
                 { icon: 'user',             text: 'Alumni — request certifications and book appointments' },
@@ -100,7 +100,7 @@
                 { icon: 'shield',           text: 'Admin — full system access for configuration and user management' },
                 { icon: 'eye-off',          text: 'No user can access another role\'s data or functions' },
             ],
-            who: 'All DTC EMS users — students, staff, and administrators',
+            who: 'All DTC Nexus users — students, staff, and administrators',
         },
     };
 
@@ -299,7 +299,7 @@
     ================================================================ */
     const FAQ_DATA = [
         {
-            q: 'How do I enroll through DTC EMS?',
+            q: 'How do I enroll through DTC Nexus?',
             answer: 'The online enrollment process is simple and fully guided:',
             bullets: [
                 { icon: 'log-in',          text: '<strong>Sign in</strong> to the portal using your registered student email and password' },
@@ -336,7 +336,7 @@
         },
         {
             q: 'What payment options are available?',
-            answer: 'The DTC EMS supports two payment methods — online and in person:',
+            answer: 'The DTC Nexus supports two payment methods — online and in person:',
             bullets: [
                 { icon: 'qr-code',         text: '<strong>GCash QR (Online)</strong> — scan the official DTC GCash QR code, complete the payment, then upload your screenshot as proof' },
                 { icon: 'banknote',        text: '<strong>Walk-in Cash Payment</strong> — visit the Cashier\'s Office in person and pay your fees directly at the counter' },
