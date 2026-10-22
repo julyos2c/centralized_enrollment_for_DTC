@@ -27,7 +27,7 @@ class AcademicRecordController extends Controller
             ->when($request->filled('school_year'), fn ($q) => $q->where('enrolled_ay', $request->query('school_year')));
 
         return view('registrar.students.index', [
-            'records' => $query->orderBy('last_name')->orderBy('student_number')->paginate(25)->withQueryString(),
+            'records' => $query->orderBy('last_name')->orderBy('student_number')->paginate(\App\Support\TablePagination::perPage(25))->withQueryString(),
             'programs' => Program::orderBy('name')->get(), 'type' => $type,
         ]);
     }

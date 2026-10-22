@@ -41,7 +41,7 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        // Count every attempt up front; bot protection itself is handled at the Cloudflare edge.
+        // Count attempts before CAPTCHA so provider failures cannot disable the limit.
         RateLimiter::hit($ipLimiterKey, $decaySeconds);
         RateLimiter::hit($identityLimiterKey, $decaySeconds);
         RateLimiter::hit($emailLimiterKey, $emailDecaySeconds);
@@ -76,6 +76,13 @@ class AuthController extends Controller
         }
 
         return redirect()->intended($this->redirectPath($user));
+    }
+
+    private function captchaRetryResponse()
+    {
+        return back()
+            ->withErrors(['captcha' => 'CAPTCHA verification is temporarily unavailable. Please try again shortly.'])
+            ->onlyInput('email');
     }
 
     public function logout(Request $request)

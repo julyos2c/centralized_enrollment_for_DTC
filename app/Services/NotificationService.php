@@ -7,9 +7,11 @@ use App\Models\UserNotification;
 use App\Models\DocumentRequest;
 use App\Models\DocumentPaymentNotificationOutbox;
 use App\Mail\DocumentRequestUpdate;
+use App\Mail\WorkflowUpdate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class NotificationService
 {
@@ -81,6 +83,75 @@ class NotificationService
                 'title' => $title,
                 'exception' => get_class($exception),
             ]);
+            return false;
+        }
+    }
+
+    /** Persist one user-facing event and queue its matching email once. */
+    public static function sendUserUpdateSafely(
+        User $user,
+        string $eventKey,
+        string $title,
+        string $message,
+        string $type = 'info',
+        ?string $link = null,
+        string $actionLabel = 'View in DTC Nexus'
+    ): bool {
+        try {
+            $notification = DB::transaction(function () use ($user, $eventKey, $title, $message, $type, $link) {
+                $notification = self::sendForEvent($user, $eventKey, $title, $message, $type, $link);
+                if ($notification->wasRecentlyCreated && $user->email) {
+                    $notification->forceFill(['email_status' => 'pending'])->save();
+                }
+                return $notification;
+            });
+
+            // Dispatch after the workflow commits, so rollback cannot emit an email.
+            if (DB::transactionLevel() > 0) {
+                DB::afterCommit(fn () => self::queueWorkflowEmail($notification->id, $user, $actionLabel));
+            } else {
+                return self::queueWorkflowEmail($notification->id, $user, $actionLabel);
+            }
+
+            return true;
+        } catch (\Throwable $exception) {
+            Log::warning('Could not deliver a user workflow update.', [
+                'user_id' => $user->id,
+                'event_key' => $eventKey,
+                'exception' => get_class($exception),
+            ]);
+
+            return false;
+        }
+    }
+
+    private static function queueWorkflowEmail(int $id, User $user, string $actionLabel): bool
+    {
+        try {
+            $notification = DB::transaction(function () use ($id) {
+                $notification = UserNotification::whereKey($id)->lockForUpdate()->firstOrFail();
+                if (!in_array($notification->email_status, ['pending', 'enqueue_failed'], true)) {
+                    return null;
+                }
+                $notification->forceFill(['email_status' => 'enqueueing'])->save();
+                return $notification;
+            });
+            if (!$notification) return true;
+            Mail::to($user->email)->queue(new WorkflowUpdate(
+                $user->name, $notification->title, $notification->message,
+                $notification->link, $actionLabel, $notification->id
+            ));
+            // Sync queues may have already completed or failed execution.
+            UserNotification::whereKey($id)->where('email_status', 'enqueueing')->update(['email_status' => 'queued']);
+            return true;
+        } catch (\Throwable $exception) {
+            try {
+                UserNotification::whereKey($id)->where('email_status', 'enqueueing')->update(['email_status' => 'enqueue_failed']);
+            } catch (\Throwable $stateException) {
+                // Preserve the committed workflow even if the database is unavailable.
+                Log::warning('Could not record workflow email failure state.', ['notification_id' => $id]);
+            }
+            Log::warning('Workflow email enqueue or synchronous execution failed.', ['notification_id' => $id, 'exception' => get_class($exception)]);
             return false;
         }
     }

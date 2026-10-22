@@ -16,6 +16,9 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
+@endpush
 @section('content')
 
 {{-- KPI ROW --}}
@@ -59,7 +62,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table mb-0">
+<table class="dashboard-summary-table table mb-0">
                     <thead>
                         <tr>
                             <th>Receipt #</th>
@@ -72,27 +75,25 @@
                     <tbody>
                         @forelse ($recentPayments as $payment)
                         <tr>
-                            <td style="font-size:12px; font-weight:600; color:var(--dtc-primary);">
+                            <td data-summary-label="Receipt #" style="font-size:12px; font-weight:600; color:var(--dtc-primary);">
                                 {{ $payment->receipt_no }}
                             </td>
-                            <td>
+                            <td data-summary-label="Payer">
                                 <div  class="u-flex-center-gap-10">
-                                    <div style="width:32px; height:32px; border-radius:50%;
+                                    <x-dtc.user-avatar :user="$payment->enrollment->user" style="width:32px; height:32px; border-radius:50%;
                                                 background:linear-gradient(135deg,#22C55E,#059669);
                                                 display:flex; align-items:center; justify-content:center;
-                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                        {{ strtoupper(substr($payment->enrollment->user->name, 0, 1)) }}
-                                    </div>
+                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                                     <span  class="u-text-sm">{{ $payment->enrollment->user->name }}</span>
                                 </div>
                             </td>
-                            <td style="font-size:13px; font-weight:600; color:var(--dtc-success);">
+                            <td data-summary-label="Amount" style="font-size:13px; font-weight:600; color:var(--dtc-success);">
                                 ₱{{ number_format($payment->amount, 2) }}
                             </td>
-                            <td  class="u-text-xxs-secondary">
+                            <td data-summary-label="Date"  class="u-text-xxs-secondary">
                                 {{ $payment->paid_at->format('M d, Y') }}
                             </td>
-                            <td><x-dtc.status-badge status="Paid" /></td>
+                            <td data-summary-label="Status"><x-dtc.status-badge status="Paid" /></td>
                         </tr>
                         @empty
                         <tr>
@@ -105,7 +106,7 @@
                 </table>
                 </div>
             </div>
-            @if ($recentPayments->total() > 0)
+            @if ($recentPayments->isNotEmpty())
                 <div class="card-footer u-panel-footer">
                     <a href="{{ route('cashier.payments.index') }}" class="u-text-sm" style="color:var(--dtc-primary); text-decoration:none;">View All Payments →</a>
                 </div>

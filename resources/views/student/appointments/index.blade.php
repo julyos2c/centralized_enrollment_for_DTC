@@ -7,7 +7,7 @@
     <div class="dr dr-head">
         <div>
             <h1>My appointments</h1>
-            <p>Your pickup times and payment status for document requests.</p>
+            <p>Track your document pickup and payment.</p>
         </div>
         <a href="{{ route('portal.appointments.create') }}" class="dr-btn dr-btn--primary">
             <i data-lucide="plus" aria-hidden="true"></i> Request a document
@@ -40,12 +40,14 @@
 @endphp
 
 @section('content')
-<div class="dr dr-index dtc-appointments-page">
+<div class="dr dr-index dtc-appointments-page dr-alumni-history dr-appointment-history">
 
     @if ($errors->any())
         <div class="dr-alert dr-alert--error" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><div>{{ $errors->first() }}</div></div>
     @endif
 
+    <details class="dr-history-summary">
+        <summary>Appointment overview <span>{{ $counts['all'] }} total &middot; {{ $confirmed }} confirmed</span></summary>
     <div class="dtc-dashboard-overview dtc-dashboard-overview--four mb-3" aria-label="Appointment summary">
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Total appointments</span>
@@ -69,7 +71,9 @@
         </div>
     </div>
 
-    <h2 class="dr-section-title">Appointment History</h2>
+    </details>
+
+    <h2 class="dr-section-title">Your appointments</h2>
 
     @if ($items->isEmpty())
         <div class="dr-empty">
@@ -81,13 +85,7 @@
         </div>
     @else
         @if ($pickupNow > 0)
-            <div class="dr-ready" role="status">
-                <span class="dr-ready-icon" aria-hidden="true"><i data-lucide="package-check"></i></span>
-                <p>
-                    <strong>{{ $pickupNow === 1 ? '1 document is' : $pickupNow.' documents are' }} ready to collect</strong>
-                    Pick up at the Registrar’s Office on your booked time. Bring your receipt and a valid ID.
-                </p>
-            </div>
+            <p class="dr-collection-hint">For pickup, bring your receipt and a valid ID.</p>
         @endif
 
         <div class="dr-filters" role="group" aria-label="Filter appointments" data-dr-filters>
@@ -123,7 +121,7 @@
                 @endphp
                 @php
                     $docStatus = $docRequest?->status;
-                    $stage     = $docStatus ? ($stageOf[$docStatus] ?? 0) : ($appointment->status === 'confirmed' ? 1 : 0);
+                    $stage     = $docStatus ? ($stageOf[$docStatus] ?? 0) : null;
                     $copiesTx  = $docRequest ? $docRequest->copies.($docRequest->copies > 1 ? ' copies' : ' copy') : null;
                     $collect   = $docRequest && $docStatus === 'ready' && $docRequest->payment_status === 'verified';
                     $docLabel  = $docNames[$appointment->document_type] ?? ucwords(str_replace('_', ' ', $appointment->document_type));
@@ -139,16 +137,13 @@
                                 @if ($copiesTx){{ $copiesTx }}, &#8369;{{ number_format($docRequest->fee, 2) }}, @endif
                                 requested {{ $appointment->created_at->format('M j, Y') }}
                             </p>
-                            @if ($appointment->purpose)
-                                <p class="dr-req-purpose">Purpose: {{ $appointment->purpose }}</p>
-                            @endif
                         </div>
                         @if ($cancelled)
                             <span class="dtc-status-badge is-{{ $topBadgeTone }}">{{ $topBadgeText }}</span>
                         @endif
                     </div>
 
-                    @if (! $cancelled)
+                    @if (! $cancelled && $docRequest)
                         <ol class="dr-track" aria-label="Progress: step {{ $stage + 1 }} of 4, {{ $stageName[$stage] }}">
                             @foreach ($stageName as $i => $name)
                                 <li class="{{ $i < $stage || ($i === $stage && $docStatus === 'released') ? 'is-done' : '' }} {{ $i === $stage ? 'is-current' : '' }}"
@@ -157,7 +152,11 @@
                         </ol>
                     @endif
 
-                    <div class="dr-remark" style="margin-top:12px;" aria-label="Pickup appointment">
+                    @if (!$cancelled && !$docRequest)
+                        <p class="dr-step-note">{{ $appointment->status === 'confirmed' ? 'Appointment confirmed' : 'Awaiting appointment confirmation' }}</p>
+                    @endif
+
+                    <div class="dr-pickup-summary" aria-label="Pickup appointment">
                         <i data-lucide="calendar-days" aria-hidden="true"></i>
                         <span>
                             <strong>{{ $when->format('D, M j') }}</strong> · {{ $timeShort }}
@@ -165,6 +164,13 @@
                             @if ($cancelled && $appointment->remarks)<br>{{ $appointment->remarks }}@endif
                         </span>
                     </div>
+
+                    @if ($appointment->purpose)
+                        <details class="dr-request-details">
+                            <summary>Request details</summary>
+                            <p class="dr-req-purpose">Purpose: {{ $appointment->purpose }}</p>
+                        </details>
+                    @endif
 
                     @if (! $cancelled)
                         <div class="dr-pay">
@@ -179,7 +185,7 @@
 
                             @if ($docRequest)
                                 @if ($docRequest->payment_status === 'verified')
-                                    <p class="dr-pay-text">Fee verified by the Cashier.</p>
+
                                 @elseif ($docRequest->payment_status === 'pending_verification')
                                     <p class="dr-pay-text">GCash proof submitted. Awaiting Cashier verification.@if($docRequest->proof_of_payment) <a href="{{ route('portal.appointments.document-payment.proof', $docRequest) }}" target="_blank" rel="noopener">View submitted proof</a>@endif</p>
                                 @else
@@ -240,7 +246,7 @@
                                         data-dtc-confirm
                                         data-dtc-confirm-title="Cancel appointment?"
                                         data-dtc-confirm-message="Are you sure you want to cancel this appointment? You may need to book a new slot."
-                                        data-dtc-confirm-ok="Cancel Appointment"
+                                        data-dtc-confirm-ok="Cancel"
                                         data-dtc-confirm-cancel="Keep Appointment"
                                         data-dtc-confirm-tone="danger"
                                         data-dtc-confirm-form="#cancel-appt-{{ $appointment->id }}">
@@ -536,6 +542,7 @@
     <link rel="stylesheet" href="{{ asset('css/appointments-index.css') }}">
     <link rel="stylesheet" href="{{ asset('css/document-requests.css') }}">
     <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/alumni-request-history.css') }}">
 @endsection
 
 @section('js')

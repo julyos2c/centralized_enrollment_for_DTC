@@ -1,0 +1,43 @@
+.dr-alumni-history .dr-history-summary { border:1px solid var(--dr-line); border-radius:12px; margin-bottom:24px; }
+.dr-alumni-history .dr-history-summary > summary { padding:14px; cursor:pointer; font-size:13px; font-weight:600; }
+.dr-alumni-history .dr-history-summary > summary span { display:block; margin:4px 0 0 15px; font-size:12px; font-weight:400; color:var(--dr-ink-2); }
+.dr-alumni-history .dr-history-summary .dtc-dashboard-overview { margin:0 !important; border:0; border-top:1px solid var(--dr-line); border-radius:0 0 12px 12px; }
+.dr-alumni-history .dr-ready { margin-top:12px; padding:12px 14px; background:var(--dr-brand-soft); color:var(--dr-ink); border:1px solid var(--dr-line); border-radius:10px; }
+.dr-alumni-history .dr-ready-icon { display:none; }
+.dr-alumni-history .dr-ready p { color:var(--dr-ink-2); font-size:12px; line-height:1.6; }
+.dr-alumni-history .dr-ready strong { color:var(--dr-ink); font-size:13px; }
+.dr-alumni-history .dr-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; overflow:visible; padding:0; margin:16px 0; }
+.dr-alumni-history .dr-filter { min-width:0; min-height:42px; justify-content:center; border-radius:8px; padding:8px; font-size:12px; }
+.dr-alumni-history .dr-req { padding:18px; border-radius:12px; box-shadow:none; }
+.dr-alumni-history .dr-req-top { display:block; }
+.dr-alumni-history .dr-req-name { font-size:16px; line-height:1.5; }
+.dr-alumni-history .dr-req-meta { margin-top:5px; font-size:12px; line-height:1.6; }
+.dr-alumni-history .dr-request-state { display:inline-flex; margin-top:12px; }
+.dr-alumni-history .dr-step-note { margin-top:10px; font-size:13px; line-height:1.6; }
+.dr-alumni-history .dr-pickup-summary { display:flex; align-items:flex-start; gap:9px; padding:12px 0; margin-top:12px; border-top:1px solid var(--dr-line); font-size:13px; line-height:1.7; color:var(--dr-ink-2); }
+.dr-alumni-history .dr-pickup-summary > svg { width:17px; height:17px; flex-shrink:0; margin-top:3px; }
+.dr-alumni-history .dr-pickup-state { display:block; color:var(--dr-ink); font-weight:600; }
+.dr-alumni-history .dr-request-details { margin-top:12px; border-top:1px solid var(--dr-line); padding-top:10px; }
+.dr-alumni-history .dr-request-details summary { cursor:pointer; padding:5px 0; font-size:12px; color:var(--dr-ink-2); }
+.dr-alumni-history .dr-request-details .dr-req-purpose { margin-top:10px; }
+.dr-alumni-history .dr-pay { margin-top:12px; padding-top:12px; }
+.dr-alumni-history .dr-pay-text { font-size:12px; overflow-wrap:anywhere; }
+.dr-alumni-history summary:focus-visible, .dr-alumni-history button:focus-visible { outline:2px solid var(--dr-brand); outline-offset:3px; }
+@media(max-width:767.98px) {
+    .dr-alumni-history .dr-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .dr-alumni-history .dr-filter { min-height:44px; }
+    .dr-alumni-history .dr-req { padding:16px; }
+}
+/* The visible tracker carries status; supporting details stay compact. */
+.dr-alumni-history .dr-collection-hint { font-size:12px; line-height:1.6; color:var(--dr-ink-2); margin:8px 0 0; }
+.dr-alumni-history .dr-track { margin:20px 0 14px; }
+.dr-alumni-history .dr-pay-line { justify-content:space-between; }
+.dr-alumni-history .dr-receipt-details summary { cursor:pointer; font-size:12px; color:var(--dr-ink-2); padding:5px 0; }
+.dr-alumni-history .dr-request-details { border:0; padding:0; margin-top:10px; }
+.dr-alumni-history .dr-pickup-summary { margin-top:0; }
+/* Five appointment filters remain visible without horizontal scrolling. */
+@media(max-width:767.98px) {
+    .dr-appointment-history .dr-filter:first-child { grid-column:1/-1; }
+}
+.dr-appointment-history .dr-pickup-summary { background:transparent; border-right:0; border-left:0; border-bottom:0; border-radius:0; color:var(--dr-ink-2); }
+.dr-appointment-history .dr-pay > .dr-btn { min-height:44px; }

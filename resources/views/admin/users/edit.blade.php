@@ -24,13 +24,11 @@
              style="background:linear-gradient(135deg,#0F4CDB,#1a5feb); border:none;">
             <div class="card-body p-4">
                 <div style="display:flex; align-items:center; gap:16px;">
-                    <div style="width:56px; height:56px; border-radius:50%;
+                    <x-dtc.user-avatar :user="$user" style="width:56px; height:56px; border-radius:50%;
                                 background:rgba(255,255,255,0.2); display:flex;
                                 align-items:center; justify-content:center;
                                 color:#fff; font-weight:800; font-size:22px; flex-shrink:0;
-                                border:2px solid rgba(255,255,255,0.3);">
-                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                    </div>
+                                border:2px solid rgba(255,255,255,0.3);" />
                     <div>
                         <div style="font-size:16px; font-weight:700; color:#fff;">
                             {{ $user->name }}

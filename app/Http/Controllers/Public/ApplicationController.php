@@ -268,6 +268,9 @@ class ApplicationController extends Controller
                 'max:255',
             ],
 
+            'guardian_name' => ['nullable', 'string', 'max:255'],
+            'guardian_contact' => ['nullable', 'string', 'max:50'],
+
             'father_name' => [
                 'nullable',
                 'string',
@@ -543,6 +546,8 @@ class ApplicationController extends Controller
                     'postal_code' => $validated['postal_code'] ?? null,
                     'country' => $validated['country'] ?? 'Philippines',
 
+                    'guardian_name' => $validated['guardian_name'] ?? null,
+                    'guardian_contact' => $validated['guardian_contact'] ?? null,
                     'father_name' => $validated['father_name'] ?? null,
                     'father_occupation' => $validated['father_occupation'] ?? null,
                     'mother_name' => $validated['mother_name'] ?? null,
@@ -661,6 +666,7 @@ class ApplicationController extends Controller
 
             return redirect()
                 ->route('public.application.success')
+                ->with('application_just_submitted', true)
                 ->with('success', 'Your application has been submitted successfully.');
 
         } catch (\Throwable $exception) {

@@ -58,7 +58,12 @@
 @endsection
 
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 
 
 
@@ -268,10 +273,18 @@
         {{-- ===================================================== --}}
         <div class="card">
             <div class="card-header">
-                <span class="font-weight-bold">Family / Parent Information</span>
+                <span class="font-weight-bold">Family / Parent / Guardian Information</span>
             </div>
             <div class="card-body">
                 <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <div class="text-muted small">Guardian's Name</div>
+                        <div>{{ $application->guardian_name ?: '—' }}</div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="text-muted small">Guardian's Contact</div>
+                        <div>{{ $application->guardian_contact ?: '—' }}</div>
+                    </div>
                     <div class="col-md-6 mb-2">
                         <div class="text-muted small">Father's Name</div>
                         <div>{{ $application->father_name ?: '—' }}</div>
@@ -484,18 +497,18 @@
                         <p class="mb-2"><strong>Review remarks:</strong> {{ $cancellationRequest->review_remarks }}</p>
                     @endif
                     @if($cancellationRequest->reviewer)
-                        <p class="text-muted small">Reviewed by {{ $cancellationRequest->reviewer->name }} {{ optional($cancellationRequest->reviewed_at)->format('M d, Y h:i A') }}</p>
+                        <p class="text-muted small">Reviewed by {{ $cancellationRequest->reviewer->name ?? 'Unavailable reviewer' }} {{ optional($cancellationRequest->reviewed_at)->format('M d, Y h:i A') }}</p>
                     @endif
                     @if($cancellationRequest->status === 'pending')
                         <form method="POST" action="{{ route('registrar.applications.cancellation.approve', $cancellationRequest) }}" class="mb-2" id="approve-cancellation-{{ $cancellationRequest->id }}">
                             @csrf
-                            <button class="btn btn-danger btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Approve cancellation?" data-dtc-confirm-message="The application will be marked as cancelled and its record will be retained." data-dtc-confirm-ok="Approve Cancellation" data-dtc-confirm-form="#approve-cancellation-{{ $cancellationRequest->id }}">Approve Cancellation</button>
+                            <button class="btn btn-danger btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Approve cancellation?" data-dtc-confirm-message="The application for {subject} will be cancelled and its record will be retained." data-dtc-confirm-subject="{{ $application->full_name }}" data-dtc-confirm-ok="Approve" data-dtc-confirm-form="#approve-cancellation-{{ $cancellationRequest->id }}">Approve Cancellation</button>
                         </form>
                         <form method="POST" action="{{ route('registrar.applications.cancellation.reject', $cancellationRequest) }}" id="decline-cancellation-{{ $cancellationRequest->id }}">
                             @csrf
                             <label for="cancellation-remarks-{{ $cancellationRequest->id }}">Reason for declining</label>
                             <textarea id="cancellation-remarks-{{ $cancellationRequest->id }}" name="remarks" class="form-control mb-2" rows="2" maxlength="500" required></textarea>
-                            <button class="btn btn-outline-secondary btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Decline cancellation request?" data-dtc-confirm-message="The application will remain active and the applicant will receive the entered reason." data-dtc-confirm-ok="Decline Request" data-dtc-confirm-form="#decline-cancellation-{{ $cancellationRequest->id }}">Decline Request</button>
+                            <button class="btn btn-outline-secondary btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Decline cancellation request?" data-dtc-confirm-message="The application for {subject} will remain active and the entered reason will be sent." data-dtc-confirm-subject="{{ $application->full_name }}" data-dtc-confirm-ok="Decline" data-dtc-confirm-form="#decline-cancellation-{{ $cancellationRequest->id }}">Decline Request</button>
                         </form>
                     @endif
                 </div>
@@ -521,7 +534,7 @@
                     <div class="text-muted small">Status</div>
                     <div>
                         <span class="badge badge-success">
-                            {{ $application->user->status ? ucfirst($application->user->status) : '—' }}
+                            {{ $application->user?->status ? ucfirst($application->user->status) : '—' }}
                         </span>
                     </div>
                 </div>
@@ -546,8 +559,9 @@
                             class="btn btn-primary btn-block"
                             data-dtc-confirm
                             data-dtc-confirm-title="Start review?"
-                            data-dtc-confirm-message="This will mark the application as under review and notify the student. Are you sure?"
-                            data-dtc-confirm-ok="Start Review"
+                            data-dtc-confirm-message="The application for {subject} will be marked as under review and a notification will be sent."
+                            data-dtc-confirm-subject="{{ $application->full_name }}"
+                            data-dtc-confirm-ok="Start"
                             data-dtc-confirm-tone="neutral"
                             data-dtc-confirm-form="#start-review-{{ $application->id }}">
                         Start Review
@@ -571,7 +585,8 @@
                             class="btn btn-success btn-block"
                             data-dtc-confirm
                             data-dtc-confirm-title="Approve application?"
-                            data-dtc-confirm-message="This will approve the application and create a student account. Are you sure?"
+                            data-dtc-confirm-message="The application for {subject} will be approved and an account will be created."
+                            data-dtc-confirm-subject="{{ $application->full_name }}"
                             data-dtc-confirm-ok="Approve"
                             data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#approve-application-{{ $application->id }}">
@@ -651,9 +666,9 @@
                     <label>Reason / Remarks</label>
                     <textarea name="remarks" class="form-control" rows="3" maxlength="500" required></textarea>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject application?" data-dtc-confirm-message="The application will be marked as rejected with the entered remarks." data-dtc-confirm-ok="Reject Application" data-dtc-confirm-form="#reject-application-{{ $application->id }}">Reject Application</button>
+                    <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject application?" data-dtc-confirm-message="The application for {subject} will be rejected with the entered remarks." data-dtc-confirm-subject="{{ $application->full_name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#reject-application-{{ $application->id }}">Reject Application</button>
                 </div>
             </form>
         </div>
@@ -674,7 +689,7 @@
                     <label>Revision Instructions / Required Corrections</label>
                     <textarea name="remarks" class="form-control" rows="3" maxlength="500" required></textarea>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-warning">Request Revision</button>
                 </div>
@@ -684,4 +699,6 @@
 </div>
 @endif
 
+
+</div>
 @endsection

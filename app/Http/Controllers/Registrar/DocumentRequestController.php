@@ -13,13 +13,33 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $requests = DocumentRequest::with(['user', 'appointment.slot'])
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:200'],
+            'status' => ['nullable', 'in:all,submitted,processing,ready,released,cancelled'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+        $status = $filters['status'] ?? 'all';
+        $query = DocumentRequest::query();
+        if ($search !== '') {
+            $documentTypes = collect(['tor' => 'Transcript of Records', 'true_copy' => 'True Copy of Records', 'certification' => 'Certification', 'diploma' => 'Diploma'])
+                ->filter(fn ($label) => stripos($label, $search) !== false)->keys()->all();
+            $query->where(function ($matches) use ($search, $documentTypes) {
+                $matches->whereHas('user', fn ($user) => $user->where('name', 'like', '%'.$search.'%')->orWhere('email', 'like', '%'.$search.'%'))
+                    ->orWhere('purpose', 'like', '%'.$search.'%')
+                    ->orWhere('document_type', 'like', '%'.$search.'%');
+                if ($documentTypes) $matches->orWhereIn('document_type', $documentTypes);
+            });
+        }
+        $statusCounts = (clone $query)->selectRaw('status, COUNT(*) AS aggregate')->groupBy('status')->pluck('aggregate', 'status');
+        $allCount = $statusCounts->sum();
+        if ($status !== 'all') $query->where('status', $status);
+        $requests = $query->with(['user', 'appointment.slot'])
             ->latest()
-            ->paginate(10);
+            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
 
-        return view('registrar.documents.index', compact('requests'));
+        return view('registrar.documents.index', compact('requests', 'statusCounts', 'allCount', 'status'));
     }
 
     public function updateStatus(Request $request, DocumentRequest $documentRequest)

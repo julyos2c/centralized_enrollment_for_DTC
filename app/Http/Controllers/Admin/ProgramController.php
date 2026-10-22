@@ -13,7 +13,7 @@ class ProgramController extends Controller
     {
         $programs = Program::withCount('subjects')
             ->orderBy('name')
-            ->paginate(10, ['*'], 'page');
+            ->paginate(\App\Support\TablePagination::perPage(10), ['*'], 'page')->withQueryString();
 
         $selectedProgram = null;
         $subjects = collect();
@@ -27,7 +27,7 @@ class ProgramController extends Controller
                     ->orderBy('year_level')
                     ->orderBy('semester')
                     ->orderBy('subject_name')
-                    ->paginate(10, ['*'], 'subjects_page');
+                    ->paginate(\App\Support\TablePagination::perPage(10), ['*'], 'subjects_page')->withQueryString();
             }
         }
 

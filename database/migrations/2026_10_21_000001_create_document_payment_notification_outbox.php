@@ -36,9 +36,17 @@ return new class extends Migration
     {
         Schema::dropIfExists('document_payment_notification_outbox');
 
+        // MySQL may use the composite unique index to back the user foreign key.
+        // Rebuild the foreign key after removing its supporting composite index.
+        Schema::table('user_notifications', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+        });
         Schema::table('user_notifications', function (Blueprint $table) {
             $table->dropUnique('user_notifications_user_event_unique');
             $table->dropColumn('event_key');
+        });
+        Schema::table('user_notifications', function (Blueprint $table) {
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 };

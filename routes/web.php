@@ -41,6 +41,11 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
     Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+    Route::get('/logout', [AuthController::class, 'confirmLogout'])->name('logout.confirm');
+    Route::middleware('auth')->group(function () {
+        Route::get('/account/password', [\App\Http\Controllers\Auth\RequiredPasswordController::class, 'edit'])->name('account.password.edit');
+        Route::post('/account/password', [\App\Http\Controllers\Auth\RequiredPasswordController::class, 'update'])->name('account.password.update');
+    });
     Route::middleware('guest')->group(function () {
 
         // ── Forgot password (request form + send email) ──────────

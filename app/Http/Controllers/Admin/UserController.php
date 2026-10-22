@@ -50,7 +50,7 @@ class UserController extends Controller
             ->latest();
 
         // withQueryString() ensures pagination links preserve ?search=&role=&status=
-        $users = $query->paginate(15)->withQueryString();
+        $users = $query->paginate(\App\Support\TablePagination::perPage(15))->withQueryString();
         $roles = Role::all();
 
         return view('admin.users.index', compact('users', 'roles', 'roleCounts'));
@@ -95,6 +95,7 @@ class UserController extends Controller
                 'id'     => $user->id,
                 'name'   => $user->name,
                 'email'  => $user->email,
+                'avatar_url' => $user->avatar ? \Illuminate\Support\Facades\Storage::disk('public')->url($user->avatar) : null,
                 'status' => $user->status,
                 'role'   => $user->roles->first()?->name ?? '',
             ]);
@@ -157,9 +158,10 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
-        $user->update([
+        $user->forceFill([
             'password' => Hash::make($request->password),
-        ]);
+            'must_change_password' => true,
+        ])->save();
 
         return redirect()
             ->route('admin.users.index')

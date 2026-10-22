@@ -119,7 +119,8 @@
     <div id="users-table-wrapper">
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table table-bordered mb-0">
+        @include('partials.table-rows', ['tableRecords' => $users])
+<table class="table table-bordered mb-0 users-directory" aria-label="User accounts">
             <thead>
                 <tr>
                     <th>User</th>
@@ -139,20 +140,7 @@
                     data-status="{{ strtolower($user->status) }}">
                     <td>
                         <div  class="u-flex-center-gap-12">
-                            @if ($user->avatar)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($user->avatar) }}"
-                                     alt="{{ $user->name }} profile photo"
-                                     loading="lazy"
-                                     style="width:38px; height:38px; border-radius:50%; object-fit:cover;
-                                            flex-shrink:0; border:1px solid var(--dtc-border);">
-                            @else
-                                <div style="width:38px; height:38px; border-radius:50%;
-                                            background:linear-gradient(135deg,var(--dtc-primary),#1a5feb);
-                                            display:flex; align-items:center; justify-content:center;
-                                            color:#fff; font-weight:700; font-size:14px; flex-shrink:0;">
-                                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                                </div>
-                            @endif
+                            <x-dtc.user-avatar :user="$user" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--dtc-primary);color:#fff;flex-shrink:0;font-weight:700;" />
 
                             <div  class="u-text-sm-bold-primary">
                                 {{ $user->name }}
@@ -160,11 +148,11 @@
                         </div>
                     </td>
 
-                    <td  class="u-text-secondary-sm">
+                    <td class="u-text-secondary-sm" data-label="Email">
                         {{ $user->email }}
                     </td>
 
-                    <td>
+                    <td data-label="Role">
                         @foreach($user->roles as $role)
                             @php
                                 $rc = [
@@ -184,21 +172,22 @@
                         @endforeach
                     </td>
 
-                    <td>
+                    <td data-label="Status">
                         @php
                             $statusVariant = ['active' => 'success', 'locked' => 'danger', 'pending' => 'warning'][$user->status] ?? 'neutral';
                         @endphp
                         <x-dtc.status-badge :status="$user->status" :variant="$statusVariant" />
                     </td>
 
-                    <td style="font-size:12px; color:var(--dtc-text-muted);">
+                    <td data-label="Joined" style="font-size:12px; color:var(--dtc-text-muted);">
                         {{ $user->created_at->format('M d, Y') }}
                     </td>
 
-                    <td>
-                        <div  class="u-actions-gap">
+                    <td data-label="Actions">
+                        <div class="u-actions-gap">
                             <button type="button"
                                     class="btn-edit-user"
+                                    aria-label="Edit {{ $user->name }}"
                                     data-id="{{ $user->id }}"
                                     data-url="{{ route('admin.users.edit', $user) }}">
                                 <i data-lucide="pencil"></i>
@@ -213,10 +202,12 @@
                                 <button type="button"
                                         class="dtc-icon-btn danger"
                                         title="Delete user"
+                                        aria-label="Delete {{ $user->name }}"
                                         data-dtc-confirm
                                         data-dtc-confirm-title="Delete user?"
-                                        data-dtc-confirm-message="Are you sure you want to delete this user account? This action cannot be undone."
-                                        data-dtc-confirm-ok="Delete User"
+                                        data-dtc-confirm-message="The account for {subject} will be permanently deleted."
+                                        data-dtc-confirm-subject="{{ $user->name }}"
+                                        data-dtc-confirm-ok="Delete"
                                         data-dtc-confirm-tone="danger"
                                         data-dtc-confirm-form="#del-user-{{ $user->id }}">
                                     <i data-lucide="trash-2"></i>
@@ -379,7 +370,7 @@
 </div>
 
 <!-- EDIT USER MODAL -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="edit-modal-name" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content dtc-modal-content">
 
@@ -396,13 +387,13 @@
             </div>
 
             {{-- Tabs --}}
-            <div style="border-bottom:1px solid var(--dtc-border); padding:0 28px;">
+            <div class="dtc-edit-tabs-wrap">
                 <ul class="nav nav-tabs border-0" id="editModalTabs" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active dtc-edit-tab" id="modal-tab-account"
                            data-toggle="tab" href="#modal-pane-account" role="tab">
                             <i data-lucide="pencil" style="width:13px;height:13px;margin-right:5px;vertical-align:-1px;"></i>
-                            Edit Account
+                            Account
                         </a>
                     </li>
                     <li class="nav-item">
@@ -468,7 +459,7 @@
                                                 <span id="edit-role-readonly-label">---</span>
                                                 <span style="margin-left:auto;font-size:11px;">Managed by system</span>
                                             </div>
-                                            <small class="dtc-form-hint">Role changes for students, alumni, and applicants go through the Registrar flow.</small>
+                                            <small class="dtc-form-hint">Role changes are managed by the Registrar.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -508,28 +499,30 @@
 
                             <div class="dtc-security-info mb-3">
                                 <i data-lucide="info" class="dtc-security-info-icon"></i>
-                                <span>Set a temporary password for this user. They'll be required to change it after their next login. Passwords are always stored hashed.</span>
+                                <span>Set a temporary password. The user must change it at their next login.</span>
                             </div>
 
                             <div class="form-group">
-                                <label class="dtc-form-label">New Password</label>
+                                <label class="dtc-form-label" for="reset-new-password">New Password</label>
                                 <div class="dtc-input-icon-group">
                                     <i data-lucide="lock" class="dtc-input-icon"></i>
                                     <input type="password" name="password" id="reset-new-password"
                                            class="form-control dtc-input-with-icon"
                                            placeholder="Min. 6 characters"
                                            autocomplete="new-password" minlength="6">
+                                    <button type="button" class="dtc-password-toggle" data-password-toggle="reset-new-password" aria-controls="reset-new-password" aria-label="Show new password" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button>
                                 </div>
                             </div>
 
                             <div class="form-group mb-0">
-                                <label class="dtc-form-label">Confirm Password</label>
+                                <label class="dtc-form-label" for="reset-confirm-password">Confirm Password</label>
                                 <div class="dtc-input-icon-group">
                                     <i data-lucide="lock" class="dtc-input-icon"></i>
                                     <input type="password" name="password_confirmation" id="reset-confirm-password"
                                            class="form-control dtc-input-with-icon"
                                            placeholder="Re-enter password"
                                            autocomplete="new-password" minlength="6">
+                                    <button type="button" class="dtc-password-toggle" data-password-toggle="reset-confirm-password" aria-controls="reset-confirm-password" aria-label="Show confirm password" aria-pressed="false"><i data-lucide="eye" aria-hidden="true"></i></button>
                                 </div>
                                 <small class="dtc-pw-match-hint" id="modal-pw-match-hint"></small>
                             </div>
@@ -553,6 +546,7 @@
 {{-- Styles live in public/css/admin-users.css (loaded via plugins.adminUsers) --}}
 
 @section('js')
+<script src="{{ asset('js/admin-user-modal.js') }}" defer></script>
 <script>
 // =============================================================================
 // USERS INDEX - JavaScript
@@ -573,17 +567,29 @@ function openEditModal(btn) {
     document.getElementById('modal-pw-match-hint').textContent = '';
 
     document.getElementById('modal-tab-account').click();
+    document.getElementById('edit-avatar').textContent = '…';
     document.getElementById('edit-modal-name').textContent  = 'Loading...';
     document.getElementById('edit-modal-email').textContent = '';
 
     $('#editUserModal').modal('show');
 
-    fetch(url, {
+    window.dtcFetch(url, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(r => r.json())
     .then(function (user) {
-        document.getElementById('edit-avatar').textContent      = user.name.charAt(0).toUpperCase();
+        const avatar = document.getElementById('edit-avatar');
+        const initial = user.name.charAt(0).toUpperCase();
+        avatar.textContent = initial;
+        if (user.avatar_url) {
+            const image = document.createElement('img');
+            image.alt = user.name + ' profile photo';
+            image.addEventListener('error', function () {
+                if (image.parentNode === avatar) avatar.textContent = initial;
+            }, { once: true });
+            image.src = user.avatar_url;
+            avatar.replaceChildren(image);
+        }
         document.getElementById('edit-modal-name').textContent  = user.name;
         document.getElementById('edit-modal-email').textContent = user.email;
         document.getElementById('edit-name').value  = user.name;
@@ -618,9 +624,9 @@ function openEditModal(btn) {
             opt.style.background  = r.checked ? 'var(--dtc-primary-soft)' : 'var(--dtc-surface-soft)';
         });
     })
-    .catch(function () {
+    .catch(function (error) {
+        window.dtcRequestFailure(error);
         document.getElementById('edit-modal-name').textContent = 'Error loading user';
-        if (window.dtcToast) dtcToast.error('Unable to load user details. Please try again.');
     });
 }
 
@@ -664,9 +670,10 @@ document.addEventListener('click', function (e) {
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onload = function () {
             if (xhr.status === 200) swapWrapper(xhr.responseText);
+            else window.dtcHttpFailure(xhr.status);
             setLoading(false);
         };
-        xhr.onerror = function () { setLoading(false); };
+        xhr.onerror = function () { setLoading(false); window.dtcHttpFailure(0); };
         xhr.send();
         currentRequest = xhr;
     }
@@ -676,6 +683,7 @@ document.addEventListener('click', function (e) {
         p.set('search', searchInput.value.trim());
         p.set('role',   roleSelect.value);
         p.set('status', statusSelect.value);
+        p.set('per_page', document.querySelector('[data-table-rows-select]')?.value || new URLSearchParams(location.search).get('per_page') || '15');
         return baseUrl + '?' + p.toString();
     }
 

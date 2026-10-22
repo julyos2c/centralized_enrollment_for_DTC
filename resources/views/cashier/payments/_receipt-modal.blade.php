@@ -56,7 +56,8 @@
                     $modalContent.html(errorMarkup);
                 }
             },
-            error: function () {
+            error: function (xhr) {
+                window.dtcHttpFailure(xhr.status);
                 $modalContent.html(errorMarkup);
                 if (window.lucide) lucide.createIcons({ nodes: $modalContent[0].querySelectorAll('[data-lucide]') });
             }

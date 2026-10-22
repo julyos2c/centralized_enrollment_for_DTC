@@ -77,6 +77,9 @@ return new class extends Migration
         Schema::dropIfExists('academic_import_batches');
         Schema::table('student_profiles', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
+        });
+        // Run the foreign-key drop before Laravel compiles the NOT NULL change.
+        Schema::table('student_profiles', function (Blueprint $table) {
             $table->dropIndex(['academic_status']);
             $table->dropIndex(['graduation_year']);
             $table->dropColumn(['first_name', 'middle_name', 'last_name', 'suffix', 'email', 'year_level', 'academic_status', 'graduation_date']);

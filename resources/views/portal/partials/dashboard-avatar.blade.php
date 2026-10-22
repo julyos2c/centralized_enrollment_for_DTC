@@ -3,16 +3,7 @@
        class="dtc-welcome-avatar-link"
        aria-label="Open profile settings"
        title="Profile settings">
-        @if(auth()->user()->avatar)
-            <img src="{{ Storage::url(auth()->user()->avatar) }}"
-                 alt=""
-                 aria-hidden="true"
-                 class="dtc-welcome-avatar-image">
-        @else
-            <div aria-hidden="true" class="dtc-welcome-avatar-initials">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-        @endif
+        <x-dtc.user-avatar :user="auth()->user()" class="dtc-welcome-avatar-initials" aria-hidden="true" />
     </a>
     <button type="button"
             class="dtc-avatar-camera-badge"

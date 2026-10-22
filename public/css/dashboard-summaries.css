@@ -1,0 +1,47 @@
+/* Dashboard tables are compact summaries; full lists live behind View All. */
+.dashboard-summary-table { width:100%; }
+.dashboard-summary-table td { overflow-wrap:anywhere; }
+@media (max-width:767.98px) {
+    .card-body:has(> .table-responsive > .dashboard-summary-table) { padding:0 !important; }
+    .table-responsive:has(> .dashboard-summary-table) { overflow:visible; padding:0 20px; }
+    .dashboard-summary-table { display:block; min-width:0 !important; border:0 !important; }
+    .dashboard-summary-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .dashboard-summary-table tbody { display:block; }
+    .dashboard-summary-table tbody tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px 16px; padding:16px 0; border:0; border-bottom:1px solid var(--dtc-border,#dbe3ee); background:transparent; }
+    .dashboard-summary-table tbody tr:last-child { border-bottom:0; }
+    .dashboard-summary-table tbody td { display:block; min-width:0; width:auto; padding:0 !important; border:0 !important; white-space:normal !important; text-align:left !important; background:transparent; line-height:1.5; }
+    .dashboard-summary-table tbody td::before { content:attr(data-summary-label); display:block; margin-bottom:3px; font-size:10px; font-weight:500; color:var(--dtc-text-muted,#64748b); }
+    .dashboard-summary-table td:first-child, .dashboard-summary-table td[colspan],
+    .dashboard-summary-table td[data-summary-label="Payer"], .dashboard-summary-table td[data-summary-label="Description"] { grid-column:1 / -1; }
+    .dashboard-summary-table td[data-summary-label="Student Name"]::before,
+    .dashboard-summary-table td[data-summary-label="Applicant Name"]::before,
+    .dashboard-summary-table td[data-summary-label="Payer"]::before,
+    .dashboard-summary-table td[data-summary-label="Action"]::before,
+    .dashboard-summary-table td[colspan]::before { display:none; }
+    .dashboard-summary-table td[data-summary-label="Payer"] { order:-1; }
+    .dashboard-summary-table td[data-summary-label="Receipt #"] { font-size:11px !important; font-weight:500 !important; color:var(--dtc-text-muted,#64748b) !important; }
+    .dashboard-summary-table td[data-summary-label="Receipt #"]::before { display:inline; content:'Receipt '; }
+    .dashboard-summary-table td[data-summary-label="Amount"] { font-size:17px !important; }
+    .dashboard-summary-table td[data-summary-label="Action"] { grid-column:1 / -1; display:flex; justify-content:flex-end; }
+    .dashboard-summary-table td[data-summary-label="Action"] button { min-height:40px; padding:8px 16px; }
+    .dashboard-summary-table .u-flex-center-gap-10 { align-items:center; min-width:0; gap:10px; }
+    .dashboard-summary-table .u-flex-center-gap-10 > span { min-width:0; white-space:normal; font-size:13px; font-weight:600; }
+    .dashboard-summary-table .dtc-user-avatar { flex-shrink:0; }
+    /* Explicit slots keep identity/status and the detail columns aligned. */
+    .dashboard-summary-table tr:has(td[data-summary-label="Payer"]),
+    .dashboard-summary-table tr:has(td[data-summary-label="Student Name"]),
+    .dashboard-summary-table tr:has(td[data-summary-label="Applicant Name"]) { grid-template-columns:minmax(0,1fr) minmax(76px,auto); align-items:start; gap:12px; }
+    .dashboard-summary-table td[data-summary-label="Payer"],
+    .dashboard-summary-table td[data-summary-label="Student Name"],
+    .dashboard-summary-table td[data-summary-label="Applicant Name"] { grid-column:1; grid-row:1; order:0; align-self:center; }
+    .dashboard-summary-table td[data-summary-label="Status"] { grid-column:2; grid-row:1; justify-self:end; align-self:center; }
+    .dashboard-summary-table td[data-summary-label="Status"]::before { display:none; }
+    .dashboard-summary-table td[data-summary-label="Course"] { grid-column:1; grid-row:2; }
+    .dashboard-summary-table td[data-summary-label="Year Level"] { grid-column:2; grid-row:2; }
+    .dashboard-summary-table td[data-summary-label="Receipt #"] { grid-column:1 / -1; grid-row:2; }
+    .dashboard-summary-table td[data-summary-label="Amount"] { grid-column:1; grid-row:3; }
+    .dashboard-summary-table td[data-summary-label="Date"] { grid-column:2; grid-row:3; }
+    .dashboard-summary-table td[data-summary-label="Reference No."] { grid-column:1 / -1; grid-row:3; }
+    .dashboard-summary-table td[data-summary-empty="true"] { display:none; }
+    .dashboard-summary-table .u-flex-center-gap-10 > span { overflow-wrap:anywhere; }
+}

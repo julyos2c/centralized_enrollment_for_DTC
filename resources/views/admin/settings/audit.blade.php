@@ -80,7 +80,8 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-bordered mb-0">
+                    @include('partials.table-rows', ['tableRecords' => $logs])
+<table class="table table-bordered mb-0">
                         <thead>
                             <tr>
                                 <th>User</th>
@@ -95,12 +96,10 @@
                                 <tr>
                                     <td style="white-space:nowrap;">
                                         <div class="u-flex-center-gap-12">
-                                            <div style="width:30px; height:30px; border-radius:50%;
+                                            <x-dtc.user-avatar :user="$log->user" :name="$log->user?->name ?? 'System'" style="width:30px; height:30px; border-radius:50%;
                                                         background:linear-gradient(135deg,var(--dtc-primary),#1a5feb);
                                                         display:flex; align-items:center; justify-content:center;
-                                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                                {{ $log->user ? strtoupper(substr($log->user->name, 0, 1)) : '?' }}
-                                            </div>
+                                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                                             <span class="u-text-sm-bold-primary">
                                                 {{ $log->user->name ?? 'System' }}
                                             </span>

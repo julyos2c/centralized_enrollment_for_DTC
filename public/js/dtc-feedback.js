@@ -200,8 +200,21 @@
 
     function renderConfirmMessage(message, subject) {
         var messageEl = confirmModal.querySelector('#dtcConfirmMessage');
-        messageEl.textContent = message;
-        if (subject) {
+        var subjectToken = '{subject}';
+        var subjectPosition = subject ? message.indexOf(subjectToken) : -1;
+
+        messageEl.textContent = '';
+        if (subjectPosition >= 0) {
+            messageEl.appendChild(document.createTextNode(message.slice(0, subjectPosition)));
+            var inlineSubject = document.createElement('strong');
+            inlineSubject.textContent = subject;
+            messageEl.appendChild(inlineSubject);
+            messageEl.appendChild(document.createTextNode(message.slice(subjectPosition + subjectToken.length)));
+        } else {
+            messageEl.textContent = message;
+        }
+
+        if (subject && subjectPosition < 0) {
             messageEl.appendChild(document.createTextNode(' '));
             var strong = document.createElement('strong');
             strong.textContent = subject;
@@ -336,6 +349,8 @@
             var keys   = Object.keys(errors);
             var first  = keys.length ? errors[keys[0]][0] : (data.message || 'Please correct the form errors.');
             window.dtcToast.warning(first);
+        } else if (status === 419) {
+            window.dtcToast.error('This page has expired. Reload before trying again.');
         } else if (status === 401) {
             window.dtcToast.error('Your session has expired. Please log in again.');
         } else if (status === 403) {

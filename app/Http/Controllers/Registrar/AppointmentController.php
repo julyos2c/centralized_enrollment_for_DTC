@@ -26,7 +26,7 @@ class AppointmentController extends Controller
         $slots = AppointmentSlot::withCount(['appointments as appointments_count' => $activeCount])
             ->orderBy('date')
             ->orderBy('start_time')
-            ->paginate(10);
+            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
 
         $allSlots = AppointmentSlot::withCount(['appointments as appointments_count' => $activeCount])->get();
         $scheduleService = app(\App\Services\AppointmentScheduleService::class);
@@ -136,7 +136,18 @@ class AppointmentController extends Controller
             $query->where('status', $status);
         }
 
-        $appointments = $query->paginate(15)->withQueryString();
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $query->where(function ($matches) use ($search) {
+                $matches->whereHas('user', function ($user) use ($search) {
+                    $user->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
+                })->orWhere('document_type', 'like', '%' . $search . '%')
+                    ->orWhere('purpose', 'like', '%' . $search . '%');
+            });
+        }
+
+        $appointments = $query->paginate(\App\Support\TablePagination::perPage(15))->withQueryString();
 
         // Pending GCash payments needing attention (across all appointments)
         $pendingPayments = AppointmentPayment::with(['appointment.user', 'appointment.slot'])
@@ -275,12 +286,14 @@ class AppointmentController extends Controller
             $applicantDestination = route('portal.appointments.index');
         }
 
-        $notified = NotificationService::sendSafely(
+        $notified = NotificationService::sendUserUpdateSafely(
             $appointment->user,
+            'appointment-confirmed:'.$appointment->id,
             'Appointment Confirmed',
             $notificationMessage,
             'success',
-            $applicantDestination
+            $applicantDestination,
+            'View appointment'
         );
 
         $destination = $linkedRequest
@@ -291,7 +304,7 @@ class AppointmentController extends Controller
             : ($linkedRequest ? ' The linked document request is in Document Requests for processing and status updates.' : '');
 
         return redirect($destination)
-            ->with('success', 'Appointment confirmed.' . $nextStep . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
+            ->with('success', 'Appointment confirmed.' . $nextStep . ($notified ? ' The applicant was notified.' : ' The applicant notification could not be delivered; the failure was logged.'));
     }
 
     public function cancel(Request $request, Appointment $appointment)
@@ -338,18 +351,20 @@ class AppointmentController extends Controller
 
         $payment = $payment->fresh();
 
-        $notified = NotificationService::sendSafely(
+        $notified = NotificationService::sendUserUpdateSafely(
             $payment->appointment->user,
+            'appointment-payment-verified:'.$payment->id,
             'GCash Payment Verified',
             'Your GCash payment for your ' .
             ucfirst($payment->appointment->document_type) .
             ' appointment has been verified.',
             'success',
-            route('portal.appointments.index')
+            route('portal.appointments.index'),
+            'View appointment'
         );
 
         return redirect()->route('registrar.appointments.index')
-            ->with('success', 'GCash payment verified.' . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
+            ->with('success', 'GCash payment verified.' . ($notified ? ' The applicant was notified.' : ' The applicant notification could not be delivered; the failure was logged.'));
     }
 
     public function rejectPayment(Request $request, AppointmentPayment $payment)
@@ -373,17 +388,19 @@ class AppointmentController extends Controller
 
         $payment = $payment->fresh();
 
-        $notified = NotificationService::sendSafely(
+        $notified = NotificationService::sendUserUpdateSafely(
             $payment->appointment->user,
+            'appointment-payment-rejected:'.$payment->id,
             'GCash Payment Rejected',
             'Your GCash payment was rejected. Reason: ' . $validated['rejection_reason'] .
             '. Please resubmit with the correct details.',
             'danger',
-            route('portal.appointments.index')
+            route('portal.appointments.index'),
+            'Review payment details'
         );
 
         return redirect()->route('registrar.appointments.index')
-            ->with('success', 'Payment rejected.' . ($notified ? ' The applicant was notified in-app.' : ' The applicant notification could not be saved; the failure was logged.'));
+            ->with('success', 'Payment rejected.' . ($notified ? ' The applicant was notified.' : ' The applicant notification could not be delivered; the failure was logged.'));
     }
 
     public function viewProof(AppointmentPayment $payment)

@@ -12,7 +12,34 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+<form method="GET" action="{{ route('registrar.enrollments.index') }}" class="dtc-fl" aria-label="Search and filter pending enrollments">
+    <div class="dtc-fl-toolbar">
+        <div class="dtc-pay-search dtc-fl-search">
+            <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+            <input type="search" name="search" class="dtc-pay-search-input" value="{{ request('search') }}" placeholder="Search student or program" aria-label="Search pending enrollments">
+        </div>
+        <button type="button" class="dtc-fl-toggle" data-toggle="collapse" data-target="#enrollmentFilters" aria-expanded="false" aria-controls="enrollmentFilters">
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i><span>Filters</span>
+        </button>
+        <button type="submit" class="sr-only">Search enrollments</button>
+    </div>
+    <div class="collapse" id="enrollmentFilters">
+        <div class="dtc-fl-panel">
+            @include('partials.table-rows', ['tableRecords' => $enrollments, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+            <div class="dtc-fl-actions">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <a href="{{ route('registrar.enrollments.index') }}" class="dtc-fl-clear">Reset</a>
+            </div>
+        </div>
+    </div>
+</form>
+
 
 
 
@@ -25,7 +52,7 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table mb-0">
+<table id="registrar-table-1" class="rg-record-table table mb-0">
             <thead>
                 <tr>
                     <th>Student Name</th>
@@ -41,26 +68,24 @@
             <tbody>
                 @forelse ($enrollments as $enrollment)
                 <tr>
-                    <td>
+                    <td data-reg-label="Student Name">
                         <div  class="u-flex-center-gap-10">
-                            <div style="width:32px; height:32px; border-radius:50%;
+                            <x-dtc.user-avatar :user="$enrollment->user" style="width:32px; height:32px; border-radius:50%;
                                         background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                         display:flex; align-items:center; justify-content:center;
-                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                {{ strtoupper(substr($enrollment->user->name, 0, 1)) }}
-                            </div>
+                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                             <span style="font-size:13px; font-weight:500;">{{ $enrollment->user->name }}</span>
                         </div>
                     </td>
-                    <td>
+                    <td data-reg-label="Program">
                         <div style="font-size:13px; font-weight:500; color:var(--dtc-text);">{{ $enrollment->program->name }}</div>
                         <div  class="u-text-xs-muted">{{ $enrollment->program->code }}</div>
                     </td>
-                    <td  class="u-text-secondary-sm">
+                    <td data-reg-label="Year / Semester"  class="u-text-secondary-sm">
                         {{ $enrollment->year_level }}{{ ['st','nd','rd','th'][$enrollment->year_level - 1] ?? 'th' }} Year
                         <span  class="u-text-muted">&middot; Sem {{ $enrollment->semester }}</span>
                     </td>
-                    <td>
+                    <td data-reg-label="Type">
                         @php $classification = $enrollment->resolveClassification(); @endphp
                         @if($classification !== 'new_student')
                             <span class="dtc-status-badge is-info" style="font-size:10px;">{{ ucfirst(str_replace('_', ' ', $classification)) }}</span>
@@ -72,14 +97,14 @@
                             <span class="u-text-muted" style="font-size:11px;">Regular</span>
                         @endif
                     </td>
-                    <td>
+                    <td data-reg-label="Status">
                         <x-dtc.status-badge :status="$enrollment->status" />
                     </td>
 
-                    <td  class="u-text-secondary-sm">
+                    <td data-reg-label="Submitted"  class="u-text-secondary-sm">
                         {{ $enrollment->created_at->format('M d, Y h:i A') }}
                     </td>
-                    <td>
+                    <td data-reg-label="Action">
                         <button type="button" class="dtc-review-btn" data-url="{{ route('registrar.enrollments.show', $enrollment) }}">
                             <i data-lucide="eye"></i> Review
                         </button>
@@ -120,4 +145,6 @@
 
 @include('registrar.enrollments._review-modal')
 
+
+</div>
 @endsection

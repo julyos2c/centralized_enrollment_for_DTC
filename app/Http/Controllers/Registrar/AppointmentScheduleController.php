@@ -17,7 +17,7 @@ class AppointmentScheduleController extends Controller
 {
     public function index()
     {
-        $closures = OfficeClosure::with('creator')->orderByDesc('start_date')->paginate(15);
+        $closures = OfficeClosure::with('creator')->orderByDesc('start_date')->paginate(\App\Support\TablePagination::perPage(15))->withQueryString();
         $closures->getCollection()->transform(function ($closure) {
             $closure->affected_count = Appointment::whereIn('status', ['pending', 'confirmed'])->whereHas('slot', function ($query) use ($closure) {
                 $query->whereBetween('date', [$closure->start_date, $closure->end_date]);
@@ -94,7 +94,15 @@ class AppointmentScheduleController extends Controller
         });
         if ($confirmed && $affected->isNotEmpty()) {
             foreach ($affected as $appointment) {
-                NotificationService::send($appointment->user, 'Appointment may be affected by an office closure', 'The Registrar has recorded an office closure affecting your appointment. Please check your appointment page for follow-up.', 'warning', route('portal.appointments.index'));
+                NotificationService::sendUserUpdateSafely(
+                    $appointment->user,
+                    'appointment-office-closure:'.$closure->id.':'.$appointment->id,
+                    'Appointment Schedule Notice',
+                    'An office closure may affect your appointment. Check your appointment page for follow-up details.',
+                    'warning',
+                    route('portal.appointments.index'),
+                    'Check appointment'
+                );
             }
         }
         AuditLog::create(['user_id' => auth()->id(), 'action' => 'appointment.closure.created', 'description' => "Recorded office closure {$closure->title}; affected appointments: {$affected->count()}.", 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]);

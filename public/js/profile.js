@@ -147,13 +147,13 @@
                 e.preventDefault();
                 const fd = new FormData(profileForm);
                 fd.set('avatar', avatarInput._croppedBlob, avatarInput._croppedName);
-                fetch(profileForm.action, {
+                window.dtcFetch(profileForm.action, {
                     method: 'POST',
                     body: fd,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 }).then(function (res) {
                     if (res.redirected) { window.location.href = res.url; }
-                });
+                }).catch(window.dtcRequestFailure);
             }
         });
     }

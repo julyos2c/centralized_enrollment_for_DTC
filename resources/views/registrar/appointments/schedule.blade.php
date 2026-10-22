@@ -4,7 +4,12 @@
 @section('content_header')
 <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><div><h4 class="mb-0 font-weight-bold u-text">Office Schedule & Closures</h4><p class="mb-0 u-text-secondary-sm">Configure the Registrar's operating hours and confirmed office closures.</p></div><a href="{{ route('registrar.appointments.slots') }}" class="btn btn-secondary btn-sm">Manage Slots</a></div>
 @endsection
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 <div class="row">
 <div class="col-lg-6"><div class="card"><div class="card-header"><strong>Recurring schedule</strong></div><form method="POST" action="{{ route('registrar.appointments.schedule.update') }}">@csrf @method('PUT') @php($s = old() ? old() : ($schedule ?? []))<div class="card-body">
@@ -25,7 +30,10 @@
 <div class="form-check"><input class="form-check-input" type="checkbox" name="confirm_impact" value="1" id="closure-impact" required><label class="form-check-label" for="closure-impact">I reviewed the affected booking count above. Existing appointments will be retained for staff follow-up.</label></div>
 </div><div class="card-footer"><button class="btn btn-primary">Record Confirmed Closure</button></div></form></div></div>
 </div>
-<div class="card"><div class="card-header"><strong>Closure calendar</strong></div><div class="card-body table-responsive"><table class="table"><thead><tr><th>Date(s)</th><th>Closure</th><th>Type</th><th>Existing appointments</th><th>Recorded by</th><th>Status</th><th>Action</th></tr></thead><tbody>@forelse($closures as $closure)<tr><td>{{ $closure->start_date }} – {{ $closure->end_date }}<br>{{ $closure->start_time ? $closure->start_time.'–'.$closure->end_time : 'All day' }}</td><td>{{ $closure->title }}<br><small>{{ $closure->reason }}</small></td><td>{{ str_replace('_',' ',ucfirst($closure->type)) }}</td><td>{{ $closure->affected_count }}</td><td>{{ optional($closure->creator)->name ?? 'Account removed' }}</td><td>{{ $closure->is_active && $closure->is_confirmed ? 'Confirmed' : 'Inactive' }}</td><td>@if($closure->is_active)<form method="POST" action="{{ route('registrar.appointments.closures.deactivate',$closure) }}">@csrf<button class="btn btn-sm btn-outline-danger">Deactivate</button></form>@endif</td></tr>@empty<tr><td colspan="7" class="text-center text-muted">No closures recorded.</td></tr>@endforelse</tbody></table>{{ $closures->links() }}</div></div>
+<div class="card"><div class="card-header"><strong>Closure calendar</strong></div><div class="card-body table-responsive">@include('partials.table-rows', ['tableRecords' => $closures, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+<table id="registrar-table-1" class="rg-record-table table"><thead><tr><th>Date(s)</th><th>Closure</th><th>Type</th><th>Existing appointments</th><th>Recorded by</th><th>Status</th><th>Action</th></tr></thead><tbody>@forelse($closures as $closure)<tr><td data-reg-label="Date(s)">{{ $closure->start_date }} – {{ $closure->end_date }}<br>{{ $closure->start_time ? $closure->start_time.'–'.$closure->end_time : 'All day' }}</td><td data-reg-label="Closure">{{ $closure->title }}<br><small>{{ $closure->reason }}</small></td><td data-reg-label="Type">{{ str_replace('_',' ',ucfirst($closure->type)) }}</td><td data-reg-label="Existing appointments">{{ $closure->affected_count }}</td><td data-reg-label="Recorded by">{{ optional($closure->creator)->name ?? 'Account removed' }}</td><td data-reg-label="Status">{{ $closure->is_active && $closure->is_confirmed ? 'Confirmed' : 'Inactive' }}</td><td data-reg-label="Action">@if($closure->is_active)<form method="POST" action="{{ route('registrar.appointments.closures.deactivate',$closure) }}">@csrf<button class="btn btn-sm btn-outline-danger">Deactivate</button></form>@endif</td></tr>@empty<tr><td colspan="7" class="text-center text-muted">No closures recorded.</td></tr>@endforelse</tbody></table>{{ $closures->links() }}</div></div>
+
+</div>
 @endsection
 @section('js')
 <script>
@@ -41,7 +49,7 @@
             output.textContent = 'Checking affected appointments…';
             try {
                 const query = new URLSearchParams(values);
-                const response = await fetch('{{ route('registrar.appointments.closures.impact') }}?' + query.toString(), { headers: { 'Accept': 'application/json' } });
+                const response = await window.dtcFetch('{{ route('registrar.appointments.closures.impact') }}?' + query.toString(), { headers: { 'Accept': 'application/json' } });
                 if (!response.ok) throw new Error('Could not check affected appointments.');
                 const result = await response.json();
                 output.textContent = result.affected_appointments + ' existing appointment(s) will be affected. They will remain in the system for staff follow-up.';

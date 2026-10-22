@@ -17,10 +17,16 @@
     $paymentTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'];
     $paymentText = ['unpaid' => 'Unpaid', 'pending_verification' => 'Pending verification', 'verified' => 'Verified', 'rejected' => 'Rejected'];
     $pageItems   = $requests->getCollection();
-    $statusCounts = $pageItems->countBy('status');
+
 @endphp
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace rg-documents">
+
 <style>
     .dq-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 14px; }
     .dq-search { position: relative; flex: 1 1 280px; max-width: 420px; }
@@ -109,18 +115,32 @@
     <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
 @endif
 
+<form method="GET" action="{{ route('registrar.documents.index') }}" class="dtc-fl rg-document-controls">
+    <input type="hidden" name="status" value="{{ $status }}">
+    <div class="dtc-fl-toolbar">
+        <div class="dq-search">
+            <i data-lucide="search" aria-hidden="true"></i>
+            <input type="search" id="dqSearch" name="search" value="{{ request('search') }}" maxlength="200" placeholder="Search requests" autocomplete="off" aria-label="Search all document requests">
+            @if(request('search'))<a class="dq-clear" href="{{ route('registrar.documents.index', ['status' => $status, 'per_page' => $requests->perPage()]) }}" aria-label="Clear search">&times;</a>@endif
+        </div>
+        <button type="button" class="dtc-fl-toggle" data-toggle="collapse" data-target="#documentFilters" aria-expanded="false" aria-controls="documentFilters">
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i><span>Filters</span>
+        </button>
+    </div>
+    <button type="submit" class="sr-only">Search requests</button>
+    <div class="collapse" id="documentFilters">
+        <div class="dtc-fl-panel">
+            @include('partials.table-rows', ['tableRecords' => $requests, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+            <div class="dtc-fl-actions"><button type="submit" class="btn btn-primary">Apply</button><a class="dtc-fl-clear" href="{{ route('registrar.documents.index') }}">Reset</a></div>
+        </div>
+    </div>
+</form>
 <div class="dq-tools">
-    <div class="dq-search">
-        <i data-lucide="search" aria-hidden="true"></i>
-        <input type="search" id="dqSearch" placeholder="Search alumni, email, document or purpose…" autocomplete="off" aria-label="Search document requests">
-        <button type="button" class="dq-clear" id="dqClear" aria-label="Clear search" hidden>&times;</button>
-    </div>
-    <div class="dq-chips" role="tablist" aria-label="Filter by status">
-        <button type="button" class="dq-chip is-active" data-filter="all">All <b>{{ $pageItems->count() }}</b></button>
-        @foreach (['submitted' => 'Submitted', 'processing' => 'Processing', 'ready' => 'Ready', 'released' => 'Released'] as $key => $label)
-            <button type="button" class="dq-chip" data-filter="{{ $key }}">{{ $label }} <b>{{ $statusCounts[$key] ?? 0 }}</b></button>
+    <nav class="dq-chips" aria-label="Filter by status">
+        @foreach (['all' => 'All', 'submitted' => 'Submitted', 'processing' => 'Processing', 'ready' => 'Ready', 'released' => 'Released'] as $key => $label)
+            <a class="dq-chip {{ $status === $key ? 'is-active' : '' }}" aria-current="{{ $status === $key ? 'page' : 'false' }}" href="{{ route('registrar.documents.index', array_merge(request()->only(['search', 'per_page']), ['status' => $key])) }}">{{ $label }} <b>{{ $key === 'all' ? $allCount : ($statusCounts[$key] ?? 0) }}</b></a>
         @endforeach
-    </div>
+    </nav>
 </div>
 
 <div class="card">
@@ -131,7 +151,7 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table dq-table">
+<table id="registrar-table-1" class="table dq-table">
                 <thead>
                     <tr>
                         <th>Alumni</th>
@@ -148,7 +168,7 @@
                     <tr class="dq-row" data-status="{{ $req->status }}">
                         <td>
                             <div class="dq-who">
-                                <div class="dq-avatar">{{ strtoupper(mb_substr($req->user->name, 0, 1)) }}</div>
+                                <x-dtc.user-avatar :user="$req->user" class="dq-avatar" />
                                 <div style="min-width:0;">
                                     <div class="dq-name">{{ $req->user->name }}</div>
                                     <div class="dq-sub">{{ $req->user->email }}</div>
@@ -190,7 +210,7 @@
                             @if ($req->status !== 'cancelled')
                                 <button type="button" class="btn btn-sm btn-primary dq-update"
                                         data-toggle="modal" data-target="#statusModal{{ $req->id }}">
-                                    Update
+                                    Update status
                                 </button>
                             @else
                                 <span class="dq-sub" aria-label="Cancelled requests cannot be updated">Closed</span>
@@ -201,7 +221,7 @@
 
                     <tr class="dq-none dq-empty" id="dqNone" @if($requests->count()) hidden @endif>
                         <td colspan="7" class="text-center py-5" style="color:var(--dtc-text-muted); font-size:13px;">
-                            <span id="dqNoneText">{{ $requests->count() ? 'No requests match your search.' : 'No document requests yet.' }}</span>
+                            <span id="dqNoneText">{{ request('search') || $status !== 'all' ? 'No requests match your filters.' : 'No document requests yet.' }}</span>
                         </td>
                     </tr>
                 </tbody>
@@ -268,7 +288,7 @@
                                       placeholder="Any notes for the alumni...">{{ $req->remarks }}</textarea>
                         </div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer dtc-balanced-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Update Status</button>
                     </div>
@@ -279,50 +299,7 @@
     @endif
 @endforeach
 
-<script>
-(function () {
-    var rows    = Array.prototype.slice.call(document.querySelectorAll('.dq-row'));
-    var input   = document.getElementById('dqSearch');
-    var clear   = document.getElementById('dqClear');
-    var chips   = Array.prototype.slice.call(document.querySelectorAll('.dq-chip'));
-    var none    = document.getElementById('dqNone');
-    var noneTxt = document.getElementById('dqNoneText');
-    var counter = document.getElementById('dqCount');
-    if (!rows.length) { return; }
 
-    var filter = 'all';
-    var index  = rows.map(function (r) { return r.textContent.replace(/\s+/g, ' ').toLowerCase(); });
 
-    function apply() {
-        var terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
-        var shown = 0;
-        rows.forEach(function (row, i) {
-            var ok = (filter === 'all' || row.dataset.status === filter) &&
-                     terms.every(function (t) { return index[i].indexOf(t) !== -1; });
-            row.hidden = !ok;
-            row.style.display = ok ? '' : 'none';
-            if (ok) { shown++; }
-        });
-        none.hidden = shown !== 0;
-        none.style.display = shown ? 'none' : '';
-        noneTxt.textContent = 'No requests match your search.';
-        clear.hidden = !input.value;
-        counter.textContent = (terms.length || filter !== 'all')
-            ? shown + ' of ' + rows.length + ' shown'
-            : counter.getAttribute('data-total') + ' total';
-    }
-
-    input.addEventListener('input', apply);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Escape') { input.value = ''; apply(); } });
-    clear.addEventListener('click', function () { input.value = ''; apply(); input.focus(); });
-    chips.forEach(function (chip) {
-        chip.addEventListener('click', function () {
-            chips.forEach(function (c) { c.classList.remove('is-active'); });
-            chip.classList.add('is-active');
-            filter = chip.dataset.filter;
-            apply();
-        });
-    });
-})();
-</script>
+</div>
 @endsection

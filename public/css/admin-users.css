@@ -857,3 +857,112 @@ body.dtc-dark .card-header ul.nav-tabs {
 .u-flex-center-gap-12 > div:first-child {
     flex-shrink: 0;
 }
+/* Mobile user directory: identity, badges, then a balanced action footer. */
+@media (max-width: 767.98px) {
+    #users-table-wrapper .table-responsive { overflow: visible; border: 0; border-radius: 0; padding: 12px; }
+    #users-table-wrapper .users-directory { display: block; width: 100%; min-width: 0; border: 0 !important; }
+    #users-table-wrapper .users-directory thead {
+        position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden;
+        clip-path: inset(50%); white-space: nowrap;
+    }
+    #users-table-wrapper .users-directory tbody { display: grid; gap: 10px; background: transparent; }
+    #users-table-wrapper .users-directory tbody > tr {
+        display: grid; grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0 12px; padding: 14px;
+        background: var(--dtc-surface, #fff);
+        border: 1px solid var(--dtc-border, #dbe3ee); border-radius: 12px;
+    }
+    #users-table-wrapper .users-directory td {
+        display: block; min-width: 0; padding: 0 !important; border: 0 !important;
+        white-space: normal !important; overflow-wrap: anywhere; background: transparent;
+    }
+    #users-table-wrapper .users-directory td:first-child,
+    #users-table-wrapper .users-directory td[data-label="Email"],
+    #users-table-wrapper .users-directory td[colspan] { grid-column: 1 / -1; }
+    #users-table-wrapper .users-directory td:first-child > div { align-items: center; min-width: 0; gap: 10px; }
+    #users-table-wrapper .users-directory td:first-child .u-text-sm-bold-primary {
+        min-width: 0; white-space: normal; overflow: visible; font-size: 14px; line-height: 1.45;
+    }
+    #users-table-wrapper .users-directory td[data-label="Email"] {
+        padding: 3px 0 12px 48px !important;
+        font-size: 12px; line-height: 1.5;
+    }
+    #users-table-wrapper .users-directory td[data-label="Role"],
+    #users-table-wrapper .users-directory td[data-label="Status"] {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+        padding-bottom: 12px !important;
+    }
+    #users-table-wrapper .users-directory td[data-label="Status"] { justify-content: flex-end; }
+    #users-table-wrapper .users-directory td[data-label="Joined"],
+    #users-table-wrapper .users-directory td[data-label="Actions"] {
+        display: flex; align-items: center;
+        border-top: 1px solid var(--dtc-border, #dbe3ee) !important;
+        padding-top: 10px !important;
+    }
+    #users-table-wrapper .users-directory td[data-label="Joined"] { flex-wrap: wrap; align-content: center; gap: 0 4px; font-size: 11px !important; }
+    #users-table-wrapper .users-directory td[data-label="Joined"]::before { content: 'Joined'; }
+    #users-table-wrapper .users-directory td[data-label="Actions"] { justify-content: flex-end; }
+    #users-table-wrapper .users-directory td[data-label="Actions"] .u-actions-gap { display: flex; align-items: center; gap: 8px; }
+    #users-table-wrapper .users-directory td[data-label="Actions"] form { margin: 0; }
+    #users-table-wrapper .users-directory td[data-label="Actions"] button {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+        padding: 0; margin: 0; border-radius: 8px;
+    }
+    body.dtc-dark #users-table-wrapper .users-directory tbody > tr { background: #111c2e; }
+}
+/* Account editor: compact identity, clear tabs and consistent controls. */
+#editUserModal .modal-dialog { max-width: 680px; }
+#editUserModal .modal-content { max-height: calc(100dvh - 32px); overflow: hidden; display: flex; flex-direction: column; }
+#editUserModal .dtc-modal-header {
+    display: flex; align-items: center; gap: 12px; padding: 20px 24px;
+    background: var(--dtc-surface, #fff) !important;
+    color: var(--dtc-text, #1e293b); border-bottom: 1px solid var(--dtc-border, #dbe3ee); flex-shrink: 0;
+}
+#editUserModal .dtc-modal-header-avatar {
+    display: flex; align-items: center; justify-content: center; width: 42px; height: 42px;
+    flex: 0 0 42px; background: rgba(37,99,235,.12); border: 1px solid rgba(37,99,235,.25);
+    border-radius: 50%; color: #2563eb;
+}
+#editUserModal .dtc-modal-header-text { flex: 1; min-width: 0; }
+#editUserModal .dtc-modal-header-avatar { overflow: hidden; }
+#editUserModal .dtc-modal-header-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+#editUserModal .dtc-modal-header-text h5 { margin: 0 0 3px; font-size: 16px; line-height: 1.4; color: inherit; overflow-wrap: anywhere; }
+#editUserModal .dtc-modal-header-text p { margin: 0; font-size: 12px; color: var(--dtc-text-muted, #64748b); overflow-wrap: anywhere; }
+#editUserModal .dtc-modal-close { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; background: transparent; color: inherit; border: 0; }
+#editUserModal .dtc-edit-tabs-wrap { padding: 0 24px; border-bottom: 1px solid var(--dtc-border, #dbe3ee); flex-shrink: 0; }
+#editModalTabs { display: flex; }
+#editModalTabs .nav-item { flex: 1; text-align: center; }
+#editModalTabs .nav-link { padding: 13px 12px; border: 0; border-bottom: 2px solid transparent; margin: 0; background: transparent; }
+#editModalTabs .nav-link.active { border-bottom-color: var(--dtc-primary, #2563eb); color: var(--dtc-primary, #2563eb); }
+#editUserModal .tab-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+#editUserModal .tab-pane.active { display: flex; flex: 1; min-height: 0; }
+#editUserModal .tab-pane > form { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+#editUserModal .dtc-modal-body { padding: 22px 24px; overflow-y: auto; min-height: 0; }
+#editUserModal .form-group { margin-bottom: 18px; }
+#editUserModal .dtc-form-label { margin-bottom: 7px; font-size: 12px; }
+#editUserModal .form-control { height: 44px; border-radius: 9px; }
+#editUserModal .dtc-form-hint { display: block; margin-top: 7px; font-size: 11px; line-height: 1.5; }
+#editUserModal .dtc-security-info { margin-bottom: 20px !important; padding: 12px; font-size: 12px; }
+#editUserModal .dtc-input-icon-group { position: relative; }
+#reset-password-form .form-control { padding-right: 48px; }
+#editUserModal .dtc-password-toggle {
+    position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; padding: 0; border: 0; background: transparent;
+    color: var(--dtc-text-muted, #64748b); border-radius: 8px; cursor: pointer;
+}
+#editUserModal .dtc-password-toggle svg { width: 18px; height: 18px; }
+#editUserModal .dtc-password-toggle:focus-visible { outline: 2px solid #60a5fa; outline-offset: -3px; }
+#editUserModal .dtc-modal-footer { display: flex; align-items: stretch; gap: 10px; padding: 16px 24px; flex-shrink: 0; }
+#editUserModal .dtc-modal-footer .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin: 0; padding: 10px 16px; border-radius: 9px; font-size: 12px; }
+body.dtc-dark #editUserModal .dtc-modal-header { background: #111c2e !important; color: #e2e8f0; }
+body.dtc-dark #editUserModal .dtc-modal-header-avatar { color: #93c5fd; }
+@media (max-width: 767.98px) {
+    #editUserModal .modal-dialog { margin: 12px; }
+    #editUserModal .modal-content { max-height: calc(100dvh - 24px); border-radius: 16px; }
+    #editUserModal .dtc-modal-header { padding: 16px; gap: 10px; }
+    #editUserModal .dtc-edit-tabs-wrap { padding: 0 16px; }
+    #editUserModal .dtc-modal-body { padding: 20px 16px; }
+    #editUserModal .dtc-modal-footer { padding: 14px 16px; }
+    #editUserModal .dtc-modal-footer .btn { flex: 1 1 0; min-width: 0; }
+}

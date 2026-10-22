@@ -16,7 +16,12 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 
 
 
@@ -44,4 +49,6 @@ $(document).on('click', '.dtc-review-reject-cancel', function () {
 });
 </script>
 @endpush
+
+</div>
 @endsection

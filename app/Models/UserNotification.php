@@ -10,6 +10,7 @@ class UserNotification extends Model
 
     protected $casts = [
         'read_at' => 'datetime',
+        'email_sent_at' => 'datetime',
     ];
 
     public function user()

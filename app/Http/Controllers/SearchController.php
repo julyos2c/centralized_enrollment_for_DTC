@@ -49,6 +49,7 @@ class SearchController extends Controller
                     'desc'   => $u->email . ' — ' . ucfirst(str_replace('_', ' ', $u->roles->first()?->name ?? 'No role')),
                     'url'    => $user->hasRole('admin') ? route('admin.users.edit', $u) : '#',
                     'avatar' => strtoupper(substr($u->name, 0, 1)),
+                    'avatar_url' => $u->avatar ? \Illuminate\Support\Facades\Storage::disk('public')->url($u->avatar) : null,
                 ];
             }
         }

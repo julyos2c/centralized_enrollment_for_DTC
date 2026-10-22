@@ -112,12 +112,14 @@ class AppointmentCancellationService
 
         if ($isStaff) {
             $applicantMessage = $this->applicantMessage($documentRequest, $requestDisposition, $remarks);
-            NotificationService::sendSafely(
+            NotificationService::sendUserUpdateSafely(
                 $cancelledAppointment->user,
+                'appointment-cancelled:'.$cancelledAppointment->id,
                 'Appointment Cancelled',
                 $applicantMessage,
                 'warning',
-                $destination
+                $destination,
+                'View appointment details'
             );
         } else {
             $staffMessage = $this->staffMessage($cancelledAppointment, $documentRequest, $requestDisposition);

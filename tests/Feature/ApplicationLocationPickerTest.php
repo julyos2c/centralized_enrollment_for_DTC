@@ -89,12 +89,19 @@ class ApplicationLocationPickerTest extends TestCase
         ], 'city_code');
     }
 
-    public function test_location_is_optional_and_form_contains_the_accessible_modal_and_draft_fields(): void
+    public function test_location_is_optional_and_form_contains_labeled_manual_address_and_draft_fields(): void
     {
         $this->get(route('public.application.create'))
             ->assertOk()
-            ->assertSee('role="dialog"', false)
-            ->assertSee('id="locPickerSearch"', false)
+            ->assertSee('<label for="region_text">Region</label>', false)
+            ->assertSee('name="region" id="region_text"', false)
+            ->assertSee('<label for="province_text">Province</label>', false)
+            ->assertSee('name="province" id="province_text"', false)
+            ->assertSee('<label for="city_text">City / Municipality</label>', false)
+            ->assertSee('name="city" id="city_text"', false)
+            ->assertSee('autocomplete="address-level1"', false)
+            ->assertSee('autocomplete="address-level2"', false)
+            ->assertDontSee('id="locPickerSearch"', false)
             ->assertSee('name="region_code"', false)
             ->assertSee('name="province_code"', false)
             ->assertSee('name="city_code"', false);

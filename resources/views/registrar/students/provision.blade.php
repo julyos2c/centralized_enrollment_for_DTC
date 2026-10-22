@@ -3,7 +3,12 @@
 
 @section('title', 'Create Portal Account')
 @section('content_header')<h1>{{ $record->academic_status === 'alumni' ? 'Set Up Alumni Access' : 'Create Portal Account' }}</h1>@endsection
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 @php($email = $record->email)
 <div class="card"><div class="card-body">
     <p>Review this academic identity before creating its portal account. The recipient must open the invitation, verify the contact email, and choose a password. No password is shown to staff.</p>
@@ -25,4 +30,6 @@
         <a class="btn btn-light" href="{{ route('registrar.students.show', $record) }}">Cancel</a>
     </form>
 </div></div>
+
+</div>
 @endsection

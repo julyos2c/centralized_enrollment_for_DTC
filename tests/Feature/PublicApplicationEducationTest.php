@@ -46,7 +46,7 @@ class PublicApplicationEducationTest extends TestCase
         foreach ($xpath->query('//*[@id="step-2"]//input | //*[@id="step-2"]//select') as $field) {
             $names[] = $field->getAttribute('name');
         }
-        $this->assertSame(['honorific', 'first_name', 'middle_name', 'last_name', 'suffix'], array_slice($names, 0, 5));
+        $this->assertSame(['honorific', 'first_name', 'last_name', 'suffix', 'middle_name'], array_slice($names, 0, 5));
         $this->assertSame('Filipino', $xpath->query('//*[@id="nationality"]')->item(0)->getAttribute('value'));
         $this->assertSame(6, $xpath->query('//*[@id="personalDetailsContent"]//input | //*[@id="personalDetailsContent"]//select')->length);
     }
@@ -191,7 +191,7 @@ class PublicApplicationEducationTest extends TestCase
             ->assertDontSee('id="wizCurrentStep"', false)
             ->assertSee('aria-controls="screeningNoticeContent"', false)
             ->assertSee('aria-expanded="false"', false)
-            ->assertSee('About document review')
+            ->assertSee('Application notice')
             ->assertSee('type="text" name="honorific"', false)
             ->assertSee('type="text" name="suffix"', false)
             ->assertDontSee('Optional name details')
@@ -416,10 +416,59 @@ class PublicApplicationEducationTest extends TestCase
             ->assertSee('most_recent_school')
             ->assertSee('home_institution')
             ->assertSee('Family &amp; Supporting Documents', false)
-            ->assertSee('Most recent school attended <span class="opt">(Optional)</span>', false)
-            ->assertSee('confirm that the information I provided is accurate')
+            ->assertSee('id="educationHeading"', false)
+            ->assertSee('id="educationDescription"', false)
+            ->assertSee('All other fields are optional and can be left blank.')
+            ->assertDontSee('(Optional)')
+            ->assertSee('By clicking <strong>Continue</strong>, you confirm accurate details', false)
+            ->assertSee('type="hidden" id="ack_enrollment" name="ack_enrollment" value=""', false)
             ->assertSee('Review Your Application')
             ->assertSee('wiz-step-label">Education', false);
+    }
+
+    public function test_applicant_can_submit_guardian_details_without_parent_details(): void
+    {
+        $program = Program::factory()->create();
+        $this->get(route('public.application.create'))->assertOk()
+            ->assertSee('No parent details? Add a guardian instead.')
+            ->assertSee('name="guardian_name"', false);
+        $payload = [
+            'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
+            'academic_status' => 'new_student', 'program_id' => $program->id,
+            'first_name' => 'Juan', 'last_name' => 'Cruz', 'gender' => 'male',
+            'birthdate' => '2005-01-01', 'email' => 'guardian@example.test',
+            'ack_enrollment' => 'on', 'guardian_name' => '  mARIA rEYES ',
+            'guardian_contact' => ' 09171234567 ',
+        ];
+        $this->post(route('public.application.store'), $payload)
+            ->assertSessionHasNoErrors()->assertRedirect(route('public.application.success'));
+        $application = Application::where('email', $payload['email'])->firstOrFail();
+        $this->assertSame('Maria Reyes', $application->guardian_name);
+        $this->assertSame('09171234567', $application->guardian_contact);
+        $this->assertNull($application->father_name);
+        $this->assertNull($application->mother_name);
+        $registrar = $this->makeUserWithRole('registrar');
+        $this->actingAs($registrar)->get(route('registrar.applications.show', $application))
+            ->assertOk()->assertSee('Maria Reyes')->assertSee('09171234567');
+    }
+
+    public function test_invalid_guardian_details_are_rejected_and_preserved_for_correction(): void
+    {
+        $program = Program::factory()->create();
+        $this->get(route('public.application.create'))->assertOk();
+        $this->from(route('public.application.create'))->post(route('public.application.store'), [
+            'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
+            'academic_status' => 'new_student', 'program_id' => $program->id,
+            'first_name' => 'Juan', 'last_name' => 'Cruz', 'gender' => 'male',
+            'birthdate' => '2005-01-01', 'email' => 'invalid-guardian@example.test',
+            'ack_enrollment' => 'on', 'guardian_name' => str_repeat('a', 256),
+            'guardian_contact' => str_repeat('1', 51),
+        ])->assertSessionHasErrors(['guardian_name', 'guardian_contact']);
+        $response = $this->get(route('public.application.create'))->assertOk();
+        $xpath = $this->personalFormXPath($response->getContent());
+        $this->assertTrue($xpath->query('//*[@id="guardianDetails"]')->item(0)->hasAttribute('open'));
+        $this->assertSame(str_repeat('1', 51), $xpath->query('//*[@id="guardian_contact"]')->item(0)->getAttribute('value'));
+        $this->assertFalse(Application::where('email', 'invalid-guardian@example.test')->exists());
     }
 
     public function test_replaying_a_successful_submission_token_does_not_create_a_second_application(): void

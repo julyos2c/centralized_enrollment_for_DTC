@@ -38,7 +38,7 @@ class DocumentPaymentController extends Controller
             $query->where('payment_status', $filter);
         }
 
-        $requests = $query->paginate(15)->withQueryString();
+        $requests = $query->paginate(\App\Support\TablePagination::perPage(15))->withQueryString();
         $counts = DocumentRequest::query()
             ->where('status', '!=', 'cancelled')
             ->selectRaw('payment_status, COUNT(*) as total')

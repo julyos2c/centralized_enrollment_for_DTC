@@ -25,6 +25,16 @@ class PaymentController extends Controller
         $query = Enrollment::where('status', 'approved')
             ->with(['user', 'program', 'payment']);
 
+        $request->validate(['search' => ['nullable', 'string', 'max:100']]);
+        if ($request->filled('search')) {
+            $search = trim($request->query('search'));
+            $query->where(function ($query) use ($search) {
+                $query->whereHas('user', fn ($user) => $user->where(function ($user) use ($search) {
+                    $user->where('name', 'like', '%' . $search . '%')->orWhere('email', 'like', '%' . $search . '%');
+                }))->orWhereHas('program', fn ($program) => $program->where('name', 'like', '%' . $search . '%'));
+            });
+        }
+
         $filter = $request->query('filter', 'all');
 
         $query = match ($filter) {
@@ -36,7 +46,7 @@ class PaymentController extends Controller
             default         => $query,
         };
 
-        $enrollments = $query->latest()->paginate(20)->withQueryString();
+        $enrollments = $query->latest()->paginate(\App\Support\TablePagination::perPage(20))->withQueryString();
 
         return view('cashier.payments.index', compact('enrollments', 'filter'));
     }
@@ -123,12 +133,14 @@ class PaymentController extends Controller
 
         $payment = Payment::where('enrollment_id', $enrollment->id)->latest()->first();
 
-        NotificationService::send(
+        NotificationService::sendUserUpdateSafely(
             $enrollment->user,
+            'enrollment-payment-recorded:'.$payment->id,
             'Payment Confirmed',
             "Your enrollment payment of ₱{$amount} has been recorded. Receipt: {$receiptNo}.",
             'success',
-            route('portal.enrollment.payment-info', $enrollment)
+            route('portal.enrollment.payment-info', $enrollment),
+            'View payment record'
         );
         foreach (\App\Models\User::role('admin')->get() as $admin) {
             NotificationService::send($admin, 'Payment Recorded', "Walk-in payment recorded for {$enrollment->user->name}.", 'info', route('cashier.payments.receipt', $enrollment));
@@ -137,8 +149,8 @@ class PaymentController extends Controller
             NotificationService::send($reg, 'Payment Recorded', "Walk-in payment recorded for {$enrollment->user->name}.", 'info', route('registrar.enrollments.show', $enrollment));
         }
 
-        return redirect()->route('cashier.payments.receipt', $enrollment)
-            ->with('success', 'Payment recorded successfully.');
+        return redirect()->route('cashier.payments.index')
+            ->with('success', 'Payment recorded successfully. The receipt remains available from the payment list.');
     }
 
     // ── verify() — GCash verification ─────────────────────────────
@@ -203,16 +215,18 @@ class PaymentController extends Controller
 
         $enrollment = $payment->fresh()->enrollment;
 
-        NotificationService::send(
+        NotificationService::sendUserUpdateSafely(
             $enrollment->user,
+            'enrollment-payment-verified:'.$payment->id,
             'GCash Payment Verified',
             "Your GCash payment of ₱{$amount} has been verified. Receipt: {$receiptNo}.",
             'success',
-            route('portal.enrollment.payment-info', $enrollment)
+            route('portal.enrollment.payment-info', $enrollment),
+            'View payment record'
         );
 
-        return redirect()->route('cashier.payments.receipt', $enrollment)
-            ->with('success', 'GCash payment verified. Student role assigned.');
+        return redirect()->route('cashier.payments.index')
+            ->with('success', 'GCash payment verified. The receipt remains available from the payment list.');
     }
 
     // ── reject() ──────────────────────────────────────────────────
@@ -247,12 +261,14 @@ class PaymentController extends Controller
             return $lockedEnrollment;
         });
 
-        NotificationService::send(
+        NotificationService::sendUserUpdateSafely(
             $enrollment->user,
+            'enrollment-payment-rejected:'.$payment->id,
             'GCash Payment Rejected',
             "Your GCash payment proof was rejected. Reason: {$validated['remarks']}. Please resubmit with a valid proof.",
             'danger',
-            route('portal.enrollment.payment-info', $enrollment)
+            route('portal.enrollment.payment-info', $enrollment),
+            'Review payment details'
         );
 
         return redirect()->route('cashier.payments.show', $enrollment)

@@ -94,7 +94,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="Subjects by year and semester" tabindex="0">
-                        <table class="table mb-0 dtc-program-subject-table">
+<table class="table mb-0 dtc-program-subject-table">
                             <thead>
                                 <tr>
                                     <th>Code</th>

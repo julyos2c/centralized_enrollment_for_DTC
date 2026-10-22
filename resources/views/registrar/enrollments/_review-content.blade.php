@@ -1,9 +1,4 @@
 @php
-    $initials = collect(preg_split('/\s+/', trim($enrollment->user->name)))
-        ->filter()
-        ->map(fn($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-        ->take(2)
-        ->implode('');
     $subjectCount = count($subjects);
 @endphp
 
@@ -12,7 +7,7 @@
     {{-- ── Header ─────────────────────────────────────────────────────── --}}
     <div class="dtc-review-header">
         <div class="dtc-review-identity">
-            <div class="dtc-review-avatar">{{ $initials ?: '?' }}</div>
+            <x-dtc.user-avatar :user="$enrollment->user" class="dtc-review-avatar" />
             <div class="dtc-review-identity-copy">
                 <h5 class="dtc-review-name">{{ $enrollment->user->name }}</h5>
                 <p class="dtc-review-email"><i data-lucide="mail"></i> {{ $enrollment->user->email }}</p>
@@ -25,8 +20,6 @@
                 <span class="dtc-status-badge is-info"><span class="dtc-status-dot"></span> Approved — Awaiting Payment</span>
             @elseif($enrollment->status === 'rejected')
                 <span class="dtc-status-badge is-danger"><span class="dtc-status-dot"></span> Rejected</span>
-            @else
-                <span class="dtc-status-badge is-warning"><span class="dtc-status-dot"></span> Pending Review</span>
             @endif
             @if($enrollment->status === 'approved' && $enrollment->is_paid)
                 <a href="{{ route('registrar.enrollments.cor.show', $enrollment) }}" class="btn btn-primary btn-sm">
@@ -247,7 +240,8 @@
                                     style="font-size:12px;"
                                     data-dtc-confirm
                                     data-dtc-confirm-title="Promote to Alumni?"
-                                    data-dtc-confirm-message="This will change {{ $enrollment->user->name }}'s role to Alumni and record their graduation year. This action cannot be undone."
+                                    data-dtc-confirm-message="The account for {subject} will be promoted to Alumni and the graduation year will be recorded."
+                                    data-dtc-confirm-subject="{{ $enrollment->user->name }}"
                                     data-dtc-confirm-ok="Promote"
                                     data-dtc-confirm-tone="success"
                                     data-dtc-confirm-form="#promote-alumni-submit-{{ $enrollment->id }}">
@@ -295,7 +289,8 @@
                             class="dtc-btn dtc-btn-success"
                             data-dtc-confirm
                             data-dtc-confirm-title="Approve enrollment?"
-                            data-dtc-confirm-message="Are you sure you want to approve this enrollment? The student will be officially enrolled."
+                            data-dtc-confirm-message="The enrollment for {subject} will be approved and become official."
+                            data-dtc-confirm-subject="{{ $enrollment->user->name }}"
                             data-dtc-confirm-ok="Approve"
                             data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#approve-enrollment-{{ $enrollment->id }}">
@@ -307,7 +302,7 @@
 
         <div class="dtc-review-footer-reject u-hidden" >
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
-            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject enrollment?" data-dtc-confirm-message="The enrollment will be rejected with the reason entered above." data-dtc-confirm-ok="Reject Enrollment" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
+            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject enrollment?" data-dtc-confirm-message="The enrollment for {subject} will be rejected with the reason entered above." data-dtc-confirm-subject="{{ $enrollment->user->name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
                 <i data-lucide="check"></i> Confirm Rejection
             </button>
         </div>
@@ -347,7 +342,7 @@
                         <textarea name="remarks" id="edit-credit-remarks" class="form-control" rows="2"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="save"></i> Save Changes

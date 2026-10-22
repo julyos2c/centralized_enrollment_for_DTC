@@ -76,6 +76,7 @@
     </footer>
 
 
+    <script src="{{ asset('js/session-feedback.js') }}" defer></script>
     <script src="{{ asset('js/dtc-app.js') }}" defer></script>
     <script src="{{ asset('js/dtc-feedback.js') }}" defer></script>
 
