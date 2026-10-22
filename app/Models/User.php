@@ -24,11 +24,28 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'auth_session_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'must_change_password' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (User $user) {
+            if ($user->isDirty('password') || $user->isDirty('status')) {
+                $user->auth_session_token = \Illuminate\Support\Str::random(64);
+                $user->remember_token = \Illuminate\Support\Str::random(60);
+            }
+        });
+        static::updated(function (User $user) {
+            if ($user->wasChanged('password') || $user->wasChanged('status')) {
+                $user->tokens()->delete();
+            }
+        });
+    }
     /**
      * Student-specific institutional identity.
      * Present only for users with the 'student' or 'alumni' role.

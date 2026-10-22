@@ -43,7 +43,8 @@
                 var content = $('<div>').html(html).find('#payment-content').html();
                 $modalContent.html(content || errorMarkup);
             })
-            .fail(function () {
+            .fail(function (xhr) {
+                window.dtcHttpFailure(xhr.status);
                 $modalContent.html(errorMarkup);
             });
     });

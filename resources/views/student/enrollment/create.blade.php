@@ -4,35 +4,36 @@
 @section('title', 'Enroll Now')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header font-weight-bold u-text" >
-                <i data-lucide="file-text" class="mr-2 u-link"></i>
-                Enrollment Details
+<div class="row justify-content-center dtc-enrollment-create">
+    <div class="col-lg-8 dtc-enrollment-create-main">
+        <div class="card dtc-enrollment-create-card">
+            <div class="card-header dtc-enrollment-create-header">
+                <a href="{{ route('portal.dashboard') }}" class="dtc-enrollment-create-back" aria-label="Return to dashboard">
+                    <i data-lucide="arrow-left" aria-hidden="true"></i>
+                </a>
+                <div>
+                    <h1>Enrollment details</h1>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body dtc-enrollment-create-body">
 
                 @if ($errors->any())
                     <div class="alert alert-danger">{{ $errors->first() }}</div>
                 @endif
 
-                <form method="POST" action="{{ route('portal.enrollment.store') }}">
+                <form method="POST" action="{{ route('portal.enrollment.store') }}" class="dtc-enrollment-create-form">
                     @csrf
 
                     {{-- Program --}}
                     @if ($lockedProgram)
                         <div class="form-group">
                             <label>Program</label>
-                            <div class="alert alert-success" style="border-radius:8px; padding:14px 16px;
+                            <div class="alert alert-success dtc-enrollment-locked-program" style="border-radius:8px; padding:14px 16px;
                                         display:flex; align-items:center; gap:12px;">
                                 <i data-lucide="check-circle" style="font-size:18px;"></i>
                                 <div>
                                     <div style="font-size:14px; font-weight:600; color:var(--dtc-text);">
                                         {{ $lockedProgram->name }}
-                                    </div>
-                                    <div style="font-size:11px; margin-top:2px;">
-                                        Based on your approved pre-enrollment application
                                     </div>
                                 </div>
                             </div>
@@ -54,26 +55,25 @@
                     @endif
 
                     {{-- Enrollment Type --}}
-                    <div class="form-group">
+                    <div class="form-group dtc-enrollment-type-group">
                         <label>Enrollment Type</label>
-                        <div class="d-flex u-gap-15">
-                            <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
-                                <input type="radio" name="is_irregular" value="0" id="type-regular" checked>
+                        <div class="d-flex u-gap-15 dtc-enrollment-type-options">
+                            <label class="dtc-enrollment-type-option" style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
+                                <input type="radio" name="is_irregular" value="0" id="type-regular" {{ old('is_irregular', '0') === '0' ? 'checked' : '' }}>
                                 Regular
                             </label>
-                            <label style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
-                                <input type="radio" name="is_irregular" value="1" id="type-irregular">
+                            <label class="dtc-enrollment-type-option" style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
+                                <input type="radio" name="is_irregular" value="1" id="type-irregular" {{ old('is_irregular') === '1' ? 'checked' : '' }}>
                                 Irregular / Shiftee / Transferee
                             </label>
                         </div>
                         <small style="color:var(--dtc-text-muted); display:block; margin-top:4px;">
-                            Choose Irregular if you need to take subjects from more than one year level or
-                            semester in this enrollment (e.g. catching up on a missed subject).
+                            Irregular enrollment allows subjects from different year levels or semesters.
                         </small>
                     </div>
 
                     {{-- Year + Semester --}}
-                    <div class="row">
+                    <div class="row dtc-enrollment-term-row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Year Level</label>
@@ -98,13 +98,13 @@
                     </div>
 
                     {{-- Subjects --}}
-                    <div class="form-group">
-                        <label>
-                            Select Subjects
-                            <span id="subjects-hint" style="font-size:11px; color:var(--dtc-text-muted); font-weight:400;">
-                                (Select program, year and semester first)
-                            </span>
-                        </label>
+                    <div class="form-group dtc-enrollment-subjects-group">
+                        <div class="dtc-enrollment-form-section-heading">
+                            <div><strong>Select subjects</strong></div>
+                        </div>
+                        <div class="dtc-subjects-hint" id="subjects-hint">
+                            Available subjects are based on your choices above.
+                        </div>
                         <div id="subjects-container">
                             <div style="background:var(--dtc-surface-soft); border:2px dashed var(--dtc-border);
                                         border-radius:12px; padding:24px; text-align:center;">
@@ -117,7 +117,7 @@
                     </div>
 
                     {{-- Fee Notice --}}
-                    <div class="alert alert-info" style="border-radius:12px; padding:16px; margin-bottom:20px;
+                    <div class="alert alert-info dtc-enrollment-fee-notice" style="border-radius:12px; padding:16px; margin-bottom:20px;
                                 display:flex; align-items:center; gap:12px;">
                         <div style="width:40px; height:40px; border-radius:10px;
                                     background:var(--dtc-primary); display:flex; align-items:center;
@@ -128,18 +128,20 @@
                             <div style="font-size:13px; font-weight:600;">
                                 Enrollment Fee: ₱{{ number_format($fee, 2) }} (fixed rate)
                             </div>
-                            <div style="font-size:12px; opacity:0.85; margin-top:2px;">
-                                Payment is collected at the Cashier's Office after Registrar approval.
+                            <div class="dtc-enrollment-payment-copy">
+                                Pay after Registrar approval using either option below.
+                            </div>
+                            <div class="dtc-enrollment-payment-options" aria-label="Available payment options">
+                                <span><i data-lucide="smartphone" aria-hidden="true"></i> GCash</span>
+                                <span><i data-lucide="wallet-cards" aria-hidden="true"></i> Cashier</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="d-flex u-gap-10" >
+                    <div class="d-flex u-gap-10 dtc-enrollment-create-actions" >
                         <button type="submit" class="btn btn-primary flex-fill">
                             <i data-lucide="send" class="mr-1"></i> Submit Enrollment
                         </button>
-                        <a href="{{ route('portal.dashboard') }}"
-                           class="btn btn-secondary flex-fill">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -147,20 +149,19 @@
     </div>
 
     {{-- Info Panel --}}
-    <div class="col-lg-4">
-        <div class="card u-primary-gradient-btn"
+    <div class="col-lg-4 dtc-enrollment-guide-column">
+        <div class="card u-primary-gradient-btn dtc-enrollment-guide-card"
              >
             <div class="card-body p-4">
-                <h5 style="font-weight:700; color:#fff; margin-bottom:16px;">
-                    <i data-lucide="info" class="mr-2"></i> Enrollment Guide
+                <h5 style="font-weight:700; color:#fff; margin-bottom:6px;">
+                    <i data-lucide="info" class="mr-2"></i> After You Submit
                 </h5>
+                <p class="dtc-enrollment-guide-intro">Your enrollment follows three review and payment steps.</p>
                 <div style="font-size:13px; line-height:1.8; opacity:0.9;">
                    @foreach([
-                    ['icon'=>'mouse-pointer', 'text'=>'Select your program, year level, and semester.'],
-                    ['icon'=>'check-square',  'text'=>'Choose the subjects you want to enroll in.'],
-                    ['icon'=>'send',   'text'=>'Submit your enrollment for Registrar review.'],
-                    ['icon'=>'bell',          'text'=>'Wait for approval notification.'],
-                    ['icon'=>'banknote',    'text'=>'Pay ₱' . number_format($fee, 2) . ' at the Cashier after approval.'],
+                    ['icon'=>'scan-search', 'text'=>'The Registrar reviews your selected subjects.'],
+                    ['icon'=>'bell', 'text'=>'You receive a notification when your enrollment is approved.'],
+                    ['icon'=>'badge-check', 'text'=>'Pay ₱' . number_format($fee, 2) . ' through GCash or at the Cashier, then wait for verification.'],
                 ] as $step)
                     <div style="display:flex; gap:10px; margin-bottom:12px;">
                         <i data-lucide="{{ $step['icon'] }}" style="color:#FFC72C; margin-top:3px; flex-shrink:0;"></i>
@@ -198,7 +199,7 @@ function loadSubjects() {
             <p style="margin-top:8px; font-size:13px;">Loading subjects...</p>
         </div>`;
 
-    fetch(`/portal/programs/${programId}/subjects?year_level=${yearLevel}&semester=${semester}`)
+    window.dtcFetch(`/portal/programs/${programId}/subjects?year_level=${yearLevel}&semester=${semester}`)
         .then(res => res.json())
         .then(subjects => {
             if (subjects.length === 0) {
@@ -248,7 +249,8 @@ function loadSubjects() {
                     </div>
                 </div>`;
         })
-        .catch(() => {
+        .catch(error => {
+            window.dtcRequestFailure(error);
             container.innerHTML = `<div class="alert alert-danger">Failed to load subjects.</div>`;
         });
 }
@@ -272,7 +274,7 @@ function loadAllSubjects() {
             <p style="margin-top:8px; font-size:13px;">Loading all subjects...</p>
         </div>`;
 
-    fetch(`/portal/programs/${programId}/subjects?mode=all`)
+    window.dtcFetch(`/portal/programs/${programId}/subjects?mode=all`)
         .then(res => res.json())
         .then(groups => {
             if (groups.length === 0) {
@@ -314,7 +316,8 @@ function loadAllSubjects() {
                     </button>
                 </div>`;
         })
-        .catch(() => {
+        .catch(error => {
+            window.dtcRequestFailure(error);
             container.innerHTML = `<div class="alert alert-danger">Failed to load subjects.</div>`;
         });
 }
@@ -327,11 +330,11 @@ document.getElementById('program_id').addEventListener('change', loadSubjects);
 document.getElementById('year_level').addEventListener('change', loadSubjects);
 document.getElementById('semester').addEventListener('change', loadSubjects);
 document.getElementById('type-regular').addEventListener('change', function () {
-    document.getElementById('subjects-hint').textContent = '(Select program, year and semester first)';
+    document.getElementById('subjects-hint').textContent = 'Showing subjects for the selected term.';
     loadSubjects();
 });
 document.getElementById('type-irregular').addEventListener('change', function () {
-    document.getElementById('subjects-hint').textContent = '(Showing all subjects for the selected program, grouped by year & semester)';
+    document.getElementById('subjects-hint').textContent = 'Showing all subjects grouped by year and semester.';
     loadSubjects();
 });
 

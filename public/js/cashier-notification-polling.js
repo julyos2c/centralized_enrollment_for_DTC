@@ -113,8 +113,9 @@
                 cache: 'no-store',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
             });
-            if (response.status === 401 || response.status === 403) {
+            if (response.status === 401 || response.status === 403 || response.status === 419) {
                 stopped = true;
+                if (window.dtcHttpFailure) window.dtcHttpFailure(response.status);
                 return;
             }
             if (!response.ok || !(response.headers.get('content-type') || '').includes('application/json')) {

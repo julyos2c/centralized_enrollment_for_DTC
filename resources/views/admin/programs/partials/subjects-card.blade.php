@@ -33,7 +33,7 @@
     @if($selectedProgram)
     <div class="card-body p-0">
         <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="Subjects for selected program" tabindex="0">
-            <table class="table mb-0 dtc-subjects-table">
+<table class="table mb-0 dtc-subjects-table">
                 <thead>
                     <tr>
                         <th>Code</th>
@@ -207,7 +207,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="plus"></i> Add Subject
@@ -271,7 +271,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="save"></i> Save Changes
@@ -327,7 +327,7 @@
                         <input type="text" name="instructor_name" id="edit-schedule-instructor" class="form-control" placeholder="e.g. Angelica Pacris">
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="save"></i> Save Schedule

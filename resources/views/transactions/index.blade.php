@@ -83,6 +83,7 @@
                     <label for="to">To</label>
                     <input type="date" class="form-control" id="to" name="to" value="{{ request('to') }}">
                 </div>
+                @include('partials.table-rows', ['tableRecords' => $transactions, 'tableId' => 'payment-history-table', 'fixedRows' => true])
                 <div class="ph-advanced-actions">
                     <button class="btn btn-primary" type="submit">Apply</button>
                     @if($hasFilters)<a class="ph-clear" href="{{ url()->current() }}">Clear all</a>@endif
@@ -92,8 +93,13 @@
     </form>
 
     <div class="ph-list">
+        <div class="ph-list-heading">
+            <h2>Transactions</h2>
+            <span>{{ $transactions->total() }} {{ $transactions->total() === 1 ? 'record' : 'records' }}</span>
+        </div>
         @if($transactions->count())
-            <table class="dtc-table ph-table">
+            <div class="ph-table-scroll">
+<table id="payment-history-table" class="dtc-table ph-table">
                 <thead>
                     <tr>
                         <th>Transaction</th>
@@ -124,11 +130,12 @@
                         <td class="ph-amount dtc-payment-amount">₱{{ number_format((float) $item->amount, 2) }}</td>
                         <td class="ph-status"><span class="dtc-status-badge is-{{ $tone }}">{{ $label }}</span></td>
                         <td class="ph-date">{{ $date ? $date->format('M j, Y') : '—' }}</td>
-                        <td class="ph-action"><a class="ph-view" href="{{ $href }}" aria-label="View details for {{ $item->transaction_key }}" tabindex="-1"><i data-lucide="chevron-right" aria-hidden="true"></i></a></td>
+                        <td class="ph-action"><a class="ph-view" href="{{ $href }}" aria-label="View details for {{ $item->transaction_key }}"><i data-lucide="chevron-right" aria-hidden="true"></i></a></td>
                     </tr>
                 @endforeach
                 </tbody>
             </table>
+            </div>
         @else
             <div class="dtc-empty-state">
                 <div class="dtc-empty-icon"><i data-lucide="receipt" aria-hidden="true"></i></div>

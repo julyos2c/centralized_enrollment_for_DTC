@@ -13,7 +13,12 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
     @php
         $fullName = trim(implode(' ', array_filter([
             $record->first_name,
@@ -56,12 +61,12 @@
                 @elseif ($invite && in_array($invite->status, ['pending', 'sending', 'delivery_failed', 'expired', 'revoked'], true) && $linkedUser->status === 'pending')
                     @php $sendingLeaseExpired = $invite->status === 'sending' && (! $invite->updated_at || $invite->updated_at->lte(now()->subMinutes(max(1, (int) config('portal_accounts.sending_lease_minutes', 15))))); @endphp
                     @if ($invite->status !== 'sending' || $sendingLeaseExpired)
-                        <form class="d-inline" id="resend-invitation-{{ $record->id }}" method="POST" action="{{ route('registrar.students.invitation.resend', $record) }}">@csrf<button type="button" class="btn btn-outline-primary btn-sm" data-dtc-confirm data-dtc-confirm-tone="neutral" data-dtc-confirm-title="Send portal invitation?" data-dtc-confirm-message="A portal setup invitation will be sent to the academic record email address." data-dtc-confirm-ok="Send Invitation" data-dtc-confirm-form="#resend-invitation-{{ $record->id }}">{{ $sendingLeaseExpired ? 'Retry Invitation' : ($invite->status === 'pending' ? 'Resend Invitation' : 'Send New Invitation') }}</button></form>
+                        <form class="d-inline" id="resend-invitation-{{ $record->id }}" method="POST" action="{{ route('registrar.students.invitation.resend', $record) }}">@csrf<button type="button" class="btn btn-outline-primary btn-sm" data-dtc-confirm data-dtc-confirm-tone="neutral" data-dtc-confirm-title="Send portal invitation?" data-dtc-confirm-message="A portal setup invitation will be sent to the academic record email for {subject}." data-dtc-confirm-subject="{{ $fullName ?: ($record->user->name ?? 'this record') }}" data-dtc-confirm-ok="Send" data-dtc-confirm-form="#resend-invitation-{{ $record->id }}">{{ $sendingLeaseExpired ? 'Retry Invitation' : ($invite->status === 'pending' ? 'Resend Invitation' : 'Send New Invitation') }}</button></form>
                     @else
                         <span class="text-muted small">Invitation delivery in progress</span>
                     @endif
                     @if (in_array($invite->status, ['pending', 'sending', 'delivery_failed', 'expired'], true))
-                        <form class="d-inline" id="revoke-invitation-{{ $record->id }}" method="POST" action="{{ route('registrar.students.invitation.revoke', $record) }}">@csrf<input type="hidden" name="confirm" value="1"><button type="button" class="btn btn-outline-danger btn-sm" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Revoke invitation?" data-dtc-confirm-message="The unused link will stop working. The pending account will remain unable to sign in." data-dtc-confirm-ok="Revoke Invitation" data-dtc-confirm-form="#revoke-invitation-{{ $record->id }}">Revoke Invitation</button></form>
+                        <form class="d-inline" id="revoke-invitation-{{ $record->id }}" method="POST" action="{{ route('registrar.students.invitation.revoke', $record) }}">@csrf<input type="hidden" name="confirm" value="1"><button type="button" class="btn btn-outline-danger btn-sm" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Revoke invitation?" data-dtc-confirm-message="The unused portal link for {subject} will stop working." data-dtc-confirm-subject="{{ $fullName ?: ($record->user->name ?? 'this record') }}" data-dtc-confirm-ok="Revoke" data-dtc-confirm-form="#revoke-invitation-{{ $record->id }}">Revoke Invitation</button></form>
                     @endif
                 @endif
             </section>
@@ -78,15 +83,16 @@
                 <section class="ar-history-section">
                     <h2>Enrollment History</h2>
                     <div class="table-responsive">
-                        <table class="table table-sm ar-history-table">
+                        @include('partials.table-rows', ['tableRecords' => $enrollments, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+<table id="registrar-table-1" class="rg-record-table dtc-mobile-records table table-sm ar-history-table">
                             <thead><tr><th>School Year</th><th>Semester</th><th>Program</th><th>Status</th></tr></thead>
                             <tbody>
                                 @foreach ($enrollments as $enrollment)
                                     <tr>
-                                        <td>{{ $enrollment->school_year }}</td>
-                                        <td>{{ ucfirst($enrollment->semester) }}</td>
-                                        <td>{{ $enrollment->program->name ?? '—' }}</td>
-                                        <td>{{ ucfirst($enrollment->status) }}</td>
+                                        <td data-reg-label="School Year" data-mobile-label="School Year">{{ $enrollment->school_year }}</td>
+                                        <td data-reg-label="Semester" data-mobile-label="Semester">{{ ucfirst($enrollment->semester) }}</td>
+                                        <td data-reg-label="Program" data-mobile-label="Program">{{ $enrollment->program->name ?? '—' }}</td>
+                                        <td data-reg-label="Status" data-mobile-label="Status">{{ ucfirst($enrollment->status) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -99,14 +105,15 @@
                 <section class="ar-history-section">
                     <h2>Certificate and Document Requests</h2>
                     <div class="table-responsive">
-                        <table class="table table-sm ar-history-table">
+                        @include('partials.table-rows', ['tableRecords' => $documentRequests, 'tableId' => 'registrar-table-2', 'fixedRows' => true])
+<table id="registrar-table-2" class="rg-record-table dtc-mobile-records table table-sm ar-history-table">
                             <thead><tr><th>Document</th><th>Requested</th><th>Status</th></tr></thead>
                             <tbody>
                                 @foreach ($documentRequests as $documentRequest)
                                     <tr>
-                                        <td>{{ $documentRequest->document_label }}</td>
-                                        <td>{{ $documentRequest->created_at->format('M j, Y') }}</td>
-                                        <td>{{ ucfirst($documentRequest->status) }}</td>
+                                        <td data-reg-label="Document" data-mobile-label="Document">{{ $documentRequest->document_label }}</td>
+                                        <td data-reg-label="Requested" data-mobile-label="Requested">{{ $documentRequest->created_at->format('M j, Y') }}</td>
+                                        <td data-reg-label="Status" data-mobile-label="Status">{{ ucfirst($documentRequest->status) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -118,4 +125,6 @@
             <a class="btn btn-light mt-3" href="{{ route('registrar.students.index', ['type' => $record->academic_status === 'alumni' ? 'alumni' : 'students']) }}">Back to records</a>
         </div>
     </section>
+
+</div>
 @endsection

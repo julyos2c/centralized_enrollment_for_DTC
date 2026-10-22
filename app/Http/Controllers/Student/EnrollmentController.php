@@ -75,7 +75,7 @@ class EnrollmentController extends Controller
         $enrollments = Enrollment::where('user_id', $user->id)
             ->with(['program', 'payment'])
             ->latest()
-            ->paginate(10);
+            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
 
         // Resolve subject names for each enrollment's subject_ids
         $enrollments->each(function ($enrollment) {
@@ -183,6 +183,16 @@ class EnrollmentController extends Controller
             );
         }
 
+        \App\Services\NotificationService::sendUserUpdateSafely(
+            $user,
+            'enrollment-submitted:'.$enrollment->id,
+            'Enrollment Submitted',
+            "We received your enrollment for {$enrollment->program->name}. It is awaiting Registrar review.",
+            'info',
+            route('portal.enrollment.index'),
+            'View enrollment status'
+        );
+
         return redirect()->route('portal.enrollment.index')->with('success', 'Enrollment submitted successfully. Await Registrar approval.');
     }
 
@@ -272,7 +282,7 @@ class EnrollmentController extends Controller
                     );
                 }
 
-                return 'created';
+                return $payment;
             });
         } catch (\Throwable $exception) {
             if ($proofPath) {
@@ -281,7 +291,7 @@ class EnrollmentController extends Controller
             throw $exception;
         }
 
-        if ($result !== 'created') {
+        if (is_string($result)) {
             $message = [
                 'not_approved' => 'Your enrollment must be approved before submitting payment.',
                 'paid' => 'This enrollment has already been paid.',
@@ -291,6 +301,16 @@ class EnrollmentController extends Controller
 
             return back()->with('error', $message);
         }
+
+        \App\Services\NotificationService::sendUserUpdateSafely(
+            Auth::user(),
+            'enrollment-payment-proof-submitted:'.$result->id,
+            'GCash Proof Received',
+            'We received your GCash payment proof. The Cashier will review it shortly.',
+            'info',
+            route('portal.enrollment.payment-info', $enrollment),
+            'View payment status'
+        );
 
         return back()->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
     }
@@ -314,7 +334,7 @@ class EnrollmentController extends Controller
 
     // ── showGcashQr() — NEW (shared institutional QR, auth-only) ──
 
-    public function showGcashQr()
+    public function showGcashQr(Request $request)
     {
         $path = Setting::get('gcash_qr_path');
 
@@ -322,9 +342,15 @@ class EnrollmentController extends Controller
             abort(404, 'GCash QR code not yet configured. Please contact the Registrar.');
         }
 
-        return response()->file(
-            Storage::disk('local')->path($path)
-        );
+        $absolutePath = Storage::disk('local')->path($path);
+
+        if ($request->boolean('download')) {
+            $extension = pathinfo($absolutePath, PATHINFO_EXTENSION) ?: 'png';
+
+            return response()->download($absolutePath, 'DTC-GCash-QR.'.$extension);
+        }
+
+        return response()->file($absolutePath);
     }
 
     // ── getSubjects() — regular mode unchanged; new grouped "all" mode ──

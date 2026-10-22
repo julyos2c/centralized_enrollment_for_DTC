@@ -6,9 +6,7 @@
  *  - localStorage persistence: form data survives page reload
  *  - Tab switching on Step 5 (Upload vs Requirements Checklist)
  *  - Interactive requirements checklist (checkboxes, not bullets)
- *  - Cascading PH address picker  (Region → Province → City → Barangay)
- *  - Cascading PH place of birth  (Region → Province → City, Step 2)
- *  - Postal code auto-filled from barangay's postalCode via PSGC API
+ *  - Browser-assisted address entry with draft persistence
  *  - Optional free-text religion field
  */
 
@@ -98,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (i + 1 <  current) s.classList.add('completed');
             if (i + 1 === current) s.setAttribute('aria-current', 'step');
             else s.removeAttribute('aria-current');
-            s.disabled = i + 1 > current + 1;
+            s.disabled = false;
         });
         connectors.forEach(function (c, i) { c.classList.toggle('completed', i + 1 < current); });
 
@@ -195,8 +193,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         s.addEventListener('click', function () {
             const target = i + 1;
-            if (target === current || target > current + 1) return;
-            goTo(target, target < current);
+            if (target === current) return;
+            goTo(target, true);
         });
     });
 
@@ -223,123 +221,40 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /* ── Submit guard: single combined consent checkbox ── */
+    /* ── Continue opens confirmation; acknowledgement is sent only on final submission ── */
     let submissionInProgress = false;
-    document.getElementById('applicationForm').addEventListener('submit', function (e) {
-        const chk    = document.getElementById('ack_enrollment');
-        const ackErr = document.getElementById('ackError');
-        const hidAck = document.getElementById('acknowledgement');
-
-        if (!chk) return;
-
-        if (!chk.checked) {
-            e.preventDefault();
-            ackErr.classList.remove('d-none');
-            ackErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            /* Shake the label */
-            const lbl = chk.closest('.simple-ack-label') || chk.nextElementSibling;
-            if (lbl) {
-                lbl.classList.add('consent-check-shake');
-                lbl.addEventListener('animationend', function () {
-                    lbl.classList.remove('consent-check-shake');
-                }, { once: true });
-            }
-            chk.addEventListener('change', function () {
-                if (chk.checked) { hidAck.value = '1'; ackErr.classList.add('d-none'); }
-            }, { once: true });
-        } else {
-            if (submissionInProgress) { e.preventDefault(); return; }
-            submissionInProgress = true;
-            btnSubmit.disabled = true;
-            btnSubmit.setAttribute('aria-busy', 'true');
-            hidAck.value = '1';
-            try { localStorage.removeItem(STORAGE_KEY); } catch (ex) {}
-        }
+    document.getElementById('applicationForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (submissionInProgress) return;
+        if (current < TOTAL) goTo(current + 1);
+        else btnSubmit.click();
     });
 
-    /* ── Submit confirmation modal ── */
-    const confirmModal = document.getElementById('dtcConfirmModal');
-    const confirmSubmit = document.getElementById('confirmSubmit');
-    const confirmCancel = document.getElementById('confirmCancel');
-
-    if (btnSubmit && confirmModal) {
-        btnSubmit.addEventListener('click', function (e) {
-            e.preventDefault();
-            const chk = document.getElementById('ack_enrollment');
-            const ackErr = document.getElementById('ackError');
-            const hidAck = document.getElementById('acknowledgement');
-
-            if (!chk || !chk.checked) {
-                e.preventDefault();
-                if (ackErr) {
-                    ackErr.classList.remove('d-none');
-                    ackErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                const lbl = chk.closest('.simple-ack-label') || chk.nextElementSibling;
-                if (lbl) {
-                    lbl.classList.add('consent-check-shake');
-                    lbl.addEventListener('animationend', function () {
-                        lbl.classList.remove('consent-check-shake');
-                    }, { once: true });
-                }
-                chk.addEventListener('change', function () {
-                    if (chk.checked) { hidAck.value = '1'; if (ackErr) ackErr.classList.add('d-none'); }
-                }, { once: true });
-                return;
+    if (btnSubmit) {
+        btnSubmit.addEventListener('click', function () {
+            if (submissionInProgress) return;
+            for (let step = 1; step < TOTAL; step++) {
+                if (!validateStep(step)) { goTo(step, true); return; }
             }
-
             if (window.dtcConfirm) {
                 window.dtcConfirm.open({
                     trigger: btnSubmit,
                     tone: 'neutral',
                     title: 'Submit application?',
-                    message: 'Review your information before submitting. Submitted applications cannot be edited unless revision is requested.',
-                    okLabel: 'Submit Application',
+                    message: 'Your application will be sent for review. Admission is not guaranteed.',
+                    okLabel: 'Submit',
                     onConfirm: function () {
+                        if (submissionInProgress) return;
                         const form = document.getElementById('applicationForm');
                         if (!form) return;
+                        submissionInProgress = true;
+                        document.getElementById('ack_enrollment').value = '1';
                         btnSubmit.disabled = true;
                         btnSubmit.setAttribute('aria-busy', 'true');
-                        try { localStorage.removeItem(STORAGE_KEY); } catch (ex) {}
+                        try { sessionStorage.setItem('dtc_pending_application_draft', localStorage.getItem(STORAGE_KEY) || ''); } catch (ex) {}
                         form.submit();
                     }
                 });
-            }
-        });
-
-        if (confirmSubmit) {
-            confirmSubmit.addEventListener('click', function () {
-                const form = document.getElementById('applicationForm');
-                if (form) {
-                    if (confirmSubmit.disabled) return;
-                    confirmSubmit.disabled = true;
-                    confirmSubmit.textContent = 'Submitting…';
-                    btnSubmit.disabled = true;
-                    btnSubmit.setAttribute('aria-busy', 'true');
-                    try { localStorage.removeItem(STORAGE_KEY); } catch (ex) {}
-                    form.submit();
-                }
-            });
-        }
-
-        if (confirmCancel) {
-            confirmCancel.addEventListener('click', function () {
-                confirmModal.classList.remove('active');
-            });
-        }
-
-        // Close modal when clicking outside
-        confirmModal.addEventListener('click', function (e) {
-            if (e.target === confirmModal) {
-                confirmModal.classList.remove('active');
-            }
-        });
-
-        // Close modal on Escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && confirmModal.classList.contains('active')) {
-                confirmModal.classList.remove('active');
             }
         });
     }
@@ -487,8 +402,71 @@ document.addEventListener('DOMContentLoaded', function () {
        APPLICANT-TYPE REACTIVE SECTIONS
     ════════════════════════════════════════════════════════════ */
 
+    // Reuse stored field names so existing applications and drafts remain compatible.
+    const educationProfiles = {
+        new_student: {
+            title: 'Senior High School Background',
+            description: 'Provide information about the Senior High School where you graduated or last attended.',
+            school: 'Senior High School Name', year: 'School Year Graduated or Last Attended',
+            program: 'Previous Degree Program', level: 'Last Year Level',
+            example: 'e.g. Danao National High School'
+        },
+        transferee: {
+            title: 'Previous College Information',
+            description: 'Provide information about the college or university where you were last enrolled before applying for transfer.',
+            school: 'Previous College or University', year: 'Last School Year Attended',
+            program: 'Previous Degree Program', level: 'Last Year Level',
+            example: 'e.g. Cebu Normal University'
+        },
+        shiftee: {
+            title: 'Current Academic Information',
+            description: 'Provide information about your current or previous academic program before shifting to another program.',
+            school: 'Current College or University', year: 'Current or Last School Year Attended',
+            program: 'Current or Previous Degree Program', level: 'Current Year Level',
+            example: 'Enter your current institution'
+        },
+        returnee: {
+            title: 'Previous Enrollment Information',
+            description: 'Provide information about your last enrollment before taking a break from your studies.',
+            school: 'College or University Last Attended', year: 'Last School Year Attended',
+            program: 'Previous Degree Program', level: 'Last Year Level and Semester Attended',
+            example: 'Enter the institution where you were last enrolled'
+        },
+        cross_enrollee: {
+            title: 'Home Institution Information',
+            description: 'Provide information about your home institution and current studies.',
+            school: 'Most Recent School Attended', year: 'Last School Year Attended',
+            program: 'Current Degree Program', level: 'Current Year Level',
+            example: 'Enter your most recent school'
+        }
+    };
+
+    function updateEducation(type) {
+        const profile = educationProfiles[type];
+        if (!profile) return;
+        document.getElementById('educationHeading').textContent = profile.title;
+        document.getElementById('educationDescription').textContent = profile.description;
+        const labels = {
+            most_recent_school: profile.school,
+            school_year_completed: profile.year,
+            previous_program: profile.program,
+            last_year_level: profile.level,
+            education_status: type === 'transferee' ? 'Enrollment or Completion Status' : 'Completion Status'
+        };
+        Object.keys(labels).forEach(function (name) {
+            document.querySelector('#step-4 label[for="' + name + '"]').textContent = labels[name];
+        });
+        document.getElementById('most_recent_school').placeholder = profile.example;
+        document.getElementById('school_year_completed').placeholder = 'e.g. 2025-2026';
+        document.getElementById('previous_program').placeholder = 'e.g. BS Information Systems';
+        document.getElementById('last_year_level').placeholder = type === 'returnee'
+            ? 'e.g. 2nd year, 1st semester' : 'e.g. 2nd year';
+        document.getElementById('last_year_level').setAttribute('aria-describedby', 'lastYearLevelHint');
+    }
+
     function updateApplicantType() {
         const t = applicantType.value;
+        updateEducation(t);
         documentSections.forEach(function (s) {
             const visible = s.getAttribute('data-type') === t;
             s.classList.toggle('d-none', !visible);
@@ -524,274 +502,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gender') && document.getElementById('gender').addEventListener('change', function () { saveField(document.getElementById('gender')); });
 
 
-    /* ════════════════════════════════════════════════════════════
-       PSGC API  — shared cache + fetch helper
-    ════════════════════════════════════════════════════════════ */
-
-    /* Local PSGC location picker. The API and submit validator share one snapshot. */
-    const locationModal = document.getElementById('locPickerModal');
-    const locationSearch = document.getElementById('locPickerSearch');
-    const locationList = document.getElementById('locPickerList');
-    const locationTitle = document.getElementById('locPickerTitle');
-    const locationBack = document.getElementById('locPickerBack');
-    const locationClose = document.getElementById('locPickerClose');
-    const regionCodeInput = document.getElementById('region_code');
-    const provinceCodeInput = document.getElementById('province_code');
-    const cityCodeInput = document.getElementById('city_code');
-    const locationCache = new Map();
-    const locationRequests = new Map();
-    let locationLevel = 'region';
-    let locationItems = [];
-    let locationOpener = null;
-    let locationRequest = 0;
-    let userChangedLocation = false;
-    let savedBodyOverflow = '';
-
-    const locationUrls = locationModal ? {
-        regions: locationModal.dataset.regionsUrl,
-        areas: locationModal.dataset.areasUrl,
-        cities: locationModal.dataset.citiesUrl
-    } : null;
-
-    function locationText(id) { return document.getElementById(id); }
-    function rememberLocation(el) { if (el) saveField(el); }
-    function normalizeSearch(value) { return value.toLocaleLowerCase().trim().replace(/\s+/g, ' '); }
-    function htmlEscape(value) {
-        return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-    }
-    function locationUrl(template, code) { return template.replace('__CODE__', encodeURIComponent(code)); }
-
-    function fetchLocations(url) {
-        if (locationCache.has(url)) return Promise.resolve(locationCache.get(url));
-        if (locationRequests.has(url)) return locationRequests.get(url);
-        const request = fetch(url, { headers: { Accept: 'application/json' } }).then(function (response) {
-            if (!response.ok) throw new Error('Location data is unavailable. Please try again.');
-            return response.json();
-        }).then(function (items) {
-            locationCache.set(url, items);
-            locationRequests.delete(url);
-            return items;
-        }).catch(function (error) {
-            locationRequests.delete(url);
-            throw error;
-        });
-        locationRequests.set(url, request);
-        return request;
-    }
-
-    function setLocationCode(input, labelInput, option) {
-        input.value = option ? option.code : '';
-        labelInput.value = option ? option.name : '';
-        rememberLocation(input);
-        rememberLocation(labelInput);
-    }
-
-    function updateLocationButtons() {
-        [
-            ['locRegionTrigger', 'region_text', 'Select region'],
-            ['locProvinceTrigger', 'province_text', 'Select province or independent city'],
-            ['locCityTrigger', 'city_text', 'Select city / municipality']
-        ].forEach(function (entry) {
-            const button = locationText(entry[0]);
-            const label = locationText(entry[1]);
-            if (button) {
-                const display = button.querySelector('[data-location-value]');
-                display.textContent = entry[0] === 'locProvinceTrigger' && !provinceCodeInput.value && cityCodeInput.value
-                    ? 'Independent city selected'
-                    : (label.value || entry[2]);
-                button.classList.toggle('has-value', !!label.value);
-            }
-        });
-    }
-
-    function openLocationPicker(level, opener) {
-        if (!locationModal) return;
-        locationLevel = level;
-        locationOpener = opener || document.activeElement;
-        savedBodyOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        locationModal.hidden = false;
-        locationModal.setAttribute('aria-hidden', 'false');
-        locationSearch.value = '';
-        showLocationItems();
-        window.requestAnimationFrame(function () { locationSearch.focus(); });
-    }
-
-    function closeLocationPicker() {
-        if (!locationModal || locationModal.hidden) return;
-        locationModal.hidden = true;
-        locationModal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = savedBodyOverflow;
-        updateLocationButtons();
-        if (locationOpener) locationOpener.focus();
-    }
-
-    function showLocationItems() {
-        const thisRequest = ++locationRequest;
-        const regionCode = regionCodeInput.value;
-        const provinceCode = provinceCodeInput.value;
-        const titles = { region: 'Select region', area: 'Select province or independent city', city: 'Select city / municipality' };
-        locationTitle.textContent = titles[locationLevel];
-        locationBack.hidden = locationLevel === 'region';
-        locationList.innerHTML = '<div class="loc-picker-loading"><span class="loc-picker-spinner" aria-hidden="true"></span>Loading locations…</div>';
-
-        let request;
-        if (locationLevel === 'region') request = fetchLocations(locationUrls.regions);
-        else if (locationLevel === 'area') request = fetchLocations(locationUrl(locationUrls.areas, regionCode));
-        else request = fetchLocations(locationUrl(locationUrls.cities, provinceCode));
-
-        request.then(function (items) {
-            if (thisRequest !== locationRequest || locationModal.hidden) return;
-            locationItems = items;
-            renderLocationItems();
-        }).catch(function () {
-            if (thisRequest !== locationRequest) return;
-            locationList.innerHTML = '<div class="loc-picker-empty">Location data could not be loaded. <button type="button" class="loc-picker-retry">Try again</button></div>';
-            const retry = locationList.querySelector('.loc-picker-retry');
-            retry.addEventListener('click', showLocationItems);
-        });
-    }
-
-    function renderLocationItems() {
-        const query = normalizeSearch(locationSearch.value);
-        const filtered = locationItems.filter(function (item) {
-            return normalizeSearch(item.name).includes(query);
-        });
-        if (!filtered.length) {
-            locationList.innerHTML = '<div class="loc-picker-empty" role="status">No locations match “' + htmlEscape(locationSearch.value) + '”.</div>';
-            return;
-        }
-
-        const selectedCode = locationLevel === 'region' ? regionCodeInput.value
-            : locationLevel === 'area' ? (provinceCodeInput.value || cityCodeInput.value) : cityCodeInput.value;
-        locationList.innerHTML = filtered.map(function (item) {
-            const selected = selectedCode === item.code;
-            const itemType = locationLevel === 'area' && item.type === 'city' ? ' · Independent city' : '';
-            return '<button type="button" class="loc-picker-item' + (selected ? ' selected' : '') + '" data-code="' + htmlEscape(item.code) + '" data-name="' + htmlEscape(item.name) + '" data-type="' + htmlEscape(item.type || '') + '" aria-pressed="' + (selected ? 'true' : 'false') + '">' + htmlEscape(item.name + itemType) + (selected ? '<span aria-hidden="true">✓</span>' : '') + '</button>';
-        }).join('');
-    }
-
-    function chooseLocation(item) {
-        userChangedLocation = true;
-        if (locationLevel === 'region') {
-            setLocationCode(regionCodeInput, locationText('region_text'), item);
-            setLocationCode(provinceCodeInput, locationText('province_text'), null);
-            setLocationCode(cityCodeInput, locationText('city_text'), null);
-            locationLevel = 'area';
-            locationSearch.value = '';
-            showLocationItems();
-        } else if (locationLevel === 'area' && item.type === 'province') {
-            setLocationCode(provinceCodeInput, locationText('province_text'), item);
-            setLocationCode(cityCodeInput, locationText('city_text'), null);
-            locationLevel = 'city';
-            locationSearch.value = '';
-            showLocationItems();
-        } else if (locationLevel === 'area') {
-            setLocationCode(provinceCodeInput, locationText('province_text'), null);
-            setLocationCode(cityCodeInput, locationText('city_text'), item);
-            closeLocationPicker();
-        } else {
-            setLocationCode(cityCodeInput, locationText('city_text'), item);
-            closeLocationPicker();
-        }
-        updateLocationButtons();
-    }
-
-    if (locationModal) {
-        const locationDraft = loadDraft();
-        [regionCodeInput, provinceCodeInput, cityCodeInput].forEach(function (input) {
-            if (input && !input.value && locationDraft[input.name]) input.value = locationDraft[input.name];
-        });
-        [['region_text', 'region'], ['province_text', 'province'], ['city_text', 'city']].forEach(function (pair) {
-            const input = locationText(pair[0]);
-            if (input && !input.value && locationDraft[pair[1]]) input.value = locationDraft[pair[1]];
-        });
-        const countryInput = document.getElementById('country');
-        const internationalField = document.getElementById('internationalLocationField');
-        function updateInternationalAddress() {
-            if (internationalField) internationalField.hidden = !countryInput || normalizeSearch(countryInput.value) === 'philippines';
-        }
-        if (countryInput) countryInput.addEventListener('input', updateInternationalAddress);
-        updateInternationalAddress();
-        document.querySelectorAll('[data-location-level]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const level = button.dataset.locationLevel;
-                const nextLevel = level === 'province'
-                    ? (regionCodeInput.value ? 'area' : 'region')
-                    : level === 'city'
-                        ? (provinceCodeInput.value ? 'city' : regionCodeInput.value ? 'area' : 'region')
-                        : 'region';
-                openLocationPicker(nextLevel, button);
-            });
-        });
-        locationClose.addEventListener('click', closeLocationPicker);
-        locationModal.querySelector('.loc-picker-backdrop').addEventListener('click', closeLocationPicker);
-        locationBack.addEventListener('click', function () {
-            locationLevel = locationLevel === 'city' ? 'area' : 'region';
-            locationSearch.value = '';
-            showLocationItems();
-        });
-        locationSearch.addEventListener('input', renderLocationItems);
-        locationList.addEventListener('click', function (event) {
-            const button = event.target.closest('.loc-picker-item');
-            if (!button) return;
-            chooseLocation({ code: button.dataset.code, name: button.dataset.name, type: button.dataset.type });
-        });
-        locationList.addEventListener('keydown', function (event) {
-            if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-            const buttons = Array.from(locationList.querySelectorAll('.loc-picker-item'));
-            const index = buttons.indexOf(document.activeElement);
-            const direction = event.key === 'ArrowDown' ? 1 : -1;
-            const next = buttons[(index + direction + buttons.length) % buttons.length];
-            if (next) { event.preventDefault(); next.focus(); }
-        });
-        locationSearch.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowDown') {
-                const first = locationList.querySelector('.loc-picker-item');
-                if (first) { event.preventDefault(); first.focus(); }
-            }
-        });
-        document.addEventListener('keydown', function (event) {
-            if (locationModal.hidden) return;
-            if (event.key === 'Escape') { event.preventDefault(); closeLocationPicker(); }
-            if (event.key === 'Tab') {
-                const focusable = Array.from(locationModal.querySelectorAll('button:not([disabled]), input:not([disabled])')).filter(el => !el.hidden);
-                const first = focusable[0], last = focusable[focusable.length - 1];
-                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-            }
-        });
-
-        // Rehydrate saved/old input in parent-to-child order after validation or refresh.
-        fetchLocations(locationUrls.regions).then(function () {
-            if (userChangedLocation) return;
-            const regionName = locationText('region_text').value;
-            if (!regionCodeInput.value && regionName) {
-                const regions = locationCache.get(locationUrls.regions) || [];
-                const match = regions.find(item => item.name === regionName);
-                if (match) regionCodeInput.value = match.code;
-            }
-            if (!regionCodeInput.value) return;
-            return fetchLocations(locationUrl(locationUrls.areas, regionCodeInput.value)).then(function (areas) {
-                if (userChangedLocation) return;
-                const area = areas.find(item => item.code === (provinceCodeInput.value || cityCodeInput.value));
-                if (area && area.type === 'province') {
-                    if (!provinceCodeInput.value) provinceCodeInput.value = area.code;
-                    return fetchLocations(locationUrl(locationUrls.cities, provinceCodeInput.value)).then(function (cities) {
-                        if (userChangedLocation) return;
-                        const selected = cities.find(item => item.code === cityCodeInput.value) || cities.find(item => item.name === locationText('city_text').value);
-                        if (selected) { cityCodeInput.value = selected.code; locationText('city_text').value = selected.name; }
-                    });
-                }
-                const direct = areas.find(item => item.type === 'city' && (item.code === cityCodeInput.value || item.name === locationText('city_text').value));
-                if (direct) { provinceCodeInput.value = ''; locationText('province_text').value = ''; cityCodeInput.value = direct.code; locationText('city_text').value = direct.name; }
-            }).then(updateLocationButtons);
-        }).catch(function () { updateLocationButtons(); });
-    }
-
-
-    /* Location select names are persisted manually above; exclude from generic loop */
-    const LOC_NAMES = ['region','province','city','region_code','province_code','city_code'];
+    /* Legacy PSGC codes remain blank; browser-autofilled address text uses normal draft persistence. */
+    const LOC_NAMES = ['region_code','province_code','city_code'];
 
     const PERSIST_SELECTOR = [
         'input[type="text"]',
@@ -831,6 +543,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     restoreDraft();
+
+    const guardianDetails = document.getElementById('guardianDetails');
+    if (guardianDetails && Array.from(guardianDetails.querySelectorAll('input')).some(function (field) { return field.value.trim() !== ''; })) {
+        guardianDetails.open = true;
+    }
+
+    const countryInput = document.getElementById('country');
+    const internationalField = document.getElementById('internationalLocationField');
+    function updateInternationalAddress() {
+        if (!internationalField) return;
+        const country = countryInput ? countryInput.value.trim().toLocaleLowerCase() : '';
+        internationalField.hidden = country === '' || country === 'philippines';
+    }
+    if (countryInput) countryInput.addEventListener('input', updateInternationalAddress);
+    updateInternationalAddress();
     const TITLE_CASE_FIELD_SET = new Set(window.dtcApplicationTitleCaseFields || []);
     TITLE_CASE_FIELD_SET.forEach(function (name) {
         const input = document.querySelector('[name="' + name + '"]');
@@ -961,17 +688,18 @@ document.addEventListener('DOMContentLoaded', function () {
             return [honorific, name, suffix].filter(Boolean).join(' ') || '—';
         }
 
+        const profile = educationProfiles[rawType];
         const educationRows = [
             ['Education level', val('education_level')],
             ['Completion status', val('education_status')],
-            ['Most recent school', val('most_recent_school')],
-            ['School year completed or last attended', val('school_year_completed')],
+            [profile ? profile.school : 'Most recent school', val('most_recent_school')],
+            [profile ? profile.year : 'School year completed or last attended', val('school_year_completed')],
             ['School location', val('school_location')],
         ];
         if (rawType === 'new_student') educationRows.push(['Senior High School strand', val('shs_strand')]);
         if (['transferee', 'shiftee', 'returnee'].indexOf(rawType) !== -1) {
-            educationRows.push(['Previous or current program', val('previous_program')]);
-            educationRows.push(['Last year level or semester attended', val('last_year_level')]);
+            educationRows.push([profile.program, val('previous_program')]);
+            educationRows.push([profile.level, val('last_year_level')]);
         }
         if (rawType === 'cross_enrollee') {
             educationRows.push(['Home institution', val('home_institution')]);
@@ -1018,8 +746,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 ['Phone',    val('phone')],
                 ['Address',  fullAddress()],
             ], 3) +
-            section('Educational Background', 'school', educationRows, 4) +
+            section(profile ? profile.title : 'Educational Background', 'school', educationRows, 4) +
             section('Family Information', 'users', [
+                ["Guardian's Name",     nameVal('guardian_name')],
+                ["Guardian's Contact",  val('guardian_contact')],
                 ["Father's Name",       nameVal('father_name')],
                 ["Father's Occupation", val('father_occupation')],
                 ["Mother's Name",       nameVal('mother_name')],

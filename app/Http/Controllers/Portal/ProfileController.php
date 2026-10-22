@@ -69,10 +69,12 @@ class ProfileController extends Controller
         if (! Hash::check($request->current_password, $user->password)) {
             return back()
                 ->withErrors(['current_password' => 'The current password is incorrect.'])
-                ->withInput();
+                ->withInput($request->except(['current_password', 'password', 'password_confirmation']));
         }
 
         $user->update(['password' => Hash::make($request->password)]);
+        $request->session()->regenerate();
+        $request->session()->put('auth_session_token', $user->auth_session_token);
 
         return redirect()->route($this->routePrefix($user) . '.show')
             ->with('success', 'Password changed successfully.');

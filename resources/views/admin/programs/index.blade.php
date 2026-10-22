@@ -30,7 +30,7 @@
 
     <div class="card-body p-0">
         <div class="table-responsive dtc-program-table-wrap" role="region" aria-label="All programs table" tabindex="0">
-            <table class="table mb-0 dtc-programs-table">
+<table class="table mb-0 dtc-programs-table">
                 <thead>
                     <tr>
                         <th>Program</th>
@@ -155,7 +155,7 @@
                                value="{{ old('code') }}" required>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="plus"></i> Add Program
@@ -190,7 +190,7 @@
                         <input type="text" name="code" id="edit-program-code" class="form-control" required>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer dtc-balanced-footer">
                     <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="dtc-btn dtc-btn-primary">
                         <i data-lucide="save"></i> Save Changes
@@ -253,7 +253,7 @@ document.querySelectorAll('.js-edit-program').forEach(function (btn) {
 const subjectsWrapper = document.getElementById('subjects-card-wrapper');
 
 function loadSubjectsCard(url, pushState) {
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    window.dtcFetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function (res) { return res.text(); })
         .then(function (html) {
             subjectsWrapper.innerHTML = html;
@@ -268,7 +268,9 @@ function loadSubjectsCard(url, pushState) {
                 window.history.pushState({}, '', url);
             }
         })
-        .catch(function () {
+        .catch(function (error) {
+            if (error.dtcReported) return;
+            window.dtcRequestFailure(error);
             // Fall back to a normal navigation if the fetch fails.
             window.location.href = url;
         });

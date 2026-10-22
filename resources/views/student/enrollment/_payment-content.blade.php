@@ -102,6 +102,31 @@
                         </div>
                         <div class="card-body">
 
+                            <div class="dtc-gcash-mobile-note">
+                                <i data-lucide="smartphone" aria-hidden="true"></i>
+                                <div><strong>Paying on this phone?</strong> Use the GCash number below. You do not need to scan the QR.</div>
+                            </div>
+
+                            <div class="dtc-gcash-account">
+                                <div>
+                                    <span>GCash account</span>
+                                    <strong>{{ $gcashName ?? 'Not configured' }}</strong>
+                                    <code>{{ $gcashNumber ?? 'Not configured' }}</code>
+                                </div>
+                                @if($gcashNumber)
+                                    <button type="button" class="dtc-gcash-copy" data-copy-value="{{ $gcashNumber }}" data-copy-label="GCash number">
+                                        <i data-lucide="copy" aria-hidden="true"></i>
+                                        <span>Copy number</span>
+                                    </button>
+                                @endif
+                            </div>
+
+                            <div class="dtc-gcash-amount">
+                                <span>Amount to send</span>
+                                <strong>₱{{ number_format($fee, 2) }}</strong>
+                                <button type="button" data-copy-value="{{ number_format((float) $fee, 2, '.', '') }}" data-copy-label="Amount">Copy</button>
+                            </div>
+
                             @if ($gcashQrReady)
                                 <img src="{{ route('portal.enrollment.gcash.qr') }}" alt="GCash QR Code"
                                      style="width:150px; height:150px; object-fit:contain; display:block; margin:0 auto 12px;
@@ -114,19 +139,13 @@
                                 </div>
                             @endif
 
-                            <p class="text-center mb-1" style="font-size:14px; font-weight:700; color:var(--dtc-text);">
-                                {{ $gcashName ?? '—' }}
-                            </p>
-                            <p class="text-center mb-3 u-text-secondary-sm" >
-                                {{ $gcashNumber ?? '—' }}
-                            </p>
+                            @if($gcashQrReady)
+                                <a href="{{ route('portal.enrollment.gcash.qr', ['download' => 1]) }}" class="dtc-gcash-save-qr">
+                                    <i data-lucide="download" aria-hidden="true"></i> Save QR to phone
+                                </a>
+                            @endif
 
-                            <ol style="font-size:12px; color:var(--dtc-text-secondary); padding-left:18px; margin-bottom:16px;">
-                                <li>Open GCash → Send Money / Scan QR</li>
-                                <li>Enter ₱{{ number_format($fee, 2) }} as the amount</li>
-                                <li>Take a screenshot of the successful transaction</li>
-                                <li>Fill in the form below and upload your screenshot</li>
-                            </ol>
+                            <p class="dtc-gcash-proof-guide">After paying, enter the reference number and upload the successful transaction screenshot.</p>
 
                             @php $pendingExists = $latestPayment && $latestPayment->isPending(); @endphp
 

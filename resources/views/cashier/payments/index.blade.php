@@ -7,16 +7,18 @@
     <div>
         <h4 class="mb-0 font-weight-bold u-text" >Process Payments</h4>
         <p class="mb-0 u-text-secondary-sm" >
-            Approved enrollments awaiting payment collection
+            Collect fees and review enrollment payments.
         </p>
     </div>
 @endsection
 
 @push('css')
     <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/cashier-payment-pages.css') }}">
 @endpush
 
 @section('content')
+<div class="cashier-payment-page">
 
 {{-- Search + Filters (same toolbar as Applications) --}}
 @php
@@ -34,7 +36,7 @@
     <div class="dtc-fl-toolbar">
         <div class="dtc-pay-search dtc-fl-search">
             <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
-            <input type="search" id="paymentSearch" class="dtc-pay-search-input"
+            <input type="search" id="paymentSearch" name="search" value="{{ request('search') }}" class="dtc-pay-search-input"
                    placeholder="Search name, email, program…" autocomplete="off"
                    aria-label="Search enrollments">
             <button type="button" id="paymentSearchClear" class="dtc-pay-search-clear" aria-label="Clear search" hidden>
@@ -59,6 +61,7 @@
                     @endforeach
                 </select>
             </div>
+            @include('partials.table-rows', ['tableRecords' => $enrollments, 'tableId' => 'enrollment-payments-table', 'fixedRows' => true])
             <div class="dtc-fl-actions">
                 <button type="submit" class="btn btn-primary">Apply</button>
                 <a href="{{ route('cashier.payments.index') }}" class="dtc-fl-clear" id="paymentFilterClear" @if(!$payFilterCount) hidden @endif>Clear all</a>
@@ -75,7 +78,8 @@
 
     <div class="card-body p-0">
         <div class="table-responsive">
-        <table class="table dtc-table dtc-payments-table mb-0">
+
+<table id="enrollment-payments-table" class="table dtc-table dtc-payments-table mb-0">
             <thead>
                 <tr>
                     <th>Applicant</th>
@@ -93,12 +97,10 @@
                 <tr class="js-payment-row">
                     <td>
                         <div  class="u-flex-center-gap-10">
-                            <div style="width:32px; height:32px; border-radius:50%;
+                            <x-dtc.user-avatar :user="$enrollment->user" style="width:32px; height:32px; border-radius:50%;
                                         background:linear-gradient(135deg,#22C55E,#059669);
                                         display:flex; align-items:center; justify-content:center;
-                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                {{ strtoupper(substr($enrollment->user->name, 0, 1)) }}
-                            </div>
+                                        color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                             <div>
                                 <div style="font-size:13px; font-weight:500; color:var(--dtc-text);">
                                     {{ $enrollment->user->name }}
@@ -146,7 +148,7 @@
                             <button type="button" class="dtc-review-btn dtc-payment-btn dtc-header-btn"
                                     data-url="{{ route('cashier.payments.show', $enrollment) }}">
                                 <i data-lucide="banknote"></i>
-                                <span class="dtc-header-btn-label">Process</span>
+                                <span class="dtc-header-btn-label">{{ $enrollment->payment?->isVerified() ? 'Details' : ($enrollment->payment?->isPending() ? 'Review' : 'Process') }}</span>
                             </button>
                             @if ($enrollment->is_paid)
                                 <button type="button" class="dtc-review-btn dtc-receipt-btn dtc-header-btn"
@@ -197,6 +199,7 @@
 @include('cashier.payments._payment-modal')
 @include('cashier.payments._receipt-modal')
 
+</div>
 @endsection
 
 @push('js')

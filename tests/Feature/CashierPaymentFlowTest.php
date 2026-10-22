@@ -19,6 +19,19 @@ class CashierPaymentFlowTest extends TestCase
         $this->seedRoles();
     }
 
+    public function test_payment_search_and_row_limit_are_preserved_in_the_filter_form(): void
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $matching = Enrollment::factory()->create(['status' => 'approved']);
+        $matching->user->update(['name' => 'Cashier Search Match']);
+        Enrollment::factory()->create(['status' => 'approved']);
+        $this->actingAs($cashier)->get(route('cashier.payments.index', ['search' => 'Cashier Search Match', 'per_page' => 5]))
+            ->assertOk()->assertViewHas('enrollments', fn ($rows) => $rows->total() === 1 && $rows->perPage() === 5)
+            ->assertSee('data-fixed-placement="true"', false)
+            ->assertSee('data-table-target="enrollment-payments-table"', false)
+            ->assertSee('value="Cashier Search Match"', false);
+    }
+
     /** @test */
     public function cashier_can_confirm_a_walk_in_payment_for_an_approved_unpaid_enrollment()
     {
@@ -28,7 +41,7 @@ class CashierPaymentFlowTest extends TestCase
         $response = $this->actingAs($cashier)
             ->post(route('cashier.payments.store', $enrollment));
 
-        $response->assertRedirect(route('cashier.payments.receipt', $enrollment));
+        $response->assertRedirect(route('cashier.payments.index'));
 
         $enrollment->refresh();
         $this->assertTrue($enrollment->is_paid);
@@ -103,7 +116,7 @@ class CashierPaymentFlowTest extends TestCase
         $pending->update(['status' => 'rejected']);
         $this->actingAs($cashier)
             ->post(route('cashier.payments.store', $enrollment))
-            ->assertRedirect(route('cashier.payments.receipt', $enrollment));
+            ->assertRedirect(route('cashier.payments.index'));
 
         $this->assertSame(2, Payment::where('enrollment_id', $enrollment->id)->count());
         $this->assertTrue($enrollment->fresh()->is_paid);

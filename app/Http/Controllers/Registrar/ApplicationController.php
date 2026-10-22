@@ -59,7 +59,7 @@ class ApplicationController extends Controller
                 $query->where('program_id', $programId);
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString()
             ->withQueryString();
 
         $programs = Program::orderBy('name')->get(['id', 'name']);

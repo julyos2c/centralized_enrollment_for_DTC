@@ -275,8 +275,9 @@ function showResults(results) {
 
     const list = document.getElementById('results-list');
     list.innerHTML = results.map(r => {
+        const escapeAvatar = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
         const iconHtml = r.avatar
-            ? `<div class="search-result-avatar">${r.avatar}</div>`
+            ? `<div class="search-result-avatar dtc-user-avatar"><span aria-hidden="true">${escapeAvatar(r.avatar)}</span>${r.avatar_url ? `<img src="${escapeAvatar(r.avatar_url)}" alt="Profile photo" onerror="this.hidden = true;">` : ''}</div>`
             : `<div class="search-result-icon ${r.type}"><i data-lucide="${r.icon}"></i></div>`;
 
         return `
@@ -317,7 +318,7 @@ function runSearch(query) {
     clearTimeout(searchTimer);
 
     searchTimer = setTimeout(() => {
-        fetch('/search?q=' + encodeURIComponent(query.trim()), {
+        window.dtcFetch('/search?q=' + encodeURIComponent(query.trim()), {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
@@ -329,7 +330,7 @@ function runSearch(query) {
                 ? showResults(data.results)
                 : showEmpty(query);
         })
-        .catch(() => showEmpty(query));
+        .catch(error => { document.getElementById('search-loading').style.display = 'none'; window.dtcRequestFailure(error); });
     }, 300);
 }
 
@@ -479,6 +480,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggle.focus();
             }
         });
+    });
+})();
+
+// Payment copy controls are delegated because enrollment payment content may
+// be loaded into a modal after the page has rendered.
+(function initPaymentCopyControls() {
+    function fallbackCopy(value) {
+        var input = document.createElement('textarea');
+        input.value = value;
+        input.setAttribute('readonly', '');
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        var copied = document.execCommand('copy');
+        input.remove();
+        return copied;
+    }
+
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-copy-value]');
+        if (!button) return;
+
+        var value = button.getAttribute('data-copy-value') || '';
+        var label = button.getAttribute('data-copy-label') || 'Value';
+        var textNode = button.querySelector('span');
+        var original = textNode ? textNode.textContent : button.textContent;
+        var showResult = function (success) {
+            if (textNode) textNode.textContent = success ? 'Copied' : 'Copy failed';
+            else button.textContent = success ? 'Copied' : 'Copy failed';
+            button.setAttribute('aria-label', success ? label + ' copied' : 'Could not copy ' + label);
+            window.setTimeout(function () {
+                if (textNode) textNode.textContent = original;
+                else button.textContent = original;
+                button.removeAttribute('aria-label');
+            }, 1800);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(value).then(function () { showResult(true); }, function () {
+                showResult(fallbackCopy(value));
+            });
+        } else {
+            showResult(fallbackCopy(value));
+        }
     });
 })();
 

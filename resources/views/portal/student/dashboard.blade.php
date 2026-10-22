@@ -12,6 +12,9 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
+@endpush
 @section('content')
 
 @php
@@ -249,7 +252,8 @@
             <div class="card-body p-0">
                 @if($subjects->isNotEmpty())
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0" style="font-size:12.5px;">
+
+<table class="dashboard-summary-table table table-sm mb-0" style="font-size:12.5px;">
                         <thead>
                             <tr style="background:var(--dtc-surface-soft);">
                                 <th style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dtc-text-secondary); border-bottom:1px solid var(--dtc-border);">Course Code</th>
@@ -261,18 +265,18 @@
                         <tbody>
                             @foreach($subjects as $subject)
                             <tr style="border-bottom:1px solid var(--dtc-border-soft);">
-                                <td style="padding:10px 16px; vertical-align:middle;">
+                                <td data-summary-label="Course Code" style="padding:10px 16px; vertical-align:middle;">
                                     <span class="dtc-status-badge is-neutral" style="font-weight:700; font-size:11px;">
                                         {{ $subject->subject_code }}
                                     </span>
                                 </td>
-                                <td style="padding:10px 16px; vertical-align:middle; color:var(--dtc-text); font-weight:500;">
+                                <td data-summary-label="Description" style="padding:10px 16px; vertical-align:middle; color:var(--dtc-text); font-weight:500;">
                                     {{ $subject->subject_name }}
                                 </td>
-                                <td style="padding:10px 16px; vertical-align:middle; text-align:center; color:var(--dtc-text); font-weight:600;">
+                                <td data-summary-label="Units" style="padding:10px 16px; vertical-align:middle; text-align:center; color:var(--dtc-text); font-weight:600;">
                                     {{ rtrim(rtrim(number_format($subject->units ?? 3, 1), '0'), '.') }}
                                 </td>
-                                <td style="padding:10px 16px; vertical-align:middle; text-align:center;">
+                                <td data-summary-label="Status" style="padding:10px 16px; vertical-align:middle; text-align:center;">
                                     @if($latestEnrollment && $latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
                                         <span class="dtc-status-badge is-success" style="font-size:10.5px;">
                                             <i data-lucide="check" style="width:10px;height:10px;"></i> Enrolled
@@ -302,10 +306,10 @@
                                 <td colspan="2" style="padding:10px 16px; font-weight:700; font-size:12px; color:var(--dtc-text); text-align:right;">
                                     Total Units
                                 </td>
-                                <td style="padding:10px 16px; font-weight:800; font-size:13px; color:var(--dtc-primary); text-align:center;">
+                                <td data-summary-label="Description" style="padding:10px 16px; font-weight:800; font-size:13px; color:var(--dtc-primary); text-align:center;">
                                     {{ rtrim(rtrim(number_format($totalUnits, 1), '0'), '.') }}
                                 </td>
-                                <td></td>
+                                <td data-summary-label="Units"></td>
                             </tr>
                         </tfoot>
                     </table>

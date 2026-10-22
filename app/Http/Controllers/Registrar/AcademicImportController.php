@@ -15,7 +15,7 @@ class AcademicImportController extends Controller
 {
     public function index()
     {
-        return view('registrar.imports.index', ['batches' => AcademicImportBatch::with('importer')->latest()->paginate(20)]);
+        return view('registrar.imports.index', ['batches' => AcademicImportBatch::with('importer')->latest()->paginate(\App\Support\TablePagination::perPage(20))->withQueryString()]);
     }
 
     public function template(string $type, AcademicRecordImportService $service): StreamedResponse

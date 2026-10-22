@@ -71,7 +71,7 @@
                     @error('reason')<p class="application-cancel-error" role="alert">{{ $message }}</p>@enderror
                     @if($errors->has('cancellation'))<p class="application-cancel-error" role="alert">{{ $errors->first('cancellation') }}</p>@endif
                     <div class="application-cancel-actions">
-                        <button type="button" class="application-cancel-button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Request application cancellation?" data-dtc-confirm-message="This sends a cancellation request to the Registrar for review." data-dtc-confirm-ok="Send Request" data-dtc-confirm-form="#application-cancellation-form"><i data-lucide="send" aria-hidden="true"></i> Request cancellation</button>
+                        <button type="button" class="application-cancel-button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Request application cancellation?" data-dtc-confirm-message="This sends a cancellation request to the Registrar for review." data-dtc-confirm-ok="Send" data-dtc-confirm-form="#application-cancellation-form"><i data-lucide="send" aria-hidden="true"></i> Request cancellation</button>
                     </div>
                 </form>
             </section>
@@ -151,6 +151,17 @@
 @endsection
 
 @section('scripts')
+@if(session('application_just_submitted'))
+<script>
+try {
+    const pendingDraft = sessionStorage.getItem('dtc_pending_application_draft');
+    if (pendingDraft !== null && pendingDraft === (localStorage.getItem('dtc_application_draft') || '')) {
+        localStorage.removeItem('dtc_application_draft');
+    }
+    sessionStorage.removeItem('dtc_pending_application_draft');
+} catch (error) {}
+</script>
+@endif
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Copy reference

@@ -29,6 +29,7 @@ class RegistrarApplicationDetailStatusTest extends TestCase
             ->get(route('registrar.applications.show', $application));
 
         $response->assertOk()
+            ->assertSee('data-dtc-confirm-subject="Test Applicant"', false)
             ->assertSee('Submitted')
             ->assertSee('Start Review')
             ->assertDontSee('This application has been rejected.')
@@ -72,7 +73,7 @@ class RegistrarApplicationDetailStatusTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Under Review')
-            ->assertSee('Approve Application?')
+            ->assertSee('Approve application?')
             ->assertSee('Request Revision')
             ->assertSee('Reject Application')
             ->assertSee(route('registrar.applications.approve', $application))

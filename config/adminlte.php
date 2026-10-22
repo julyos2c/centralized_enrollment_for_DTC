@@ -437,7 +437,17 @@ return [
             [
                 'type'     => 'js',
                 'asset'    => true,
+                'location' => 'js/session-feedback.js',
+            ],
+            [
+                'type' => 'js',
+                'asset' => true,
                 'location' => 'js/dtc-app.js',
+            ],
+            [
+                'type' => 'js',
+                'asset' => true,
+                'location' => 'js/table-rows.js',
             ],
         ],
     ],

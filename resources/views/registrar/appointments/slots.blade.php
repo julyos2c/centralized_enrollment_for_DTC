@@ -21,7 +21,12 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 
 @if($errors->any() && !old('date'))
 <div class="alert alert-danger">{{ $errors->first() }}</div>
@@ -350,6 +355,8 @@
     </div>
 </div>
 
+
+</div>
 @endsection
 
 @section('css')

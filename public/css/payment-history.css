@@ -120,3 +120,72 @@
 @media (prefers-reduced-motion: reduce) {
     .ph-filter-toggle { transition: none; }
 }
+/* Refined history layout, shared by staff and account holders. */
+.dtc-payment-history .ph-toolbar { align-items:center; gap:10px; }
+.dtc-payment-history .ph-search { position:relative; max-width:none; min-width:0; }
+.dtc-payment-history .ph-search .dtc-pay-search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:17px; height:17px; pointer-events:none; }
+.dtc-payment-history .ph-search input { height:44px; padding-left:42px; padding-right:38px; font-size:13px; }
+.dtc-payment-history .ph-status-bar { display:flex; flex-wrap:wrap; gap:7px; overflow:visible; padding:0; }
+.dtc-payment-history .ph-status-bar .dtc-filter-pill { flex:0 0 auto; padding:7px 11px; font-size:11px; }
+.dtc-payment-history .ph-advanced .dtc-table-rows { padding:0; }
+.dtc-payment-history .ph-advanced [data-table-rows-field] { display:flex; flex-direction:column; align-items:stretch; gap:6px; margin:0; font-size:12px; font-weight:600; color:var(--dtc-text-secondary); }
+.dtc-payment-history .ph-advanced select { min-height:42px; }
+.ph-list-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--dtc-border-soft); }
+.ph-list-heading h2 { margin:0; color:var(--dtc-text); font-size:14px; font-weight:600; }
+.ph-list-heading > span { color:var(--dtc-text-muted); font-size:12px; }
+.ph-table-scroll { overflow-x:auto; }
+.ph-table { width:100%; margin:0; }
+.ph-table .ph-ref-link { font-weight:600; color:var(--dtc-primary); }
+.ph-table .ph-sub { display:block; margin-top:4px; font-size:11px; }
+.ph-table .ph-amount { font-variant-numeric:tabular-nums; }
+.ph-view { width:40px; height:40px; border:1px solid var(--dtc-border-soft); }
+.ph-detail .ph-summary { padding:24px; border-top:3px solid var(--dtc-primary); }
+.ph-detail .ph-summary-amount { margin:8px 0; font-size:30px; }
+.ph-detail .ph-facts > div { padding:15px 20px; }
+@media (max-width:767.98px) {
+    .dtc-payment-history .ph-filter-toggle { min-width:44px; justify-content:center; }
+    .dtc-payment-history .ph-filter-toggle span:not(.ph-filter-count) { display:inline; }
+    .dtc-payment-history .ph-advanced { grid-template-columns:repeat(2,minmax(0,1fr)); padding:14px; }
+    .dtc-payment-history .ph-advanced-actions { grid-column:1/-1; }
+    .ph-table-scroll { overflow:visible; padding:0 16px; }
+    .ph-list-heading { padding:16px; }
+    .ph-table tbody tr { grid-template-columns:minmax(0,1fr) auto; gap:10px 12px; padding:18px 0; align-items:start; }
+    .ph-table tbody td { white-space:normal; overflow-wrap:anywhere; text-align:left; padding:0 !important; }
+    .ph-table .ph-ref { order:0; grid-row:1; grid-column:1; }
+    .ph-table .ph-status { order:0; grid-row:1; grid-column:2; justify-self:end; margin:0; }
+    .ph-table .ph-status .dtc-status-badge { max-width:125px; white-space:normal; text-align:center; line-height:1.4; }
+    .ph-table .ph-payer { order:1; grid-column:1/-1; margin:0; font-size:13px; }
+    .ph-table .ph-related { order:2; grid-column:1/-1; margin:0; font-size:12px; color:var(--dtc-text-muted); }
+    .ph-table .ph-amount { order:3; grid-column:1; padding-top:6px !important; font-size:19px; line-height:1.4; }
+    .ph-table .ph-date { order:3; grid-column:2; align-self:end; margin:0; padding-bottom:3px !important; font-size:11px; text-align:right; }
+    .ph-table .ph-ref-link:focus-visible::after { outline:2px solid #60a5fa; outline-offset:-2px; border-radius:8px; }
+    .ph-footer { justify-content:space-between; padding:14px 16px; text-align:left; }
+    .ph-detail .ph-summary { padding:18px; gap:10px; }
+    .ph-detail .ph-summary-amount { font-size:26px; }
+    .ph-detail .ph-summary .dtc-status-badge { max-width:125px; white-space:normal; text-align:center; }
+}
+@media (max-width:360px) {
+    .dtc-payment-history .ph-advanced { grid-template-columns:1fr; }
+    .ph-footer { justify-content:center; text-align:center; }
+}
+
+/* Equal mobile filter cells keep long status labels from skewing the rows. */
+@media (max-width:767.98px) {
+    .dtc-payment-history .ph-status-bar {
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:8px;
+    }
+    .dtc-payment-history .ph-status-bar .dtc-filter-pill {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        min-width:0;
+        min-height:44px;
+        padding:8px 6px;
+        margin:0;
+        white-space:normal;
+        text-align:center;
+        line-height:1.35;
+    }
+}

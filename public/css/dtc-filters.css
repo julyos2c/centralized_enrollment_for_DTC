@@ -43,11 +43,18 @@ body.dtc-dark .dtc-fl-toggle.has-filters { border-color: rgba(108, 155, 255, .45
 .dtc-fl-clear[hidden] { display: none; }
 
 @media (max-width: 767.98px) {
-    .dtc-fl-toolbar .dtc-fl-search { max-width: none; }
+    .dtc-fl-toolbar { align-items:center; }
+    .dtc-fl-toolbar .dtc-fl-search { max-width:none; min-width:0; }
     .dtc-fl-toggle { padding: 0 12px; }
     .dtc-fl-panel { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
-    .dtc-fl-actions { grid-column: 1 / -1; }
-    .dtc-fl-actions .btn { flex: 1 1 auto; min-height: 44px; }
+    .dtc-fl-actions { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .dtc-fl-actions .btn, .dtc-fl-actions .dtc-fl-clear {
+        display:flex; align-items:center; justify-content:center; min-width:0; min-height:44px;
+        margin:0; padding:10px 12px; border-radius:8px; font-size:12px; font-weight:600; text-align:center;
+    }
+    .dtc-fl-actions .dtc-fl-clear { border:1px solid var(--dtc-border); background:var(--dtc-surface); }
+    .dtc-fl-actions .btn:only-child,
+    .dtc-fl-actions:has(.dtc-fl-clear[hidden]) .btn { grid-column:1 / -1; }
 }
 
 @media (max-width: 380px) {

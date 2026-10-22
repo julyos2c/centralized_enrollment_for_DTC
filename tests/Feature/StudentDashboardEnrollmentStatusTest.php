@@ -207,7 +207,7 @@ class StudentDashboardEnrollmentStatusTest extends TestCase
 
         $this->actingAs($student)->get(route('portal.dashboard'))
             ->assertOk()
-            ->assertSee('src="' . Storage::url($student->avatar) . '"', false)
+            ->assertSee('src="' . Storage::disk('public')->url($student->avatar) . '"', false)
             ->assertDontSee('>J</div>', false);
     }
 
@@ -299,7 +299,7 @@ class StudentDashboardEnrollmentStatusTest extends TestCase
             ->assertSee('Ready for pickup')
             ->assertSee('Released')
             ->assertSee('Total fees')
-            ->assertSee('Request History')
+            ->assertSee('Your requests')
             ->assertSee('Transcript of Records');
     }
 }

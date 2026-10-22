@@ -1,9 +1,4 @@
 @php
-    $initials = collect(preg_split('/\s+/', trim($enrollment->user->name)))
-        ->filter()
-        ->map(fn($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-        ->take(2)
-        ->implode('');
 
     $fee = $latestPayment && $enrollment->is_paid
         ? $latestPayment->amount
@@ -15,7 +10,7 @@
     {{-- ── Header ─────────────────────────────────────────────────────── --}}
     <div class="dtc-review-header">
         <div class="dtc-review-identity">
-            <div class="dtc-review-avatar">{{ $initials ?: '?' }}</div>
+            <x-dtc.user-avatar :user="$enrollment->user" class="dtc-review-avatar" />
             <div class="dtc-review-identity-copy">
                 <h5 class="dtc-review-name">{{ $enrollment->user->name }}</h5>
                 <p class="dtc-review-email"><i data-lucide="mail"></i> {{ $enrollment->user->email }}</p>
@@ -159,8 +154,9 @@
                                 class="dtc-btn dtc-btn-success"
                                 data-dtc-confirm
                                 data-dtc-confirm-title="Verify GCash payment?"
-                                data-dtc-confirm-message="This will verify the GCash payment and promote the applicant to student status. Are you sure?"
-                                data-dtc-confirm-ok="Verify Payment"
+                                data-dtc-confirm-message="The GCash payment from {subject} will be verified and the enrollment will be finalized."
+                                data-dtc-confirm-subject="{{ $enrollment->user->name }}"
+                                data-dtc-confirm-ok="Verify"
                                 data-dtc-confirm-tone="success"
                                 data-dtc-confirm-form="#verify-gcash-{{ $latestPayment->id }}">
                             <i data-lucide="check"></i> Verify Payment
@@ -173,9 +169,10 @@
                             class="dtc-btn dtc-btn-success"
                             data-dtc-confirm
                             data-dtc-confirm-title="Confirm cash payment?"
-                            data-dtc-confirm-message="Confirm that cash payment has been received from the student?"
-                            data-dtc-confirm-ok="Confirm Payment"
-                                data-dtc-confirm-tone="success"
+                            data-dtc-confirm-message="Confirm that cash payment has been received from {subject}. The enrollment will then be finalized."
+                            data-dtc-confirm-subject="{{ $enrollment->user->name }}"
+                            data-dtc-confirm-ok="Confirm"
+                            data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#walkinForm-{{ $enrollment->id }}">
                         <i data-lucide="check"></i> Confirm Payment Received
                     </button>
@@ -185,7 +182,7 @@
 
         <div class="dtc-review-footer-reject u-hidden" >
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
-            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The submitted GCash payment will be marked as rejected." data-dtc-confirm-ok="Reject Payment" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
+            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The submitted GCash payment from {subject} will be rejected with the reason entered above." data-dtc-confirm-subject="{{ $enrollment->user->name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
                 <i data-lucide="check"></i> Confirm Rejection
             </button>
         </div>

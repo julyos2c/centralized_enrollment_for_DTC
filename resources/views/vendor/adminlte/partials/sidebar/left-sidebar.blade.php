@@ -45,14 +45,7 @@
                     aria-expanded="false"
                     aria-controls="dtcSidebarProfileMenu"
                     aria-label="Open account menu">
-                @if(auth()->user()->avatar)
-                    <img src="{{ Storage::url(auth()->user()->avatar) }}"
-                         alt="Avatar"
-                         class="dtc-sidebar-avatar dtc-sidebar-avatar-img"
-                         aria-hidden="true">
-                @else
-                    <div class="dtc-sidebar-avatar" aria-hidden="true">{{ $sidebarInitials ?: 'U' }}</div>
-                @endif
+                <x-dtc.user-avatar :user="auth()->user()" class="dtc-sidebar-avatar" aria-hidden="true" />
                 <div class="dtc-sidebar-user-copy">
                     <div class="dtc-sidebar-user-name" title="{{ auth()->user()->name }}">{{ auth()->user()->name }}</div>
                     <div class="dtc-sidebar-user-role">{{ $sidebarRoleLabel }}</div>

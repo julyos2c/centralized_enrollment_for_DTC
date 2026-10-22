@@ -5,10 +5,7 @@ namespace Tests\Feature;
 use App\Http\Middleware\TrustHosts;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\SeedsRoles;
 use Tests\TestCase;
@@ -35,6 +32,7 @@ class LoginSecurityRemediationTest extends TestCase
 
         $response->assertRedirect(route('portal.dashboard'));
         $this->assertAuthenticatedAs($user);
+<<<<<<< HEAD
         Http::assertNothingSent();
     }
 
@@ -44,6 +42,8 @@ class LoginSecurityRemediationTest extends TestCase
             ->assertOk()
             ->assertDontSee('recaptcha', false)
             ->assertDontSee('g-recaptcha', false);
+=======
+>>>>>>> 6c73dfb (fix: resolve workflow gaps and refine responsive portal interfaces)
     }
 
     public function test_per_email_limit_holds_when_source_ip_rotates(): void

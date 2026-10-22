@@ -7,16 +7,46 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 font-weight-bold u-text">Appointment Requests</h4>
-            <p class="mb-0 u-text-secondary-sm">Review, confirm, and manage student appointment bookings</p>
+            <p class="mb-0 u-text-secondary-sm">Review bookings and confirm appointments.</p>
         </div>
-        <a href="{{ route('registrar.appointments.slots') }}" class="btn btn-primary btn-sm dtc-header-btn">
+        <a href="{{ route('registrar.appointments.slots') }}" class="btn btn-primary dtc-header-btn rg-manage-slots">
             <i data-lucide="clock" class="mr-1"></i>
             <span class="dtc-header-btn-label">Manage Slots</span>
         </a>
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace rg-appointments">
+
+<form method="GET" action="{{ route('registrar.appointments.index') }}" class="dtc-fl rg-appointment-search" aria-label="Search and filter appointments">
+    <input type="hidden" name="status" value="{{ $status }}">
+    <div class="dtc-fl-toolbar">
+        <div class="dtc-pay-search dtc-fl-search">
+            <i data-lucide="search" class="dtc-pay-search-icon" aria-hidden="true"></i>
+            <input type="search" name="search" class="dtc-pay-search-input" value="{{ request('search') }}" placeholder="Search appointments" aria-label="Search appointments">
+        </div>
+        <button type="button" class="dtc-fl-toggle" data-toggle="collapse" data-target="#appointmentFilters" aria-expanded="false" aria-controls="appointmentFilters">
+            <i data-lucide="sliders-horizontal" aria-hidden="true"></i><span>Filters</span>
+        </button>
+        <button type="submit" class="sr-only">Search appointments</button>
+    </div>
+    <div class="collapse" id="appointmentFilters">
+        <div class="dtc-fl-panel">
+            @include('partials.table-rows', ['tableRecords' => $appointments, 'tableId' => 'registrar-table-2', 'fixedRows' => true])
+            <div class="dtc-fl-actions">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <a href="{{ route('registrar.appointments.index', ['status' => $status]) }}" class="dtc-fl-clear">Reset</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+
 
 {{-- ── Pending GCash Payments Alert ──────────────────────────────────────── --}}
 @if($pendingPayments->isNotEmpty())
@@ -34,7 +64,8 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table mb-0">
+            @include('partials.table-rows', ['tableRecords' => $pendingPayments, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+<table id="registrar-table-1" class="rg-record-table table mb-0">
                 <thead>
                     <tr>
                         <th>Student</th>
@@ -48,38 +79,36 @@
                 <tbody>
                     @foreach($pendingPayments as $payment)
                     <tr>
-                        <td>
+                        <td data-reg-label="Student">
                             <div class="u-flex-center-gap-10">
-                                <div style="width:30px;height:30px;border-radius:50%;
+                                <x-dtc.user-avatar :user="$payment->appointment->user" style="width:30px;height:30px;border-radius:50%;
                                             background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                             display:flex;align-items:center;justify-content:center;
-                                            color:#fff;font-weight:700;font-size:11px;flex-shrink:0;">
-                                    {{ strtoupper(substr($payment->appointment->user->name, 0, 1)) }}
-                                </div>
+                                            color:#fff;font-weight:700;font-size:11px;flex-shrink:0;" />
                                 <div>
                                     <div class="u-text-sm-bold-primary">{{ $payment->appointment->user->name }}</div>
                                     <div class="u-text-xs-secondary">{{ $payment->appointment->user->email }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-reg-label="Document">
                             <span class="dtc-status-badge is-info" style="font-weight:600;">
                                 {{ ucfirst($payment->appointment->document_type) }}
                             </span>
                         </td>
-                        <td style="font-size:12px;color:var(--dtc-text);">
+                        <td data-reg-label="Date" style="font-size:12px;color:var(--dtc-text);">
                             {{ \Carbon\Carbon::parse($payment->appointment->slot->date)->format('M d, Y') }}
                         </td>
-                        <td>
+                        <td data-reg-label="Reference No.">
                             <span style="font-size:12px;font-weight:700;font-family:monospace;
                                          color:var(--dtc-text);letter-spacing:0.5px;">
                                 {{ $payment->reference_number }}
                             </span>
                         </td>
-                        <td style="font-size:11px;color:var(--dtc-text-muted);">
+                        <td data-reg-label="Submitted" style="font-size:11px;color:var(--dtc-text-muted);">
                             {{ $payment->created_at->diffForHumans() }}
                         </td>
-                        <td>
+                        <td data-reg-label="Actions">
                             <div class="u-actions-gap">
                                 {{-- View Proof --}}
                                 <a href="{{ route('registrar.appointments.payments.proof', $payment) }}"
@@ -99,7 +128,8 @@
                                             title="Verify payment"
                                             data-dtc-confirm
                                             data-dtc-confirm-title="Verify GCash payment?"
-                                            data-dtc-confirm-message="Confirm that reference number {{ $payment->reference_number }} has been validated in your GCash records."
+                                            data-dtc-confirm-message="Verify the GCash payment from {subject} after confirming reference {{ $payment->reference_number }} in the payment records."
+                                            data-dtc-confirm-subject="{{ $payment->appointment->user->name }}"
                                             data-dtc-confirm-ok="Verify"
                                             data-dtc-confirm-tone="success"
                                             data-dtc-confirm-form="#verify-pay-{{ $payment->id }}">
@@ -152,7 +182,7 @@
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
                                                         data-dismiss="modal">Back</button>
-                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The GCash payment will be rejected with the entered reason." data-dtc-confirm-ok="Reject Payment" data-dtc-confirm-form="#reject-appointment-payment-{{ $payment->id }}">
+                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The GCash payment from {subject} will be rejected with the entered reason." data-dtc-confirm-subject="{{ $payment->appointment->user->name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#reject-appointment-payment-{{ $payment->id }}">
                                                     Reject Payment
                                                 </button>
                                             </div>
@@ -171,18 +201,19 @@
 @endif
 
 {{-- ── Status Filter Tabs ─────────────────────────────────────────────────── --}}
-<div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between flex-wrap u-gap-8">
-        <div class="d-flex" style="gap:6px; flex-wrap:wrap;">
+<div class="card rg-appointment-queue">
+    <div class="card-header rg-appointment-toolbar">
+        <nav class="rg-appointment-tabs" aria-label="Appointment status">
             @foreach([
                 ['key' => 'pending',   'label' => 'Pending',   'icon' => 'hourglass',      'badge' => 'is-warning'],
                 ['key' => 'confirmed', 'label' => 'Confirmed', 'icon' => 'check-circle',   'badge' => 'is-success'],
                 ['key' => 'cancelled', 'label' => 'Cancelled', 'icon' => 'x-circle',       'badge' => 'is-danger'],
                 ['key' => 'all',       'label' => 'All',       'icon' => 'list',            'badge' => 'is-info'],
             ] as $tab)
-            <a href="{{ route('registrar.appointments.index', ['status' => $tab['key']]) }}"
-               class="dtc-status-badge {{ $tab['badge'] }} {{ $status === $tab['key'] ? 'dtc-tab-active' : '' }}"
-               style="text-decoration:none; cursor:pointer; padding:6px 14px; font-size:11px;">
+            <a href="{{ route('registrar.appointments.index', array_merge(request()->only(['search', 'per_page']), ['status' => $tab['key']])) }}"
+               aria-current="{{ $status === $tab['key'] ? 'page' : 'false' }}"
+               class="rg-appointment-tab {{ $status === $tab['key'] ? 'is-active' : '' }}"
+               >
                 <i data-lucide="{{ $tab['icon'] }}" style="width:11px;height:11px;"></i>
                 {{ $tab['label'] }}
                 @if(isset($counts[$tab['key']]) && $counts[$tab['key']] > 0)
@@ -193,13 +224,16 @@
                 @endif
             </a>
             @endforeach
+        </nav>
+        <div class="rg-appointment-options">
+            <span class="u-text-secondary-sm">{{ $appointments->total() }} {{ $appointments->total() === 1 ? 'booking' : 'bookings' }}</span>
+
         </div>
-        <span class="u-text-secondary-sm">{{ $appointments->total() }} total</span>
     </div>
 
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table mb-0">
+<table id="registrar-table-2" class="rg-record-table table mb-0">
                 <thead>
                     <tr>
                         <th>Student</th>
@@ -215,26 +249,24 @@
                     @forelse ($appointments as $appointment)
                     @php $pay = $appointment->latestPayment; @endphp
                     <tr>
-                        <td>
+                        <td data-reg-label="Student">
                             <div class="u-flex-center-gap-10">
-                                <div style="width:34px;height:34px;border-radius:50%;
+                                <x-dtc.user-avatar :user="$appointment->user" style="width:34px;height:34px;border-radius:50%;
                                             background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                             display:flex;align-items:center;justify-content:center;
-                                            color:#fff;font-weight:700;font-size:12px;flex-shrink:0;">
-                                    {{ strtoupper(substr($appointment->user->name, 0, 1)) }}
-                                </div>
+                                            color:#fff;font-weight:700;font-size:12px;flex-shrink:0;" />
                                 <div>
                                     <div class="u-text-sm-bold-primary">{{ $appointment->user->name }}</div>
                                     <div class="u-text-xs-secondary">{{ $appointment->user->email }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-reg-label="Document">
                             <span class="dtc-status-badge is-info" style="font-weight:600;">
                                 {{ ucfirst($appointment->document_type) }}
                             </span>
                         </td>
-                        <td>
+                        <td data-reg-label="Date &amp; Time">
                             <div style="font-size:13px;font-weight:600;color:var(--dtc-text);">
                                 {{ \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y') }}
                             </div>
@@ -242,10 +274,10 @@
                                 {{ \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A') }}
                             </div>
                         </td>
-                        <td style="font-size:12px;color:var(--dtc-text-secondary);max-width:140px;">
+                        <td data-reg-label="Purpose" style="font-size:12px;color:var(--dtc-text-secondary);max-width:140px;">
                             {{ $appointment->purpose ?? '—' }}
                         </td>
-                        <td>
+                        <td data-reg-label="Payment">
                             @if(!$pay)
                                 <span style="font-size:11px;color:var(--dtc-text-muted);">—</span>
                             @elseif($pay->payment_method === 'walk_in')
@@ -266,10 +298,10 @@
                                 </span>
                             @endif
                         </td>
-                        <td>
+                        <td data-reg-label="Status">
                             <x-dtc.status-badge :status="ucfirst($appointment->status)" />
                         </td>
-                        <td>
+                        <td data-reg-label="Actions">
                             <div class="u-actions-gap">
                                 @if($appointment->status === 'pending')
                                     {{-- Confirm --}}
@@ -278,25 +310,26 @@
                                           action="{{ route('registrar.appointments.confirm', $appointment) }}">
                                         @csrf
                                         <button type="button"
-                                                class="dtc-icon-btn success"
+                                                class="dtc-icon-btn success rg-booking-confirm"
                                                 title="Confirm appointment"
                                                 data-dtc-confirm
                                                 data-dtc-confirm-title="Confirm appointment?"
-                                                data-dtc-confirm-message="Confirm this appointment for {{ $appointment->user->name }}?"
+                                                data-dtc-confirm-message="The appointment for {subject} will be confirmed."
+                                                data-dtc-confirm-subject="{{ $appointment->user->name }}"
                                                 data-dtc-confirm-ok="Confirm"
                                                 data-dtc-confirm-tone="success"
                                                 data-dtc-confirm-form="#confirm-appt-{{ $appointment->id }}">
-                                            <i data-lucide="check"></i>
+                                            <i data-lucide="check"></i><span class="rg-appointment-action-label">Confirm</span>
                                         </button>
                                     </form>
 
                                     {{-- Cancel --}}
                                     <button type="button"
-                                            class="dtc-icon-btn danger"
+                                            class="dtc-icon-btn danger rg-booking-cancel"
                                             title="Cancel appointment"
                                             data-toggle="modal"
                                             data-target="#cancelModal{{ $appointment->id }}">
-                                        <i data-lucide="x"></i>
+                                        <i data-lucide="x"></i><span class="rg-appointment-action-label">Cancel</span>
                                     </button>
                                 @else
                                     <span style="font-size:11px;color:var(--dtc-text-muted);">—</span>
@@ -329,7 +362,7 @@
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
                                                         data-dismiss="modal">Back</button>
-                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Cancel appointment?" data-dtc-confirm-message="The appointment will be cancelled with the entered reason." data-dtc-confirm-ok="Cancel Appointment" data-dtc-confirm-form="#cancel-appointment-{{ $appointment->id }}">
+                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Cancel appointment?" data-dtc-confirm-message="The appointment for {subject} will be cancelled with the entered reason." data-dtc-confirm-subject="{{ $appointment->user->name }}" data-dtc-confirm-ok="Cancel" data-dtc-confirm-form="#cancel-appointment-{{ $appointment->id }}">
                                                     Confirm Cancel
                                                 </button>
                                             </div>
@@ -372,6 +405,8 @@
     </div>
 </div>
 
+
+</div>
 @endsection
 
 @section('css')

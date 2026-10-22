@@ -209,7 +209,7 @@
     var btnMarkAll = document.getElementById('btn-mark-all-read');
     if (btnMarkAll) {
         btnMarkAll.addEventListener('click', function () {
-            fetch(MARK_ALL_URL, {
+            window.dtcFetch(MARK_ALL_URL, {
                 method: 'POST',
                 headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
             }).then(function () {
@@ -228,7 +228,7 @@
                 var btnDel = document.getElementById('btn-delete-read');
                 if (btnDel) btnDel.disabled = false;
                 if (window.dtcToast) dtcToast.success('All notifications marked as read.');
-            });
+            }).catch(window.dtcRequestFailure);
         });
     }
 
@@ -241,7 +241,7 @@
         var url  = btn.dataset.url;
 
         function doDelete() {
-            fetch(url, {
+            window.dtcFetch(url, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
             }).then(function (r) {
@@ -256,7 +256,7 @@
                     var activeTab = document.querySelector('.dtc-notif-tab.active');
                     if (activeTab) applyTab(activeTab.dataset.tab);
                 }, 200);
-            });
+            }).catch(window.dtcRequestFailure);
         }
 
         if (window.dtcConfirm) window.dtcConfirm.open({
@@ -280,7 +280,7 @@
                 message: 'All read notifications will be permanently removed.',
                 okLabel: 'Delete All Read',
                 onConfirm: function () {
-                    fetch(DELETE_READ_URL, {
+                    window.dtcFetch(DELETE_READ_URL, {
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
                     }).then(function () {
@@ -293,7 +293,7 @@
                         var activeTab = document.querySelector('.dtc-notif-tab.active');
                         if (activeTab) applyTab(activeTab.dataset.tab);
                         if (window.dtcToast) dtcToast.success('All read notifications deleted.');
-                    });
+                    }).catch(window.dtcRequestFailure);
                 }
             });
         });

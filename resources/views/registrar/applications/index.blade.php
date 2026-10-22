@@ -19,7 +19,12 @@
     <script src="{{ asset('js/dtc-filters.js') }}"></script>
 @endpush
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+@endpush
 @section('content')
+<div class="registrar-workspace">
+
 
 {{-- Search & Filter --}}
 @php
@@ -88,7 +93,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="dtc-fl-actions">
+            @include('partials.table-rows', ['tableRecords' => $applications, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
+<div class="dtc-fl-actions">
                 <button type="submit" class="btn btn-primary">Apply</button>
                 <a href="{{ route('registrar.applications.index') }}" class="dtc-fl-clear" data-dtc-clear @if(!$appHasFilters) hidden @endif>Clear all</a>
             </div>
@@ -125,7 +131,8 @@
         {{-- ── Desktop table (hidden on mobile) ── --}}
         <div class="card-body p-0 d-none d-md-block">
             <div class="table-responsive">
-                <table class="table table-bordered mb-0">
+
+<table id="registrar-table-1" class="table table-bordered mb-0">
                     <thead>
                         <tr>
                             <th>Reference No.</th>
@@ -243,6 +250,8 @@
     </div>{{-- /#applications-table-wrapper --}}
 </div>
 
+
+</div>
 @endsection
 
 @section('js')
@@ -281,9 +290,10 @@
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.onload = function () {
             if (xhr.status === 200) swapWrapper(xhr.responseText);
+            else window.dtcHttpFailure(xhr.status);
             setLoading(false);
         };
-        xhr.onerror = function () { setLoading(false); };
+        xhr.onerror = function () { setLoading(false); window.dtcHttpFailure(0); };
         xhr.send();
         currentRequest = xhr;
     }
@@ -294,6 +304,7 @@
         p.set('type',   typeSelect.value);
         p.set('status', statusSelect.value);
         p.set('program_id', programSelect.value);
+        p.set('per_page', document.querySelector('[data-table-rows-select]')?.value || new URLSearchParams(location.search).get('per_page') || '10');
         return baseUrl + '?' + p.toString();
     }
 

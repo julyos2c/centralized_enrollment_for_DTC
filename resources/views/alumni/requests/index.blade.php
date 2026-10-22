@@ -34,9 +34,11 @@
 @endphp
 
 @section('content')
-<div class="dr dr-index" id="request-history">
+<div class="dr dr-index dr-alumni-history" id="request-history">
 
 
+    <details class="dr-history-summary">
+        <summary>Request overview <span>{{ $totalRequests }} total &middot; {{ $readyRequests }} ready</span></summary>
     <div class="dtc-dashboard-overview dtc-dashboard-overview--four mb-3" aria-label="Document request summary">
         <div class="dtc-overview-item">
             <span class="dtc-overview-label">Total requests</span>
@@ -57,7 +59,9 @@
         </div>
     </div>
 
-    <h2 class="dr-section-title">Request History</h2>
+    </details>
+
+    <h2 class="dr-section-title">Your requests</h2>
 
     @if ($items->isEmpty())
         <div class="dr-empty">
@@ -69,13 +73,7 @@
         </div>
     @else
         @if ($pickupNow > 0)
-            <div class="dr-ready" role="status">
-                <span class="dr-ready-icon" aria-hidden="true"><i data-lucide="package-check"></i></span>
-                <p>
-                    <strong>{{ $pickupNow === 1 ? '1 document is' : $pickupNow.' documents are' }} ready to collect</strong>
-                    Pick up at the Registrar’s Office. Bring your receipt and a valid ID.
-                </p>
-            </div>
+            <p class="dr-collection-hint">For pickup, bring your receipt and a valid ID.</p>
         @endif
 
         <div class="dr-filters" role="group" aria-label="Filter requests" data-dr-filters>
@@ -99,9 +97,6 @@
                         <div>
                             <h2 class="dr-req-name">{{ $req->document_label }}</h2>
                             <p class="dr-req-meta">{{ $copiesTx }}, &#8369;{{ number_format($req->fee, 2) }}, requested {{ $req->created_at->format('M j, Y') }}</p>
-                            @if ($req->purpose)
-                                <p class="dr-req-purpose">Purpose: {{ $req->purpose }}</p>
-                            @endif
                         </div>
                     </div>
 
@@ -112,18 +107,10 @@
                         @endforeach
                     </ol>
 
-                    <p class="dr-step-note">
-                        @if ($req->status === 'submitted')
-                            Waiting for Registrar review.
-                        @elseif ($req->status === 'processing')
-                            Being prepared. We’ll notify you when it’s ready.
-                        @elseif ($collect)
-                            @if ($req->appointment?->status === 'confirmed')
-                                Ready and paid.
-                            @elseif ($req->appointment?->status === 'pending')
-                                Ready and paid.
-                            @else
-                                Ready at the Registrar’s Office.
+                    @if (($collect && !in_array($req->appointment?->status, ['confirmed', 'pending'], true)) || ($req->status === 'ready' && !$paid))
+                    <div class="dr-step-note">
+                        @if ($collect)
+                            @if (!in_array($req->appointment?->status, ['confirmed', 'pending'], true))
                                 @if ($req->appointment?->status === 'cancelled')
                                     Your pickup time was cancelled.
                                 @endif
@@ -139,14 +126,13 @@
                                 @endif
                             @endif
                         @elseif ($req->status === 'ready')
-                            Ready. You can collect it once the Cashier verifies your payment.
-                        @else
-                            Released to you.
+                            Pickup is available after payment verification.
                         @endif
-                    </p>
+                    </div>
+                    @endif
 
                     @if ($req->appointment && $req->appointment->slot)
-                        <div class="dr-remark" style="margin-top:12px;" aria-label="Pickup appointment">
+                        <div class="dr-pickup-summary" aria-label="Pickup appointment">
                             <i data-lucide="calendar-days" aria-hidden="true"></i>
                             <span>
                                 <strong>Pickup:</strong>
@@ -155,12 +141,12 @@
                                 — {{ ucfirst($req->appointment->status) }}.
                                 @if ($req->appointment->status === 'pending')
                                     @if ($collect)
-                                        Awaiting Registrar confirmation.
+                                        Awaiting confirmation.
                                     @else
                                         Slot reserved. Confirmed once your document is ready and paid.
                                     @endif
                                 @elseif ($req->appointment->status === 'cancelled')
-                                    Contact the Registrar to rebook.
+                                    {{ $collect && $pickupSlots->isNotEmpty() ? 'Choose a new pickup time above.' : 'Contact the Registrar for available pickup times.' }}
                                 @endif
                             </span>
                         </div>
@@ -173,10 +159,18 @@
                         </div>
                     @endif
 
+                    <details class="dr-request-details">
+                        <summary>Request details</summary>
+                        @if ($req->purpose)<p class="dr-req-purpose">Purpose: {{ $req->purpose }}</p>@endif
+
+
+                    </details>
+
                     <div class="dr-pay">
                         <div class="dr-pay-line">
                             <span class="dtc-status-badge is-{{ $payTone[$req->payment_status] ?? 'neutral' }}">{{ $payLabel[$req->payment_status] ?? ucfirst(str_replace('_', ' ', $req->payment_status)) }}</span>
-                            <span class="dr-pay-method">{{ $req->payment_method === 'gcash_qr' ? 'GCash QR' : 'Cashier’s Office' }}</span>
+                            @unless($paid)<span class="dr-pay-method">{{ $req->payment_method === 'gcash_qr' ? 'GCash QR' : 'Cashier’s Office' }}</span>
+                            @endunless
                         </div>
 
                         @if ($req->payment_status === 'unpaid')
@@ -189,7 +183,7 @@
                                 @endif
                             </p>
                         @elseif ($paid)
-                            <p class="dr-pay-text">Received &#8369;{{ number_format($req->amount_received, 2) }}@if ($req->receipt_no), receipt {{ $req->receipt_no }}@endif.</p>
+                            <details class="dr-receipt-details"><summary>Payment details</summary><p class="dr-pay-text">Received &#8369;{{ number_format($req->amount_received, 2) }}@if ($req->receipt_no), receipt {{ $req->receipt_no }}@endif.</p></details>
                         @elseif ($rejected)
                             <div class="dr-remark" role="alert">
                                 <i data-lucide="circle-alert" aria-hidden="true"></i>
@@ -238,6 +232,7 @@
 @section('css')
     <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pickup-picker.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/alumni-request-history.css') }}">
 @endsection
 
 @section('js')

@@ -399,7 +399,7 @@ class SettingsController extends Controller
                 $q->where('action', $request->action)
             )
             ->latest()
-            ->paginate(25)
+            ->paginate(\App\Support\TablePagination::perPage(25))->withQueryString()
             ->withQueryString();
 
         return view('admin.settings.audit', [

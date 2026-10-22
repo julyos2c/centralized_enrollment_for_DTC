@@ -16,9 +16,6 @@
 
 @php
     $profileRoutePrefix = $profileRoutePrefix ?? 'portal.profile';
-    $initials = collect(preg_split('/\s+/', trim($user->name)))
-        ->filter()->take(2)
-        ->map(fn($p) => strtoupper(substr($p, 0, 1)))->implode('');
 @endphp
 
 @if ($errors->any() && !$errors->has('current_password') && !$errors->has('password'))
@@ -39,13 +36,7 @@
 
         {{-- Avatar --}}
         <div class="ps-avatar-wrap">
-            @if ($user->avatar)
-                <img src="{{ Storage::url($user->avatar) }}"
-                     alt="Profile photo"
-                     class="ps-avatar-img">
-            @else
-                <div class="ps-avatar-initials">{{ $initials ?: 'U' }}</div>
-            @endif
+            <x-dtc.user-avatar :user="$user" class="ps-avatar-initials" />
             <button type="button"
                     class="ps-avatar-edit-btn"
                     onclick="document.getElementById('avatarFileInput').click()"

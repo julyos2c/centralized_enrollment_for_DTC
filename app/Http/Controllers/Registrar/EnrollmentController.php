@@ -14,12 +14,25 @@ class EnrollmentController extends Controller
     {
         $filters = $request->validate([
             'review' => ['nullable', 'integer'],
+            'search' => ['nullable', 'string', 'max:200'],
         ]);
 
-        $enrollments = Enrollment::with('user', 'program')
-            ->where('status', 'pending')
+        $query = Enrollment::with('user', 'program')->where('status', 'pending');
+        $search = trim($filters['search'] ?? '');
+        if ($search !== '') {
+            $query->where(function ($matches) use ($search) {
+                $matches->whereHas('user', function ($user) use ($search) {
+                    $user->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
+                })->orWhereHas('program', function ($program) use ($search) {
+                    $program->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('code', 'like', '%' . $search . '%');
+                });
+            });
+        }
+        $enrollments = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
 
         $reviewEnrollment = null;
         if (! empty($filters['review'])) {
@@ -95,12 +108,14 @@ class EnrollmentController extends Controller
         $fee = number_format(\App\Models\Setting::get('enrollment_fee', 500), 2);
 
         // ── Notify Student ────────────────────────────────────────────
-        NotificationService::send(
+        NotificationService::sendUserUpdateSafely(
             $enrollment->user,
+            'enrollment-approved:'.$enrollment->id,
             'Enrollment Approved',
             "Your enrollment has been approved by the Registrar. Please proceed to the Cashier to pay the ₱{$fee} enrollment fee.",
             'success',
-            route('portal.enrollment.payment-info', $enrollment)
+            route('portal.enrollment.payment-info', $enrollment),
+            'View payment options'
         );
 
         // ── Notify Cashier ────────────────────────────────────────────
@@ -144,12 +159,14 @@ class EnrollmentController extends Controller
         ]);
 
         // ── Notify Student ────────────────────────────────────────────
-        NotificationService::send(
+        NotificationService::sendUserUpdateSafely(
             $enrollment->user,
+            'enrollment-rejected:'.$enrollment->id,
             'Enrollment Rejected',
             'Your enrollment was rejected. Reason: ' . $validated['remarks'],
             'danger',
-            route('portal.enrollment.index')
+            route('portal.enrollment.index'),
+            'Review enrollment'
         );
 
         // ── Notify Admin ──────────────────────────────────────────────

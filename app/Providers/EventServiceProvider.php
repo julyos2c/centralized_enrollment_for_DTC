@@ -27,7 +27,11 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
+            if (request()->hasSession()) {
+                request()->session()->put('auth_session_token', $event->user->auth_session_token);
+            }
+        });
     }
 
     /**

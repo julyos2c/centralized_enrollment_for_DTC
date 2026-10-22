@@ -183,6 +183,18 @@ class AppointmentController extends Controller
             );
         }
 
+        NotificationService::sendUserUpdateSafely(
+            Auth::user(),
+            'appointment-booked:'.$appointment->id,
+            'Appointment Request Received',
+            'We received your appointment request for '.ucfirst($appointment->document_type).' on '
+                .\Carbon\Carbon::parse($slot->date)->format('M d, Y').' at '
+                .\Carbon\Carbon::parse($slot->start_time)->format('h:i A').'. It is awaiting Registrar confirmation.',
+            'info',
+            route('portal.appointments.index'),
+            'View appointment'
+        );
+
         return redirect()->route('portal.appointments.index')
             ->with('success', 'Appointment booked successfully! Please wait for the Registrar to confirm.');
     }
@@ -338,7 +350,7 @@ class AppointmentController extends Controller
             }
 
             $path = $request->file('proof_of_payment')->store('appointment-proofs', 'local');
-            AppointmentPayment::create([
+            $payment = AppointmentPayment::create([
                 'appointment_id'   => $lockedAppointment->id,
                 'payment_method'   => 'gcash',
                 'reference_number' => $validated['reference_number'],
@@ -347,10 +359,10 @@ class AppointmentController extends Controller
                 'status'           => 'pending',
             ]);
 
-            return 'created';
+            return $payment;
         });
 
-        if ($result !== 'created') {
+        if (is_string($result)) {
             $message = [
                 'cancelled' => 'Cannot submit payment for a cancelled appointment.',
                 'pending' => 'You already have a payment pending verification.',
@@ -359,6 +371,16 @@ class AppointmentController extends Controller
 
             return back()->with('error', $message);
         }
+
+        NotificationService::sendUserUpdateSafely(
+            Auth::user(),
+            'appointment-payment-proof-submitted:'.$result->id,
+            'GCash Proof Received',
+            'We received your appointment payment proof. It is awaiting verification.',
+            'info',
+            route('portal.appointments.index'),
+            'View payment status'
+        );
 
         return back()->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
     }

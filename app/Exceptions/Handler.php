@@ -43,6 +43,24 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
+        $this->renderable(function (\Symfony\Component\HttpKernel\Exception\HttpException $exception, $request) {
+            if (! ($exception->getPrevious() instanceof \Illuminate\Session\TokenMismatchException)
+                || ! $request->isMethod('post') || ! $request->routeIs('logout')) {
+                return null;
+            }
+
+            // Never perform logout with an invalid CSRF token. Recover via a safe GET.
+            $destination = auth()->check() ? route('logout.confirm') : route('landing');
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your session has expired. Please refresh before continuing.',
+                    'redirect_url' => $destination,
+                ], 419);
+            }
+
+            return redirect()->to($destination, 303);
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });

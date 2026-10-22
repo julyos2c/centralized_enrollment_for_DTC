@@ -16,6 +16,9 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
+@endpush
 @section('content')
 
 {{-- KPI ROW --}}
@@ -59,13 +62,13 @@
     <div class="col-lg-7 mb-3">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="font-weight-bold">Pending Enrollments</span>
+                <span class="font-weight-bold">Recent Enrollments</span>
                 <a href="{{ route('registrar.enrollments.index') }}"
                    style="font-size:12px; color:var(--dtc-primary); text-decoration:none;">View All</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table mb-0">
+<table class="dashboard-summary-table table mb-0">
                     <thead>
                         <tr>
                             <th>Student Name</th>
@@ -78,23 +81,21 @@
                     <tbody>
                         @forelse ($recentEnrollments as $enrollment)
                         <tr>
-                            <td>
+                            <td data-summary-label="Student Name">
                                 <div  class="u-flex-center-gap-10">
-                                    <div style="width:32px; height:32px; border-radius:50%;
+                                    <x-dtc.user-avatar :user="$enrollment->user" style="width:32px; height:32px; border-radius:50%;
                                                 background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                                 display:flex; align-items:center; justify-content:center;
-                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                        {{ strtoupper(substr($enrollment->user->name, 0, 1)) }}
-                                    </div>
+                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                                     <span style="font-size:13px; font-weight:500;">{{ $enrollment->user->name }}</span>
                                 </div>
                             </td>
-                            <td  class="u-text-sm">{{ $enrollment->program->code }}</td>
-                            <td  class="u-text-sm">{{ $enrollment->year_level }}{{ ['st','nd','rd','th'][$enrollment->year_level - 1] ?? 'th' }} Year</td>
-                            <td>
+                            <td data-summary-label="Course"  class="u-text-sm">{{ $enrollment->program->code }}</td>
+                            <td data-summary-label="Year Level"  class="u-text-sm">{{ $enrollment->year_level }}{{ ['st','nd','rd','th'][$enrollment->year_level - 1] ?? 'th' }} Year</td>
+                            <td data-summary-label="Status">
                                 <x-dtc.status-badge :status="$enrollment->status" />
                             </td>
-                            <td>
+                            <td data-summary-label="Action" data-summary-empty="{{ $enrollment->status !== 'pending' ? 'true' : 'false' }}">
                                 @if($enrollment->status === 'pending')
                                     <button type="button" class="dtc-review-btn"
                                             data-url="{{ route('registrar.enrollments.show', $enrollment) }}">
@@ -181,7 +182,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                <table class="table mb-0">
+<table class="dashboard-summary-table table mb-0">
                     <thead>
                         <tr>
                             <th>Applicant Name</th>
@@ -194,23 +195,21 @@
                     <tbody>
                         @forelse ($recentApplications as $application)
                         <tr>
-                            <td>
+                            <td data-summary-label="Applicant Name">
                                 <div  class="u-flex-center-gap-10">
-                                    <div style="width:32px; height:32px; border-radius:50%;
+                                    <x-dtc.user-avatar :user="$application->user" :name="$application->full_name" style="width:32px; height:32px; border-radius:50%;
                                                 background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                                 display:flex; align-items:center; justify-content:center;
-                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;">
-                                        {{ strtoupper(substr($application->first_name, 0, 1)) }}
-                                    </div>
+                                                color:#fff; font-weight:700; font-size:12px; flex-shrink:0;" />
                                     <span style="font-size:13px; font-weight:500;">{{ $application->full_name }}</span>
                                 </div>
                             </td>
-                            <td  class="u-text-sm">{{ $application->reference_no }}</td>
-                            <td  class="u-text-sm">{{ $application->program->code ?? '—' }}</td>
-                            <td>
+                            <td data-summary-label="Reference No."  class="u-text-sm">{{ $application->reference_no }}</td>
+                            <td data-summary-label="Course"  class="u-text-sm">{{ $application->program->code ?? '—' }}</td>
+                            <td data-summary-label="Status">
                                 <x-dtc.status-badge :status="$application->status" />
                             </td>
-                            <td>
+                            <td data-summary-label="Action" data-summary-empty="{{ !in_array($application->status, ['submitted', 'under_review']) ? 'true' : 'false' }}">
                                 @if(in_array($application->status, ['submitted', 'under_review']))
                                     <a href="{{ route('registrar.applications.show', $application) }}" class="dtc-review-btn">
                                         Review
