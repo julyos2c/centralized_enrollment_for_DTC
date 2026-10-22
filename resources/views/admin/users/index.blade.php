@@ -214,9 +214,10 @@
                                         class="dtc-icon-btn danger"
                                         title="Delete user"
                                         data-dtc-confirm
-                                        data-dtc-confirm-title="Delete User?"
+                                        data-dtc-confirm-title="Delete user?"
                                         data-dtc-confirm-message="Are you sure you want to delete this user account? This action cannot be undone."
                                         data-dtc-confirm-ok="Delete User"
+                                        data-dtc-confirm-tone="danger"
                                         data-dtc-confirm-form="#del-user-{{ $user->id }}">
                                     <i data-lucide="trash-2"></i>
                                 </button>

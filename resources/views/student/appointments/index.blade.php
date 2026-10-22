@@ -238,10 +238,11 @@
                                 @csrf
                                 <button type="button" class="dr-btn dr-btn--danger dr-btn--sm"
                                         data-dtc-confirm
-                                        data-dtc-confirm-title="Cancel Appointment?"
+                                        data-dtc-confirm-title="Cancel appointment?"
                                         data-dtc-confirm-message="Are you sure you want to cancel this appointment? You may need to book a new slot."
                                         data-dtc-confirm-ok="Cancel Appointment"
                                         data-dtc-confirm-cancel="Keep Appointment"
+                                        data-dtc-confirm-tone="danger"
                                         data-dtc-confirm-form="#cancel-appt-{{ $appointment->id }}">
                                     Cancel booking
                                 </button>

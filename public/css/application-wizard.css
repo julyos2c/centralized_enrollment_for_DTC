@@ -3718,3 +3718,291 @@ body.dtc-dark .status-requirements ul {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Admission form refinements: compact floating labels and clear name controls. */
+.app-wizard-page .wiz-field:has(> label + .wiz-input),
+.app-wizard-page .wiz-field:has(> label + .name-group) {
+    position: relative;
+    gap: 0;
+    --wiz-floating-surface: #fff;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group) > label {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 11px;
+    margin: 0;
+    padding: 0 4px;
+    background: var(--wiz-floating-surface);
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.2;
+    pointer-events: none;
+    transform: translateY(17px);
+    transform-origin: left center;
+    transition: transform .18s ease, color .18s ease;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input {
+    padding: 18px 15px 6px;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > select.wiz-input,
+.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > input.wiz-input {
+    padding-top: 16px;
+}
+.app-wizard-page .wiz-field:has(> label + .name-group) .name-group .wiz-input {
+    padding-top: 16px;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
+.app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+.app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label {
+    color: #0f4cdb;
+    transform: translateY(-6px) scale(.9);
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input::placeholder,
+.app-wizard-page .wiz-field:has(> label + .name-group) .wiz-input::placeholder { color: transparent; }
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > .wiz-input::placeholder,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .wiz-input::placeholder { color: #94a3b8; }
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus-visible) > .wiz-input,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .name-group { outline-offset: 2px; }
+.app-wizard-page .wiz-field > .wiz-hint,
+.app-wizard-page .wiz-field > .wiz-err-msg { margin-top: 7px; }
+.app-wizard-page .wiz-notice > svg,
+.app-wizard-page .wiz-inline-notice > svg,
+.app-wizard-page .wiz-panel-icon > svg,
+.app-wizard-page .wiz-btn > svg,
+.app-wizard-page .app-wizard-back > svg { flex: 0 0 auto; vertical-align: middle; }
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input),
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group) { --wiz-floating-surface: #111c2e; }
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group) > label { color: #94a3b8; }
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label { color: #93c5fd; }
+@media (max-width: 600px) {
+    .app-wizard-page .app-wizard-tracker {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .app-wizard-page .wiz-step { gap: 4px; }
+    .app-wizard-page .wiz-step-dot { width: 30px; height: 30px; border-width: 1px; }
+    .app-wizard-page .wiz-step-dot i,
+    .app-wizard-page .wiz-step-dot svg { width: 14px; height: 14px; }
+    .app-wizard-page .wiz-step-label { min-height: 2.4em; font-size: 8px; overflow-wrap: anywhere; white-space: normal; text-align: center; }
+    .app-wizard-page .wiz-connector { height: 1px; min-width: 3px; margin: 14px 2px 0; }
+    .app-wizard-page .app-wizard-bar-wrap { margin-bottom: 20px; }
+}
+
+/* Unified progress, disclosure, and status hierarchy for the public application pages. */
+.app-wizard-page .app-wizard-topbar { justify-content: flex-start; margin-bottom: 14px; }
+.app-wizard-page .app-wizard-tracker { margin-bottom: 18px; }
+.app-wizard-page .wiz-step {
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.app-wizard-page .wiz-step:disabled,
+.app-wizard-page .wiz-step[aria-current="step"] { cursor: default; }
+.app-wizard-page .wiz-step[aria-current="step"] .wiz-step-label { color: #0f4cdb; font-weight: 700; }
+.app-wizard-page .wiz-step[aria-current="step"] .wiz-step-dot { box-shadow: 0 0 0 4px rgba(15, 76, 219, .12); }
+.app-wizard-page .wiz-step.completed .wiz-step-dot { background: #16a34a; border-color: #16a34a; color: #fff; }
+.application-screening-notice {
+    margin: 0 0 16px;
+    overflow: hidden;
+    border: 1px solid #bfdbfe;
+    border-left: 3px solid #0f4cdb;
+    border-radius: 8px;
+    background: #fff;
+}
+.application-screening-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 0;
+    background: transparent;
+    color: #17418f;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+}
+.application-screening-toggle > svg { width: 17px; height: 17px; flex: 0 0 auto; }
+.application-screening-toggle:focus-visible { outline: 3px solid rgba(15, 76, 219, .4); outline-offset: -3px; }
+.application-screening-chevron { margin-left: auto; transition: transform .18s ease; }
+.application-screening-toggle[aria-expanded="true"] .application-screening-chevron { transform: rotate(180deg); }
+.application-screening-content { padding: 0 16px 14px 41px; color: #334155; font-size: 13px; line-height: 1.55; }
+.application-screening-content[hidden] { display: none; }
+.app-wizard-page .wiz-name-section { margin: 0 0 28px; }
+.app-wizard-page .wiz-name-section-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 0 0 16px;
+}
+.app-wizard-page .wiz-name-section-header h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.app-wizard-page .wiz-personal-section { margin: 0 0 28px; }
+.app-wizard-page .wiz-personal-section-title {
+    margin: 0 0 16px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+/* Keep the shared floating-label animation within the spacious personal grids. */
+.app-wizard-page #step-2 .wiz-field { min-width: 0; margin: 0; gap: 0; }
+.app-wizard-page #step-2 .opt { font-size: 11px; font-weight: 400; color: #64748b; }
+.app-wizard-page #step-2 .wiz-input { min-width: 0; height: 48px; }
+.app-wizard-page #step-2 select.wiz-input { padding-right: 34px; }
+.wiz-personal-names,
+.wiz-personal-pair { display: grid; gap: 20px; align-items: start; }
+.wiz-personal-names { grid-template-columns: minmax(0, 1.15fr) minmax(0, .82fr) minmax(0, 1.15fr); }
+.wiz-name-composite {
+    display: grid;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+}
+.wiz-name-composite--first { grid-template-columns: minmax(132px, .44fr) minmax(145px, 1fr); }
+.wiz-name-composite--last { grid-template-columns: minmax(145px, 1fr) minmax(118px, .4fr); }
+.wiz-name-composite label { white-space: nowrap; }
+.wiz-name-composite:focus-within {
+    border-color: #0f4cdb;
+    box-shadow: 0 0 0 3px rgba(15, 76, 219, .12);
+}
+.app-wizard-page #step-2 .wiz-name-composite > .wiz-field:first-child {
+    border-right: 1px solid #dbe3ee;
+}
+.app-wizard-page #step-2 .wiz-name-composite .wiz-input {
+    height: 47px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.app-wizard-page #step-2 .wiz-name-composite .wiz-input:focus { box-shadow: none; }
+.app-wizard-page #step-2 .wiz-name-composite:has(.wiz-invalid) {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, .08);
+}
+.app-wizard-page #step-2 .wiz-name-composite > .wiz-field:has(.wiz-invalid) {
+    background: rgba(220, 38, 38, .045);
+}
+.app-wizard-page #step-2 .wiz-name-composite .wiz-input.wiz-invalid {
+    background: transparent;
+    box-shadow: none;
+}
+.wiz-personal-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wiz-personal-disclosure { border: 1px solid #dbe3ee; border-radius: 8px; overflow: hidden; }
+.wiz-personal-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 16px;
+    border: 0;
+    background: #f8fafc;
+    color: #344054;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+.wiz-personal-toggle-hint { display: block; margin-top: 4px; color: #64748b; font-size: 12px; font-weight: 400; }
+.wiz-personal-toggle > svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.wiz-personal-toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.wiz-personal-toggle:focus-visible { outline: 2px solid #0f4cdb; outline-offset: -3px; }
+.wiz-personal-content { padding: 20px 16px; }
+.wiz-personal-content[hidden] { display: none; }
+.wiz-personal-content .wiz-marital-row { margin-top: 20px; }
+@media (max-width: 899px) {
+    .wiz-personal-names { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+@media (max-width: 599px) {
+    .wiz-personal-names, .wiz-personal-pair { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .wiz-name-composite--first { grid-template-columns: minmax(124px, .44fr) minmax(0, 1fr); }
+    .wiz-name-composite--last { grid-template-columns: minmax(0, 1fr) minmax(110px, .4fr); }
+    .wiz-personal-toggle { padding: 14px 12px; }
+    .wiz-personal-content { padding: 16px 12px; }
+}
+body.dtc-dark .wiz-name-composite {
+    border-color: #334155;
+    background: #111c2e;
+}
+body.dtc-dark .wiz-name-composite:focus-within {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, .18);
+}
+body.dtc-dark .app-wizard-page #step-2 .wiz-name-composite > .wiz-field:first-child {
+    border-right-color: #334155;
+}
+body.dtc-dark .app-wizard-page #step-2 .wiz-name-composite > .wiz-field:has(.wiz-invalid) {
+    background: rgba(220, 38, 38, .1);
+}
+.status-lookup-page .app-wizard-topbar { margin-bottom: 18px; }
+.status-page-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.status-page-heading h1 { margin: 0; color: #0f172a; font-size: 25px; font-weight: 700; line-height: 1.25; }
+.status-page-heading .status-result-badge,
+.status-lookup-page .status-result-badge { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.25; }
+.status-page-heading .status-result-badge { margin-left: 0; }
+.status-lookup-page .status-result-card { margin-top: 4px; }
+.status-lookup-page .status-lookup-secure { display: flex; width: fit-content; margin-top: 8px; padding: 5px 8px; border-radius: 999px; background: #eff6ff; color: #1e40af; }
+.status-lookup-page .status-result-card .wiz-panel-header { align-items: center; }
+.status-lookup-page .status-facts dd,
+.status-lookup-page .status-description,
+.status-lookup-page .status-next-step span,
+.status-lookup-page .status-remarks-copy { overflow-wrap: anywhere; }
+.status-lookup-page .status-progress li { min-width: 0; }
+.status-lookup-page .status-progress li > div { min-width: 0; }
+body.dtc-dark .application-screening-notice { background: #111c2e; border-color: #334155; border-left-color: #60a5fa; }
+body.dtc-dark .application-screening-toggle { color: #bfdbfe; }
+body.dtc-dark .application-screening-content { color: #cbd5e1; }
+body.dtc-dark .app-wizard-page .wiz-step[aria-current="step"] .wiz-step-label { color: #93c5fd; }
+body.dtc-dark .app-wizard-page .wiz-personal-section-title { color: #e2e8f0; }
+body.dtc-dark .app-wizard-page .wiz-name-section-header h3 { color: #e2e8f0; }
+body.dtc-dark .app-wizard-page #step-2 .opt { color: #94a3b8; }
+body.dtc-dark .app-wizard-page #step-2 input[type="date"] { color-scheme: dark; }
+body.dtc-dark .wiz-personal-disclosure { border-color: #334155; }
+body.dtc-dark .wiz-personal-toggle { background: #152034; color: #e2e8f0; }
+body.dtc-dark .wiz-personal-toggle-hint { color: #94a3b8; }
+body.dtc-dark .wiz-personal-toggle:focus-visible { outline-color: #60a5fa; }
+body.dtc-dark .status-page-heading h1 { color: #f1f5f9; }
+body.dtc-dark .status-lookup-page .status-lookup-secure { background: #172554; color: #bfdbfe; }
+@media (max-width: 600px) {
+    .app-wizard-page .app-wizard-topbar { margin-bottom: 12px; }
+    .app-wizard-page .app-wizard-tracker { margin-bottom: 14px; }
+    .app-wizard-page .wiz-step-label { font-size: 8px; }
+    .application-screening-content { padding-right: 12px; padding-left: 39px; }
+    .status-page-heading h1 { font-size: 21px; }
+    .status-lookup-page .wiz-panel-header { gap: 12px; }
+    .status-lookup-page .status-result-badge { white-space: normal; }
+}
+.status-result-badge.is-cancelled { color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; }
+body.dtc-dark .status-result-badge.is-cancelled { color: #cbd5e1; background: #1e293b; border-color: #475569; }

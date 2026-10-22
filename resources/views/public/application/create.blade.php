@@ -15,59 +15,47 @@
         <a href="{{ route('landing') }}" class="app-wizard-back" aria-label="Back to home">
             <i data-lucide="arrow-left"></i>
         </a>
-        <div class="app-wizard-brand">
-            <span class="app-wizard-brand-copy">
-                <span class="app-wizard-brand-label">Admissions</span>
-                <span class="app-wizard-brand-title">Application form</span>
-            </span>
-        </div>
-        <div class="app-wizard-progress-label">
-            Step <span id="wizCurrentStep">1</span> of <span id="wizTotalSteps">6</span>
-        </div>
     </div>
 
     <header class="app-wizard-intro">
         <h1>Start your application</h1>
-        <p>Complete each section, then review your details before sending them to the Registrar.</p>
+        <p>Complete the sections, then review before submitting.</p>
     </header>
 
     {{-- ── Step Tracker ─────────────────────────────────────────── --}}
-    <div class="app-wizard-tracker" id="wizardTracker" role="list">
-        <div class="wiz-step active" data-step="1" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="graduation-cap"></i></div>
+    <nav class="app-wizard-tracker" id="wizardTracker" aria-label="Application steps">
+        <button type="button" class="wiz-step active" data-step="1" aria-controls="step-1" aria-current="step">
+            <span class="wiz-step-dot"><i data-lucide="graduation-cap" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Admission</span>
-        </div>
+        </button>
         <div class="wiz-connector"></div>
-        <div class="wiz-step" data-step="2" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="user"></i></div>
+        <button type="button" class="wiz-step" data-step="2" aria-controls="step-2">
+            <span class="wiz-step-dot"><i data-lucide="user" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Personal</span>
-        </div>
+        </button>
         <div class="wiz-connector"></div>
-        <div class="wiz-step" data-step="3" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="phone"></i></div>
+        <button type="button" class="wiz-step" data-step="3" aria-controls="step-3" disabled>
+            <span class="wiz-step-dot"><i data-lucide="phone" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Contact</span>
-        </div>
+        </button>
         <div class="wiz-connector"></div>
-        <div class="wiz-step" data-step="4" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="school"></i></div>
+        <button type="button" class="wiz-step" data-step="4" aria-controls="step-4" disabled>
+            <span class="wiz-step-dot"><i data-lucide="school" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Education</span>
-        </div>
+        </button>
         <div class="wiz-connector"></div>
-        <div class="wiz-step" data-step="5" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="users"></i></div>
+        <button type="button" class="wiz-step" data-step="5" aria-controls="step-5" disabled>
+            <span class="wiz-step-dot"><i data-lucide="users" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Family &amp; Docs</span>
-        </div>
+        </button>
         <div class="wiz-connector"></div>
-        <div class="wiz-step" data-step="6" role="listitem" tabindex="0">
-            <div class="wiz-step-dot"><i data-lucide="clipboard-check"></i></div>
+        <button type="button" class="wiz-step" data-step="6" aria-controls="step-6" disabled>
+            <span class="wiz-step-dot"><i data-lucide="clipboard-check" aria-hidden="true"></i></span>
             <span class="wiz-step-label">Review</span>
-        </div>
-    </div>
+        </button>
+    </nav>
 
     {{-- ── Progress Bar ─────────────────────────────────────────── --}}
-    <div class="app-wizard-bar-wrap" aria-hidden="true">
-        <div class="app-wizard-bar" id="wizardBar" style="width:16.67%"></div>
-    </div>
 
     {{-- ── Server-side Validation Errors ───────────────────────── --}}
     @if ($errors->any())
@@ -86,9 +74,14 @@
     @endif
 
     {{-- ── Screening Notice ─────────────────────────────────────── --}}
-    <div class="wiz-notice">
-        <i data-lucide="info"></i>
-        <div>
+    <div class="application-screening-notice">
+        <button type="button" class="application-screening-toggle" id="screeningNoticeToggle"
+            aria-expanded="false" aria-controls="screeningNoticeContent">
+            <i data-lucide="info" aria-hidden="true"></i>
+            <span>About document review</span>
+            <i class="application-screening-chevron" data-lucide="chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="application-screening-content" id="screeningNoticeContent" hidden>
             <strong>Preliminary screening only.</strong>
             Uploaded documents are for initial review. You must still present
             original documents to the Registrar's Office before official enrollment.
@@ -115,7 +108,7 @@
                 <div class="wiz-panel-icon"><i data-lucide="graduation-cap"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Applicant Type &amp; Program</h2>
-                    <p class="wiz-panel-sub">Tell us what type of applicant you are and which program you're applying for.</p>
+                    <p class="wiz-panel-sub">Choose your applicant type and intended program.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
@@ -167,147 +160,162 @@
         {{-- ╔══════════════════════════════════════════════════╗
              ║  STEP 2 — PERSONAL INFORMATION                  ║
              ╚══════════════════════════════════════════════════╝ --}}
+        @php
+            $optionalPersonalFields = ['birth_place', 'religion', 'nationality', 'lrn', 'marital_status', 'spouse_name'];
+            $personalDetailsExpanded = collect($optionalPersonalFields)->contains(function ($field) use ($errors) {
+                $value = old($field);
+                return $errors->has($field) || (is_string($value) && trim($value) !== ''
+                    && ($field !== 'nationality' || strcasecmp(trim($value), 'Filipino') !== 0));
+            });
+        @endphp
         <div class="wiz-panel" id="step-2">
             <div class="wiz-panel-header">
                 <div class="wiz-panel-icon"><i data-lucide="user"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Personal Information</h2>
-                    <p class="wiz-panel-sub">Please provide your personal details accurately.</p>
+                    <p class="wiz-panel-sub">Use the details shown on your official documents.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
 
-                {{-- ── Name row: Last (Title prefix) | First | Middle (Suffix) ── --}}
-                <div class="wiz-row--name">
-
-                    {{-- Last Name with Title fused to its left edge --}}
-                    <div class="wiz-field" id="field-last_name">
-                        <label for="last_name">Last Name <span class="req">*</span></label>
-                        <div class="name-group name-group--prefix @error('last_name') wiz-invalid @enderror">
-                            <select name="honorific" id="honorific"
-                                class="name-addon" autocomplete="honorific-prefix"
-                                title="Title / Honorific (optional)">
-                                <option value="">—</option>
-                                <option value="Mr."  {{ old('honorific') === 'Mr.'  ? 'selected' : '' }}>Mr.</option>
-                                <option value="Ms."  {{ old('honorific') === 'Ms.'  ? 'selected' : '' }}>Ms.</option>
-                                <option value="Mrs." {{ old('honorific') === 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
-                                <option value="Dr."  {{ old('honorific') === 'Dr.'  ? 'selected' : '' }}>Dr.</option>
-                                <option value="Prof."{{ old('honorific') === 'Prof.'? 'selected' : '' }}>Prof.</option>
-                                <option value="Engr."{{ old('honorific') === 'Engr.'? 'selected' : '' }}>Engr.</option>
-                                <option value="Atty."{{ old('honorific') === 'Atty.'? 'selected' : '' }}>Atty.</option>
-                            </select>
-                            <input type="text" name="last_name" id="last_name" placeholder="Dela Cruz"
-                                class="wiz-input" value="{{ old('last_name') }}"
-                                autocomplete="family-name" required>
+                {{-- Name controls remain separate form fields while related parts share a visual group. --}}
+                <section class="wiz-name-section" aria-labelledby="applicant-name-heading">
+                    <div class="wiz-name-section-header">
+                        <h3 id="applicant-name-heading">Your name</h3>
+                    </div>
+                    <div class="wiz-personal-names">
+                        <div class="wiz-name-composite wiz-name-composite--first">
+                            <div class="wiz-field wiz-name-honorific">
+                                <label for="honorific">Honorific <span class="opt">(Optional)</span></label>
+                                <input type="text" name="honorific" id="honorific" placeholder="e.g., Dr."
+                                    class="wiz-input @error('honorific') wiz-invalid @enderror"
+                                    value="{{ old('honorific') }}" autocomplete="honorific-prefix" maxlength="20">
+                                @error('honorific')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field wiz-name-required" id="field-first_name">
+                                <label for="first_name">First Name <span class="req">*</span></label>
+                                <input type="text" name="first_name" id="first_name" placeholder="Juan"
+                                    class="wiz-input @error('first_name') wiz-invalid @enderror"
+                                    value="{{ old('first_name') }}" autocomplete="given-name" required>
+                                @error('first_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                            </div>
                         </div>
-                        @error('last_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
-                    </div>
-
-                    {{-- First Name — plain, no addon --}}
-                    <div class="wiz-field" id="field-first_name">
-                        <label for="first_name">First Name <span class="req">*</span></label>
-                        <input type="text" name="first_name" id="first_name" placeholder="Juan"
-                            class="wiz-input @error('first_name') wiz-invalid @enderror"
-                            value="{{ old('first_name') }}"
-                            autocomplete="given-name" required>
-                        @error('first_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
-                    </div>
-
-                    {{-- Middle Name with Suffix fused to its right edge --}}
-                    <div class="wiz-field">
-                        <label for="middle_name">Middle Name <span class="opt">(Optional)</span></label>
-                        <div class="name-group name-group--suffix">
+                        <div class="wiz-field">
+                            <label for="middle_name">Middle Name <span class="opt">(Optional)</span></label>
                             <input type="text" name="middle_name" id="middle_name" placeholder="Santos"
                                 class="wiz-input @error('middle_name') wiz-invalid @enderror"
-                                value="{{ old('middle_name') }}"
-                                autocomplete="additional-name">
-                            <select name="suffix" id="suffix"
-                                class="name-addon" autocomplete="honorific-suffix"
-                                title="Suffix (optional)">
-                                <option value="">—</option>
-                                <option value="Jr."  {{ old('suffix') === 'Jr.'  ? 'selected' : '' }}>Jr.</option>
-                                <option value="Sr."  {{ old('suffix') === 'Sr.'  ? 'selected' : '' }}>Sr.</option>
-                                <option value="II"   {{ old('suffix') === 'II'   ? 'selected' : '' }}>II</option>
-                                <option value="III"  {{ old('suffix') === 'III'  ? 'selected' : '' }}>III</option>
-                                <option value="IV"   {{ old('suffix') === 'IV'   ? 'selected' : '' }}>IV</option>
-                            </select>
+                                value="{{ old('middle_name') }}" autocomplete="additional-name">
+                            @error('middle_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
                         </div>
-                        @error('middle_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                        <div class="wiz-name-composite wiz-name-composite--last">
+                            <div class="wiz-field wiz-name-required" id="field-last_name">
+                                <label for="last_name">Last Name <span class="req">*</span></label>
+                                <input type="text" name="last_name" id="last_name" placeholder="Dela Cruz"
+                                    class="wiz-input @error('last_name') wiz-invalid @enderror" value="{{ old('last_name') }}"
+                                    autocomplete="family-name" required>
+                                @error('last_name')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field wiz-name-suffix">
+                                <label for="suffix">Suffix <span class="opt">(Optional)</span></label>
+                                <input type="text" name="suffix" id="suffix" placeholder="e.g., Jr."
+                                    class="wiz-input @error('suffix') wiz-invalid @enderror"
+                                    value="{{ old('suffix') }}" autocomplete="honorific-suffix" maxlength="20">
+                                @error('suffix')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section class="wiz-personal-section" aria-labelledby="identity-details-heading">
+                    <h3 class="wiz-personal-section-title" id="identity-details-heading">Identity details</h3>
+                    <div class="wiz-personal-pair">
+                        <div class="wiz-field" id="field-gender">
+                            <label for="gender">Gender <span class="req">*</span></label>
+                            <select name="gender" id="gender"
+                                class="wiz-input @error('gender') wiz-invalid @enderror"
+                                autocomplete="sex" required>
+                                <option value="">Select gender</option>
+                                <option value="male"   {{ old('gender') === 'male'   ? 'selected' : '' }}>Male</option>
+                                <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
+                            </select>
+                            @error('gender')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                        </div>
+                        <div class="wiz-field" id="field-birthdate">
+                            <label for="birthdate">Date of Birth <span class="req">*</span></label>
+                            <input type="date" name="birthdate" id="birthdate"
+                                class="wiz-input @error('birthdate') wiz-invalid @enderror"
+                                value="{{ old('birthdate') }}"
+                                autocomplete="bday" required>
+                            @error('birthdate')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
+                        </div>
                     </div>
 
-                </div>
+                </section>
 
-                <div class="wiz-row wiz-row--3">
-                    <div class="wiz-field" id="field-gender">
-                        <label for="gender">Gender <span class="req">*</span></label>
-                        <select name="gender" id="gender"
-                            class="wiz-input @error('gender') wiz-invalid @enderror"
-                            autocomplete="sex" required>
-                            <option value="">Select gender</option>
-                            <option value="male"   {{ old('gender') === 'male'   ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender') === 'female' ? 'selected' : '' }}>Female</option>
-                        </select>
-                        @error('gender')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
-                    </div>
-                    <div class="wiz-field" id="field-birthdate">
-                        <label for="birthdate">Date of Birth <span class="req">*</span></label>
-                        <input type="date" name="birthdate" id="birthdate"
-                            class="wiz-input @error('birthdate') wiz-invalid @enderror"
-                            value="{{ old('birthdate') }}"
-                            autocomplete="bday" required>
-                        @error('birthdate')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
-                    </div>
-                    <div class="wiz-field">
-                        <label for="birth_place">Place of Birth <span class="opt">(Optional)</span></label>
-                        <input type="text" name="birth_place" id="birth_place"
-                            placeholder="e.g. Danao, Bohol"
-                            class="wiz-input" value="{{ old('birth_place') }}"
-                            autocomplete="off">
-                    </div>
-                </div>
+                <section class="wiz-personal-disclosure" aria-labelledby="personalDetailsToggle">
+                    <button type="button" class="wiz-personal-toggle" id="personalDetailsToggle"
+                        aria-expanded="{{ $personalDetailsExpanded ? 'true' : 'false' }}" aria-controls="personalDetailsContent">
+                        <span><span id="personal-additional-heading">Additional personal details <span class="opt">(Optional)</span></span>
+                            <span class="wiz-personal-toggle-hint">Birthplace, nationality, LRN and marital details</span>
+                        </span>
+                        <i data-lucide="chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div id="personalDetailsContent" class="wiz-personal-content" data-has-old-input="{{ session()->hasOldInput() ? 'true' : 'false' }}" @if (!$personalDetailsExpanded) hidden @endif>
+                        <div class="wiz-personal-pair">
+                            <div class="wiz-field">
+                                <label for="birth_place">Place of Birth <span class="opt">(Optional)</span></label>
+                                <input type="text" name="birth_place" id="birth_place" placeholder="e.g. Danao, Bohol"
+                                    class="wiz-input @error('birth_place') wiz-invalid @enderror" value="{{ old('birth_place') }}" autocomplete="off">
+                                @error('birth_place')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field">
+                                <label for="religion">Religion <span class="opt">(Optional)</span></label>
+                                <input type="text" name="religion" id="religion"
+                                    placeholder="e.g. Roman Catholic"
+                                    class="wiz-input @error('religion') wiz-invalid @enderror" value="{{ old('religion') }}"
+                                    autocomplete="off">
+                                @error('religion')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field">
+                                <label for="nationality">Nationality <span class="opt">(Optional)</span></label>
+                                <input type="text" name="nationality" id="nationality" placeholder="Filipino"
+                                    class="wiz-input @error('nationality') wiz-invalid @enderror" value="{{ old('nationality', 'Filipino') }}"
+                                    @if (!session()->hasOldInput('nationality')) data-draft-default="Filipino" @endif
+                                    autocomplete="off">
+                                @error('nationality')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field">
+                                <label for="lrn">LRN <span class="opt">(Optional)</span></label>
+                                <input type="text" name="lrn" id="lrn" placeholder="136041123456"
+                                    class="wiz-input @error('lrn') wiz-invalid @enderror" value="{{ old('lrn') }}" maxlength="12"
+                                    autocomplete="off">
+                                @error('lrn')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                                <span class="wiz-hint">Learner Reference Number — for DepEd graduates.</span>
+                            </div>
+                        </div>
 
-                <div class="wiz-row wiz-row--3">
-                    <div class="wiz-field">
-                        <label for="religion">Religion <span class="opt">(Optional)</span></label>
-                        <input type="text" name="religion" id="religion"
-                            placeholder="e.g. Roman Catholic"
-                            class="wiz-input" value="{{ old('religion') }}"
-                            autocomplete="off">
+                        <div class="wiz-personal-pair wiz-marital-row">
+                            <div class="wiz-field" id="field-marital_status">
+                                <label for="marital_status">Marital Status <span class="opt">(Optional)</span></label>
+                                <select name="marital_status" id="marital_status" class="wiz-input @error('marital_status') wiz-invalid @enderror" autocomplete="off">
+                                    <option value="">Select status</option>
+                                    <option value="single"   {{ old('marital_status') === 'single'   ? 'selected' : '' }}>Single</option>
+                                    <option value="married"  {{ old('marital_status') === 'married'  ? 'selected' : '' }}>Married</option>
+                                    <option value="divorced" {{ old('marital_status') === 'divorced' ? 'selected' : '' }}>Divorced</option>
+                                    <option value="widowed"  {{ old('marital_status') === 'widowed'  ? 'selected' : '' }}>Widowed</option>
+                                </select>
+                                @error('marital_status')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field" id="spouseField">
+                                <label for="spouse_name">Spouse Name <span class="opt">(Optional)</span></label>
+                                <input type="text" name="spouse_name" id="spouse_name"
+                                    placeholder="Spouse's full name"
+                                    class="wiz-input @error('spouse_name') wiz-invalid @enderror" value="{{ old('spouse_name') }}"
+                                    autocomplete="off">
+                                @error('spouse_name')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
                     </div>
-                    <div class="wiz-field">
-                        <label for="nationality">Nationality <span class="opt">(Optional)</span></label>
-                        <input type="text" name="nationality" id="nationality" placeholder="Filipino"
-                            class="wiz-input" value="{{ old('nationality', 'Filipino') }}"
-                            autocomplete="off">
-                    </div>
-                    <div class="wiz-field">
-                        <label for="lrn">LRN <span class="opt">(Optional)</span></label>
-                        <input type="text" name="lrn" id="lrn" placeholder="136041123456"
-                            class="wiz-input" value="{{ old('lrn') }}" maxlength="12"
-                            autocomplete="off">
-                        <span class="wiz-hint">Learner Reference Number — for DepEd graduates.</span>
-                    </div>
-                </div>
-
-                <div class="wiz-row wiz-row--2">
-                    <div class="wiz-field">
-                        <label for="marital_status">Marital Status <span class="opt">(Optional)</span></label>
-                        <select name="marital_status" id="marital_status" class="wiz-input" autocomplete="off">
-                            <option value="">Select status</option>
-                            <option value="single"   {{ old('marital_status') === 'single'   ? 'selected' : '' }}>Single</option>
-                            <option value="married"  {{ old('marital_status') === 'married'  ? 'selected' : '' }}>Married</option>
-                            <option value="divorced" {{ old('marital_status') === 'divorced' ? 'selected' : '' }}>Divorced</option>
-                            <option value="widowed"  {{ old('marital_status') === 'widowed'  ? 'selected' : '' }}>Widowed</option>
-                        </select>
-                    </div>
-                    <div class="wiz-field" id="spouseField">
-                        <label for="spouse_name">Spouse Name <span class="opt">(Optional)</span></label>
-                        <input type="text" name="spouse_name" id="spouse_name"
-                            placeholder="Spouse's full name"
-                            class="wiz-input" value="{{ old('spouse_name') }}"
-                            autocomplete="off">
-                    </div>
-                </div>
+                </section>
 
             </div>
         </div>
@@ -321,7 +329,7 @@
                 <div class="wiz-panel-icon"><i data-lucide="phone"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Contact Information</h2>
-                    <p class="wiz-panel-sub">Where can we reach you regarding your application?</p>
+                    <p class="wiz-panel-sub">Add your contact and address details.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
@@ -440,7 +448,7 @@
                 <div class="wiz-panel-icon"><i data-lucide="school" aria-hidden="true"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Educational Background</h2>
-                    <p class="wiz-panel-sub">Share your recent school history. These details are optional and help the Registrar understand your application.</p>
+                    <p class="wiz-panel-sub">Add your recent school details. Optional fields can be left blank.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
@@ -529,7 +537,7 @@
                 <div class="wiz-panel-icon"><i data-lucide="file-up"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Family &amp; Supporting Documents</h2>
-                    <p class="wiz-panel-sub">Add optional family details and preliminary document uploads.</p>
+                    <p class="wiz-panel-sub">Add family details and supporting documents.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
@@ -724,7 +732,7 @@
                 <div class="wiz-panel-icon"><i data-lucide="clipboard-check"></i></div>
                 <div>
                     <h2 class="wiz-panel-title">Review Your Application</h2>
-                    <p class="wiz-panel-sub">Please check all your details carefully before submitting.</p>
+                    <p class="wiz-panel-sub">Review your details before submitting.</p>
                 </div>
             </div>
             <div class="wiz-panel-body">
@@ -773,28 +781,6 @@
     </form>
 
     {{-- ── Submit Confirmation Modal ────────────────────────────────────── --}}
-    <div class="confirm-modal-overlay" id="confirmModal">
-        <div class="confirm-modal">
-            <div class="confirm-modal-header">
-                <div class="confirm-modal-icon">
-                    <i data-lucide="alert-circle"></i>
-                </div>
-                <h3 class="confirm-modal-title">Confirm Submission</h3>
-            </div>
-            <div class="confirm-modal-body">
-                <p>Are you sure you want to submit your pre-enrollment application?</p>
-                <p class="confirm-modal-sub">Please review all information carefully before confirming. Once submitted, you cannot make changes.</p>
-            </div>
-            <div class="confirm-modal-footer">
-                <button type="button" class="wiz-btn wiz-btn--ghost" id="confirmCancel">
-                    Cancel
-                </button>
-                <button type="button" class="wiz-btn wiz-btn--primary" id="confirmSubmit">
-                    <i data-lucide="send"></i> Yes, Submit Application
-                </button>
-            </div>
-        </div>
-    </div>
 
     {{-- ── Privacy Policy Modal ────────────────────────────────────── --}}
     <div class="privacy-modal-overlay" id="privacyModal">
@@ -874,6 +860,7 @@
 
 
 @section('scripts')
+<script>window.dtcApplicationTitleCaseFields = @json($titleCaseFields);</script>
 <script src="{{ asset('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset('js/application-wizard.js') }}" defer></script>
 @php

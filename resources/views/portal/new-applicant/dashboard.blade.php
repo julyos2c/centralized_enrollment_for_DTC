@@ -201,58 +201,53 @@
         </div>
 
         {{-- Next Step --}}
-        <div class="card mb-3">
-            <div class="card-header font-weight-bold">Next Step</div>
-            <div class="card-body p-0">
-                @if($nextStep['url'])
-                    @if($nextStep['isPayment'] ?? false)
-                        <button type="button" class="dtc-payment-btn dtc-next-step-btn" data-url="{{ $nextStep['url'] }}">
-                            <div class="dtc-next-step-icon" style="background:var(--dtc-primary);">
-                                <i data-lucide="{{ $nextStep['icon'] }}" style="font-size:20px; color:#fff;"></i>
-                            </div>
-                            <div style="flex:1; text-align:left;">
-                                <div style="font-size:14px; font-weight:700; color:var(--dtc-primary);">
-                                    {{ $nextStep['label'] }}
-                                </div>
-                                <div  class="u-text-xxs-secondary">
-                                    {{ $nextStep['desc'] }}
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" style="color:var(--dtc-primary); font-size:14px;"></i>
-                        </button>
-                    @else
-                        <a href="{{ $nextStep['url'] }}" class="dtc-next-step-btn">
-                            <div class="dtc-next-step-icon" style="background:var(--dtc-primary);">
-                                <i data-lucide="{{ $nextStep['icon'] }}" style="font-size:20px; color:#fff;"></i>
-                            </div>
-                            <div  class="u-flex-1">
-                                <div style="font-size:14px; font-weight:700; color:var(--dtc-primary);">
-                                    {{ $nextStep['label'] }}
-                                </div>
-                                <div  class="u-text-xxs-secondary">
-                                    {{ $nextStep['desc'] }}
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" style="color:var(--dtc-primary); font-size:14px;"></i>
-                        </a>
-                    @endif
-                @else
-                    <div class="dtc-next-step-btn" style="cursor:default;">
-                        <div class="dtc-next-step-icon" style="background:var(--dtc-surface-soft);">
-                            <i data-lucide="{{ $nextStep['icon'] }}" style="font-size:20px; color:var(--dtc-text-muted);"></i>
-                        </div>
-                        <div>
-                            <div style="font-size:14px; font-weight:700; color:var(--dtc-text);">
-                                {{ $nextStep['label'] }}
-                            </div>
-                            <div  class="u-text-xxs-secondary">
-                                {{ $nextStep['desc'] }}
-                            </div>
-                        </div>
+        @php
+            $nextStepIsEnrollment = $nextStep['label'] === 'Proceed to Official Enrollment';
+            $nextStepActionLabel = match ($nextStep['label']) {
+                'Proceed to Official Enrollment' => 'Start Enrollment',
+                'Submit Corrected Payment Proof' => 'Review Payment',
+                'Proceed to Payment' => 'Continue to Payment',
+                'Review Required Corrections' => 'Review Corrections',
+                'Await Registrar Review', 'Review Application Decision' => 'View Application',
+                'Wait for Registrar Approval', 'Wait for Payment Verification',
+                'Enrollment Completed', 'View Enrollment Status' => 'View Enrollment',
+                default => 'View Details',
+            };
+            $nextStepDescription = $nextStepIsEnrollment
+                ? 'Select your subjects and submit your official enrollment.'
+                : $nextStep['desc'];
+        @endphp
+        <section class="dtc-next-action mb-3 {{ $nextStep['url'] ? 'has-action' : 'is-static' }}"
+                 aria-labelledby="next-step-title">
+            <div class="dtc-next-action-main">
+                <div class="dtc-next-action-status" aria-hidden="true">
+                    <i data-lucide="{{ $nextStepIsEnrollment ? 'circle-check' : $nextStep['icon'] }}"></i>
+                </div>
+                <div class="dtc-next-action-copy">
+                    <div class="dtc-next-action-eyebrow">
+                        {{ $nextStepIsEnrollment ? 'Application approved' : 'Next step' }}
                     </div>
-                @endif
+                    <h2 id="next-step-title">{{ $nextStep['label'] }}</h2>
+                    <p>{{ $nextStepDescription }}</p>
+                </div>
             </div>
-        </div>
+
+            @if($nextStep['url'])
+                @if($nextStep['isPayment'] ?? false)
+                    <button type="button"
+                            class="dtc-payment-btn dtc-next-action-button"
+                            data-url="{{ $nextStep['url'] }}">
+                        <span>{{ $nextStepActionLabel }}</span>
+                        <i data-lucide="arrow-right" aria-hidden="true"></i>
+                    </button>
+                @else
+                    <a href="{{ $nextStep['url'] }}" class="dtc-next-action-button">
+                        <span>{{ $nextStepActionLabel }}</span>
+                        <i data-lucide="arrow-right" aria-hidden="true"></i>
+                    </a>
+                @endif
+            @endif
+        </section>
 
     </div>
 

@@ -259,65 +259,27 @@
             });
         }
 
-        // Use dtcConfirmModal if available, otherwise native confirm
-        var modal  = document.getElementById('dtcConfirmModal');
-        if (modal && window.jQuery) {
-            modal.className = 'modal fade dtc-confirm-modal is-danger';
-            var titleEl = modal.querySelector('#dtcConfirmTitle');
-            var msgEl   = modal.querySelector('#dtcConfirmMessage');
-            var okBtn   = modal.querySelector('#dtcConfirmOk');
-            if (titleEl) titleEl.textContent = 'Delete Notification?';
-            if (msgEl)   msgEl.textContent   = 'This notification will be permanently removed.';
-            var newOk = okBtn.cloneNode(true);
-            okBtn.parentNode.replaceChild(newOk, okBtn);
-            newOk.textContent = 'Delete';
-            newOk.classList.add('dtc-btn-danger');
-            newOk.addEventListener('click', function () {
-                jQuery('#dtcConfirmModal').modal('hide');
-                doDelete();
-            });
-            jQuery('#dtcConfirmModal').modal('show');
-        } else {
-            if (window.confirm('Delete this notification?')) doDelete();
-        }
+        if (window.dtcConfirm) window.dtcConfirm.open({
+            trigger: btn,
+            tone: 'danger',
+            title: 'Delete notification?',
+            message: 'This notification will be permanently removed.',
+            okLabel: 'Delete',
+            onConfirm: doDelete
+        });
     });
 
     // -- Delete all read - with dtcConfirmModal --------------------------------
     var btnDeleteRead = document.getElementById('btn-delete-read');
     if (btnDeleteRead) {
         btnDeleteRead.addEventListener('click', function () {
-            var modal  = document.getElementById('dtcConfirmModal');
-            if (modal && window.jQuery) {
-                modal.className = 'modal fade dtc-confirm-modal is-danger';
-                var titleEl = modal.querySelector('#dtcConfirmTitle');
-                var msgEl   = modal.querySelector('#dtcConfirmMessage');
-                var okBtn   = modal.querySelector('#dtcConfirmOk');
-                if (titleEl) titleEl.textContent = 'Delete Read Notifications?';
-                if (msgEl)   msgEl.textContent   = 'All read notifications will be permanently removed.';
-                var newOk = okBtn.cloneNode(true);
-                okBtn.parentNode.replaceChild(newOk, okBtn);
-                newOk.textContent = 'Delete All Read';
-                newOk.classList.add('dtc-btn-danger');
-                newOk.addEventListener('click', function () {
-                    jQuery('#dtcConfirmModal').modal('hide');
-                    fetch(DELETE_READ_URL, {
-                        method: 'DELETE',
-                        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-                    }).then(function () {
-                        document.querySelectorAll('.dtc-notif-item.is-read').forEach(function (item) {
-                            var group = item.closest('.dtc-notif-group');
-                            item.remove();
-                            if (group && !group.querySelector('.dtc-notif-item')) group.remove();
-                        });
-                        if (btnDeleteRead) btnDeleteRead.disabled = true;
-                        var activeTab = document.querySelector('.dtc-notif-tab.active');
-                        if (activeTab) applyTab(activeTab.dataset.tab);
-                        if (window.dtcToast) dtcToast.success('All read notifications deleted.');
-                    });
-                });
-                jQuery('#dtcConfirmModal').modal('show');
-            } else {
-                if (window.confirm('Delete all read notifications? This cannot be undone.')) {
+            if (window.dtcConfirm) window.dtcConfirm.open({
+                trigger: btnDeleteRead,
+                tone: 'danger',
+                title: 'Delete read notifications?',
+                message: 'All read notifications will be permanently removed.',
+                okLabel: 'Delete All Read',
+                onConfirm: function () {
                     fetch(DELETE_READ_URL, {
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
@@ -333,7 +295,7 @@
                         if (window.dtcToast) dtcToast.success('All read notifications deleted.');
                     });
                 }
-            }
+            });
         });
     }
 

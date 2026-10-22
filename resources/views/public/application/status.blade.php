@@ -12,24 +12,20 @@
         <a href="{{ route('landing') }}" class="app-wizard-back" aria-label="Back to home">
             <i data-lucide="arrow-left" aria-hidden="true"></i>
         </a>
-        <div class="app-wizard-brand">
-            <span class="app-wizard-brand-copy">
-                <span class="app-wizard-brand-label">Admissions</span>
-                <span class="app-wizard-brand-title">Application status</span>
-            </span>
-        </div>
-        <span class="status-lookup-secure"><i data-lucide="shield-check" aria-hidden="true"></i> Private lookup</span>
     </div>
 
     <header class="app-wizard-intro">
-        <h1>{{ isset($application) ? 'Your application status' : 'Check your application status' }}</h1>
-        <p>
-            @if(isset($application))
-                Here is the latest status recorded by the Registrar.
-            @else
-                Use the reference number from your confirmation and the email address on your application.
-            @endif
-        </p>
+        @if(isset($application))
+            <div class="status-page-heading">
+                <h1>Application status</h1>
+                <span class="status-result-badge is-{{ $application->status }}" role="status">
+                    {{ ucwords(str_replace('_', ' ', $application->status)) }}
+                </span>
+            </div>
+        @else
+            <h1>Check your application status</h1>
+            <p>Use the reference number and email address from your application.</p>
+        @endif
     </header>
 
     @if(isset($application))
@@ -40,9 +36,6 @@
                     <h2 class="wiz-panel-title" id="status-result-title">Application details</h2>
                     <p class="wiz-panel-sub">Reference {{ $application->reference_no }}</p>
                 </div>
-                <span class="status-result-badge is-{{ $application->status }}">
-                    {{ ucwords(str_replace('_', ' ', $application->status)) }}
-                </span>
             </div>
             <div class="wiz-panel-body">
                 <dl class="status-facts">
@@ -111,7 +104,7 @@
             <div class="wiz-panel-header">
                 <div class="wiz-panel-icon"><i data-lucide="search-check" aria-hidden="true"></i></div>
                 <div>
-                    <h2 class="wiz-panel-title" id="status-form-title">Find your application</h2>
+                    <h2 class="wiz-panel-title" id="status-form-title">Lookup details</h2>
                     <p class="wiz-panel-sub">Both details must match the application record.</p>
                 </div>
             </div>
@@ -139,7 +132,7 @@
                             class="wiz-input @error('reference_no') wiz-invalid @enderror"
                             value="{{ old('reference_no') }}" placeholder="e.g. APP-2026-ABC123"
                             autocomplete="off" maxlength="50" required aria-describedby="reference-hint">
-                        <span class="wiz-hint" id="reference-hint">Enter the reference number from your application confirmation.</span>
+                        <span class="wiz-hint" id="reference-hint">Found on your confirmation page and email. It starts with APP-.</span>
                         @error('reference_no')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
 

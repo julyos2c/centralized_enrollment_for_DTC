@@ -105,9 +105,10 @@
                                             class="dtc-icon-btn danger"
                                             title="Remove subject"
                                             data-dtc-confirm
-                                            data-dtc-confirm-title="Remove Subject?"
+                                            data-dtc-confirm-title="Remove subject?"
                                             data-dtc-confirm-message="Are you sure you want to remove this subject from the program?"
                                             data-dtc-confirm-ok="Remove Subject"
+                                            data-dtc-confirm-tone="danger"
                                             data-dtc-confirm-form="#del-sub-card-{{ $subject->id }}">
                                         <i data-lucide="trash-2"></i>
                                     </button>

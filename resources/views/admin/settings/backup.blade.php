@@ -44,10 +44,10 @@
                     <button type="button"
                             class="btn btn-primary btn-block"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Create Backup Now?"
+                            data-dtc-confirm-title="Create backup now?"
                             data-dtc-confirm-message="This will export a full copy of the database. Continue?"
                             data-dtc-confirm-ok="Backup Now"
-                            data-dtc-confirm-type="warning"
+                            data-dtc-confirm-tone="neutral"
                             data-dtc-confirm-form="#backup-create-form">
                         <i data-lucide="download" class="mr-2"></i> Backup Now
                     </button>
@@ -130,9 +130,10 @@
                                 <button type="button"
                                         class="backup-btn backup-btn-delete"
                                         data-dtc-confirm
-                                        data-dtc-confirm-title="Delete Backup?"
+                                        data-dtc-confirm-title="Delete backup?"
                                         data-dtc-confirm-message="Are you sure you want to permanently delete this backup file? This cannot be undone."
                                         data-dtc-confirm-ok="Delete Backup"
+                                        data-dtc-confirm-tone="danger"
                                         data-dtc-confirm-form="#del-backup-{{ $backup }}">
                                     <i data-lucide="trash-2"></i>
                                 </button>

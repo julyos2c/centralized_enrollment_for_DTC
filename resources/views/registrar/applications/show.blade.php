@@ -10,6 +10,7 @@
             'revision_required' => 'badge-warning',
             'approved'          => 'badge-success',
             'rejected'          => 'badge-danger',
+            'cancelled'         => 'badge-dark',
         ];
 
         $applicantTypeLabels = [
@@ -22,29 +23,40 @@
 
     @endphp
 
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-           <h4 class="mb-0 font-weight-bold u-text" >
-                Pre-Enrollment Application
-            </h4>
-            <p class="mb-0 u-text-secondary-sm" >
-                Reference No: <strong>{{ $application->reference_no }}</strong>
-                &nbsp;·&nbsp;
+    <div class="app-review-header">
+        <div class="app-review-header-main">
+            <h4 class="mb-1 font-weight-bold u-text">Pre-Enrollment Application</h4>
+            <p class="app-review-ref u-text-secondary-sm">
+                Reference No. <strong>{{ $application->reference_no }}</strong>
+            </p>
+            <div class="app-review-meta">
                 <span class="badge {{ $statusBadges[$application->status] ?? 'badge-secondary' }}">
                     {{ ucwords(str_replace('_', ' ', $application->status)) }}
                 </span>
-                &nbsp;·&nbsp;
-                {{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}
-                &nbsp;·&nbsp;
-                {{ $application->program->name ?? '—' }}
-            </p>
+                <span class="app-review-chip">{{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}</span>
+                <span class="app-review-chip">{{ $application->program->name ?? '—' }}</span>
+            </div>
         </div>
 
-        <a href="{{ route('registrar.applications.index') }}" class="btn btn-secondary btn-sm">
+        <a href="{{ route('registrar.applications.index') }}" class="btn btn-secondary btn-sm app-review-back">
             ← Back to List
         </a>
     </div>
 @endsection
+
+@section('css')
+<style>
+    .app-review-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; }
+    .app-review-header-main { min-width: 0; flex: 1 1 320px; }
+    .app-review-ref { margin: 0 0 10px; }
+    .app-review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .app-review-meta .badge { padding: 5px 10px; font-size: 12px; font-weight: 600; border-radius: 999px; }
+    .app-review-chip { display: inline-block; max-width: 100%; padding: 4px 10px; color: inherit; border: 1px solid rgba(100, 116, 139, .35); border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 1.4; opacity: .9; }
+    .app-review-back { flex: 0 0 auto; }
+    @media (max-width: 575.98px) { .app-review-back { order: -1; } .app-review-header-main { flex-basis: 100%; } }
+</style>
+@endsection
+
 
 @section('content')
 
@@ -462,6 +474,34 @@
             </div>
         </div>
 
+        @foreach($application->cancellationRequests as $cancellationRequest)
+            <div class="card {{ $cancellationRequest->status === 'pending' ? 'border-warning' : '' }}">
+                <div class="card-header"><span class="font-weight-bold">Cancellation Request — {{ ucfirst($cancellationRequest->status) }}</span></div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Applicant reason:</strong> {{ $cancellationRequest->reason }}</p>
+                    <p class="text-muted small mb-2">Requested {{ $cancellationRequest->created_at->format('M d, Y h:i A') }} from status {{ str_replace('_', ' ', $cancellationRequest->previous_status) }}.</p>
+                    @if($cancellationRequest->review_remarks)
+                        <p class="mb-2"><strong>Review remarks:</strong> {{ $cancellationRequest->review_remarks }}</p>
+                    @endif
+                    @if($cancellationRequest->reviewer)
+                        <p class="text-muted small">Reviewed by {{ $cancellationRequest->reviewer->name }} {{ optional($cancellationRequest->reviewed_at)->format('M d, Y h:i A') }}</p>
+                    @endif
+                    @if($cancellationRequest->status === 'pending')
+                        <form method="POST" action="{{ route('registrar.applications.cancellation.approve', $cancellationRequest) }}" class="mb-2" id="approve-cancellation-{{ $cancellationRequest->id }}">
+                            @csrf
+                            <button class="btn btn-danger btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Approve cancellation?" data-dtc-confirm-message="The application will be marked as cancelled and its record will be retained." data-dtc-confirm-ok="Approve Cancellation" data-dtc-confirm-form="#approve-cancellation-{{ $cancellationRequest->id }}">Approve Cancellation</button>
+                        </form>
+                        <form method="POST" action="{{ route('registrar.applications.cancellation.reject', $cancellationRequest) }}" id="decline-cancellation-{{ $cancellationRequest->id }}">
+                            @csrf
+                            <label for="cancellation-remarks-{{ $cancellationRequest->id }}">Reason for declining</label>
+                            <textarea id="cancellation-remarks-{{ $cancellationRequest->id }}" name="remarks" class="form-control mb-2" rows="2" maxlength="500" required></textarea>
+                            <button class="btn btn-outline-secondary btn-block" type="button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Decline cancellation request?" data-dtc-confirm-message="The application will remain active and the applicant will receive the entered reason." data-dtc-confirm-ok="Decline Request" data-dtc-confirm-form="#decline-cancellation-{{ $cancellationRequest->id }}">Decline Request</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+
         {{-- Approved account info --}}
         @if($application->status === 'approved')
         <div class="card">
@@ -492,7 +532,7 @@
         {{-- ===================================================== --}}
         {{-- SECTION 8 — ACTIONS                                    --}}
         {{-- ===================================================== --}}
-        @if($application->status === 'submitted')
+        @if($application->status === 'submitted' && !$application->pendingCancellationRequest)
         <div class="card">
             <div class="card-header">
                 <span class="font-weight-bold">Registrar Actions</span>
@@ -505,17 +545,17 @@
                     <button type="button"
                             class="btn btn-primary btn-block"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Start Review?"
+                            data-dtc-confirm-title="Start review?"
                             data-dtc-confirm-message="This will mark the application as under review and notify the student. Are you sure?"
                             data-dtc-confirm-ok="Start Review"
-                            data-dtc-confirm-type="info"
+                            data-dtc-confirm-tone="neutral"
                             data-dtc-confirm-form="#start-review-{{ $application->id }}">
                         Start Review
                     </button>
                 </form>
             </div>
         </div>
-        @elseif($application->status === 'under_review')
+        @elseif($application->status === 'under_review' && !$application->pendingCancellationRequest)
         <div class="card">
             <div class="card-header">
                 <span class="font-weight-bold">Registrar Actions</span>
@@ -530,10 +570,10 @@
                     <button type="button"
                             class="btn btn-success btn-block"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Approve Application?"
+                            data-dtc-confirm-title="Approve application?"
                             data-dtc-confirm-message="This will approve the application and create a student account. Are you sure?"
                             data-dtc-confirm-ok="Approve"
-                            data-dtc-confirm-type="warning"
+                            data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#approve-application-{{ $application->id }}">
                         Approve
                     </button>
@@ -575,6 +615,14 @@
                 </div>
             </div>
         </div>
+        @elseif($application->status === 'cancelled')
+        <div class="card">
+            <div class="card-body"><div class="text-muted u-text-sm">This application was cancelled after Registrar review. The application and cancellation history remain on file.</div></div>
+        </div>
+        @elseif($application->pendingCancellationRequest)
+        <div class="card">
+            <div class="card-body"><div class="text-muted u-text-sm">Resolve the pending cancellation request above before continuing the application review.</div></div>
+        </div>
         @else
         <div class="card">
             <div class="card-body">
@@ -593,7 +641,7 @@
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('registrar.applications.reject', $application) }}">
+            <form method="POST" action="{{ route('registrar.applications.reject', $application) }}" id="reject-application-{{ $application->id }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Reject Application</h5>
@@ -605,7 +653,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Application</button>
+                    <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject application?" data-dtc-confirm-message="The application will be marked as rejected with the entered remarks." data-dtc-confirm-ok="Reject Application" data-dtc-confirm-form="#reject-application-{{ $application->id }}">Reject Application</button>
                 </div>
             </form>
         </div>

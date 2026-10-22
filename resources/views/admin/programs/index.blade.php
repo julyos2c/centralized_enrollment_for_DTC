@@ -80,9 +80,10 @@
                                             class="dtc-icon-btn danger"
                                             title="Delete program"
                                             data-dtc-confirm
-                                            data-dtc-confirm-title="Delete Program?"
+                                            data-dtc-confirm-title="Delete program?"
                                             data-dtc-confirm-message="Are you sure you want to delete this program? This action cannot be undone."
                                             data-dtc-confirm-ok="Delete Program"
+                                            data-dtc-confirm-tone="danger"
                                             data-dtc-confirm-form="#del-program-{{ $program->id }}">
                                         <i data-lucide="trash-2"></i>
                                     </button>

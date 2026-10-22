@@ -5,8 +5,8 @@
 @if ($valid)
     <p class="auth-card-subtitle">Completing this form verifies this email address and activates your portal account.</p>
     <form method="POST" action="{{ route('portal.activation.store') }}">@csrf<input type="hidden" name="token" value="{{ $token }}">
-        <div class="auth-field"><label class="auth-label" for="password">New password</label><input id="password" name="password" type="password" class="auth-input" required minlength="8" autocomplete="new-password"></div>
-        <div class="auth-field"><label class="auth-label" for="password_confirmation">Confirm password</label><input id="password_confirmation" name="password_confirmation" type="password" class="auth-input" required minlength="8" autocomplete="new-password"></div>
+        <div class="auth-field"><label class="auth-label" for="password">New password</label><input id="password" name="password" type="password" class="auth-input @error('password') auth-input--error @enderror" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password"></div>
+        <div class="auth-field"><label class="auth-label" for="password_confirmation">Confirm password</label><input id="password_confirmation" name="password_confirmation" type="password" class="auth-input @error('password_confirmation') auth-input--error @enderror" placeholder="Re-enter your password" required minlength="8" autocomplete="new-password"></div>
         @error('token')<div class="auth-alert auth-alert--error" role="alert">{{ $message }}</div>@enderror
         @error('password')<div class="auth-alert auth-alert--error" role="alert">{{ $message }}</div>@enderror
         <button class="auth-btn" type="submit">Set password</button>

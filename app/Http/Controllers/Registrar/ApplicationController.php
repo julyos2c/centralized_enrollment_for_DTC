@@ -7,10 +7,12 @@ use App\Mail\ApplicationApproved;
 use App\Mail\ApplicationRejected;
 use App\Mail\ApplicationRevisionRequired;
 use App\Models\Application;
+use App\Models\ApplicationCancellationRequest;
 use App\Models\ApplicationDocument;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Services\ApplicationCancellationService;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +34,7 @@ class ApplicationController extends Controller
                 'new_student', 'transferee', 'shiftee', 'returnee', 'cross_enrollee',
             ])],
             'status' => ['nullable', Rule::in([
-                'submitted', 'under_review', 'revision_required', 'approved', 'rejected',
+                'submitted', 'under_review', 'revision_required', 'approved', 'rejected', 'cancelled',
             ])],
             'program_id' => ['nullable', 'integer', 'exists:programs,id'],
         ]);
@@ -67,7 +69,7 @@ class ApplicationController extends Controller
 
     public function show(Application $application)
     {
-        $application->load(['program', 'user', 'reviewer', 'documents']);
+        $application->load(['program', 'user', 'reviewer', 'documents', 'cancellationRequests.requester', 'cancellationRequests.reviewer']);
 
         return view('registrar.applications.show', compact('application'));
     }
@@ -75,16 +77,20 @@ class ApplicationController extends Controller
     public function startReview(Application $application)
     {
         // ── Only allow starting review for submitted applications ───────
-        if ($application->status !== 'submitted') {
-            return redirect()->route('registrar.applications.show', $application)
-                ->with('error', 'This application has already been reviewed.');
-        }
+        $updated = DB::transaction(function () use ($application) {
+            $locked = Application::whereKey($application->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'submitted' || $locked->pendingCancellationRequest()->exists()) {
+                return false;
+            }
+            $locked->update(['status' => 'under_review', 'reviewed_by' => auth()->id(), 'reviewed_at' => now()]);
+            return true;
+        });
 
-        $application->update([
-            'status' => 'under_review',
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ]);
+        if (! $updated) {
+            return redirect()->route('registrar.applications.show', $application)
+                ->with('error', 'This application cannot start review while a cancellation request is pending or after another status change.');
+        }
+        $application->refresh();
 
         // ── Notify Student if they have an account ─────────────────────
         if ($application->user) {
@@ -125,7 +131,7 @@ class ApplicationController extends Controller
             $approval = DB::transaction(function () use ($application) {
                 $lockedApplication = Application::whereKey($application->id)->lockForUpdate()->firstOrFail();
 
-                if ($lockedApplication->status !== 'under_review' || $lockedApplication->user_id !== null) {
+                if ($lockedApplication->status !== 'under_review' || $lockedApplication->user_id !== null || $lockedApplication->pendingCancellationRequest()->exists()) {
                     return null;
                 }
 
@@ -286,12 +292,57 @@ class ApplicationController extends Controller
             ->with($delivery['ok'] ? 'success' : 'warning', 'Revision requested. ' . $delivery['message']);
     }
 
+    public function approveCancellation(Request $request, ApplicationCancellationRequest $cancellationRequest, ApplicationCancellationService $service)
+    {
+        abort_unless($request->user()->hasAnyRole(['registrar', 'admin']), 403);
+        $validated = $request->validate(['remarks' => ['nullable', 'string', 'max:500']]);
+        $result = $service->resolve($cancellationRequest->id, $request->user(), true, $validated['remarks'] ?? null);
+        $application = $result['application'];
+        if ($result['changed']) {
+            $this->notifyCancellationApplicant($application, 'Application Cancellation Approved', 'The Registrar approved your cancellation request. The application is now cancelled.');
+        }
+
+        return redirect()->route('registrar.applications.show', $application)
+            ->with($result['changed'] ? 'success' : 'warning', $result['changed'] ? 'Cancellation approved. The application record and history were retained.' : 'This cancellation request was already resolved.');
+    }
+
+    public function rejectCancellation(Request $request, ApplicationCancellationRequest $cancellationRequest, ApplicationCancellationService $service)
+    {
+        abort_unless($request->user()->hasAnyRole(['registrar', 'admin']), 403);
+        $validated = $request->validate(['remarks' => ['required', 'string', 'max:500']]);
+        $result = $service->resolve($cancellationRequest->id, $request->user(), false, $validated['remarks']);
+        $application = $result['application'];
+        if ($result['changed']) {
+            $this->notifyCancellationApplicant($application, 'Application Cancellation Request Declined', 'The Registrar did not approve your cancellation request. Your application remains '.$application->status.'.');
+        }
+
+        return redirect()->route('registrar.applications.show', $application)
+            ->with($result['changed'] ? 'success' : 'warning', $result['changed'] ? 'Cancellation request declined. The application remains in its previous workflow.' : 'This cancellation request was already resolved.');
+    }
+
+    private function notifyCancellationApplicant(Application $application, string $subject, string $message): void
+    {
+        if (! filter_var($application->email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+        try {
+            Mail::raw($message."\n\nReference: ".$application->reference_no, function ($mail) use ($application, $subject) {
+                $mail->to($application->email)->subject($subject);
+            });
+        } catch (\Throwable $exception) {
+            Log::warning('Cancellation decision email delivery failed.', [
+                'application_id' => $application->id,
+                'exception' => get_class($exception),
+            ]);
+        }
+    }
+
     /** Atomically claim the review transition so retried requests cannot duplicate notices. */
     private function transitionApplication(Application $application, string $status, string $remarks): ?Application
     {
         return DB::transaction(function () use ($application, $status, $remarks) {
             $locked = Application::whereKey($application->id)->lockForUpdate()->firstOrFail();
-            if ($locked->status !== 'under_review') {
+            if ($locked->status !== 'under_review' || $locked->pendingCancellationRequest()->exists()) {
                 return null;
             }
 

@@ -61,13 +61,15 @@
             </p>
 
             <div class="auth-field">
-                <label class="auth-label">Email</label>
+                <label class="auth-label" for="setup_email">Email</label>
                 <div class="auth-input-wrap">
                     <i data-lucide="mail" class="auth-input-icon" aria-hidden="true"></i>
                     <input
                         type="text"
+                        id="setup_email"
                         class="auth-input"
                         value="{{ $email }}"
+                        placeholder=" "
                         disabled
                     >
                 </div>
@@ -109,7 +111,7 @@
                             type="password"
                             name="password"
                             id="password"
-                            class="auth-input"
+                            class="auth-input @error('password') auth-input--error @enderror"
                             placeholder="At least 8 characters"
                             autocomplete="new-password"
                             minlength="8"
@@ -130,7 +132,7 @@
                             type="password"
                             name="password_confirmation"
                             id="password_confirmation"
-                            class="auth-input"
+                            class="auth-input @error('password_confirmation') auth-input--error @enderror"
                             placeholder="Re-enter your password"
                             autocomplete="new-password"
                             minlength="8"

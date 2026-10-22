@@ -35,9 +35,10 @@ class PublicApplicationStatusPageTest extends TestCase
         $this->get(route('public.application.status.form'))
             ->assertOk()
             ->assertSee('class="app-wizard-page status-lookup-page"', false)
-            ->assertSee('Admissions')
-            ->assertSee('Private lookup')
-            ->assertSee('Find your application')
+            ->assertSee('Lookup details')
+            ->assertSee('Both details must match the application record.')
+            ->assertSee('Check your application status')
+            ->assertDontSee('Application status</span>', false)
             ->assertSee('APP-2026-ABC123')
             ->assertSee('not-found@example.test')
             ->assertSee('Start an application');
@@ -64,7 +65,8 @@ class PublicApplicationStatusPageTest extends TestCase
             'email' => $application->email,
         ])
             ->assertOk()
-            ->assertSee('Your application status')
+            ->assertSee('Application status')
+            ->assertSee('class="status-result-badge is-submitted"', false)
             ->assertSee('Application details')
             ->assertSee('APP-2026-STATUS1')
             ->assertSee('Jamie Applicant')
