@@ -9,7 +9,7 @@ use App\Models\ApplicationDocument;
 use App\Models\Program;
 use App\Models\User;
 use App\Services\NotificationService;
-use App\Support\NameNormalizer;
+use App\Support\ApplicationTextNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -93,6 +93,7 @@ class ApplicationController extends Controller
             'programs' => $programs,
             'documentRequirements' => self::DOCUMENTS_BY_TYPE,
             'physicalRequirements' => self::PHYSICAL_REQUIREMENTS,
+            'titleCaseFields' => ApplicationTextNormalizer::titleCaseFields(),
             'submissionToken' => $submissionToken,
         ]);
     }
@@ -114,6 +115,9 @@ class ApplicationController extends Controller
                 'application' => 'This form has expired or was already submitted. Please review the application status or start a new application.',
             ]);
         }
+
+        // Normalize human-entered text before validation, review data, and storage.
+        $request->merge(ApplicationTextNormalizer::normalizeFields($request->all()));
 
         $regionCodes = array_column($locations->regions(), 'code');
         $selectedRegion = (string) $request->input('region_code', '');
@@ -166,8 +170,8 @@ class ApplicationController extends Controller
                 'max:255',
             ],
 
-            'honorific' => ['nullable', 'string', Rule::in(['Mr.', 'Ms.', 'Mrs.', 'Dr.', 'Prof.', 'Engr.', 'Atty.'])],
-            'suffix' => ['nullable', 'string', Rule::in(['Jr.', 'Sr.', 'II', 'III', 'IV'])],
+            'honorific' => ['nullable', 'string', 'max:20'],
+            'suffix' => ['nullable', 'string', 'max:20'],
 
             'gender' => [
                 'required',
@@ -407,12 +411,6 @@ class ApplicationController extends Controller
             'province_code.in' => 'Select a province that belongs to the chosen region.',
             'city_code.in' => 'Select a city or municipality that belongs to the chosen area.',
         ]);
-
-        foreach (['first_name', 'middle_name', 'last_name', 'father_name', 'mother_name', 'spouse_name'] as $nameField) {
-            if (array_key_exists($nameField, $validated)) {
-                $validated[$nameField] = NameNormalizer::normalize($validated[$nameField]);
-            }
-        }
 
         // Never treat browser-submitted geographic labels as authoritative.
         if (strcasecmp(trim($validated['country'] ?? 'Philippines'), 'Philippines') === 0) {
@@ -687,7 +685,7 @@ class ApplicationController extends Controller
         $token = $request->session()->get('application_confirmation_token');
         abort_unless(is_string($token) && preg_match('/^[a-f0-9]{64}$/', $token), 404);
 
-        $application = Application::where('confirmation_token_hash', hash('sha256', $token))
+        $application = Application::with('pendingCancellationRequest')->where('confirmation_token_hash', hash('sha256', $token))
             ->where('confirmation_token_expires_at', '>', now())
             ->firstOrFail();
 

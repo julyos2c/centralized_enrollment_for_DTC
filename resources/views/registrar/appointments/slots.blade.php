@@ -162,10 +162,10 @@
 
             {{-- Actions --}}
             <div class="dtc-slot-actions-block">
-                <form method="POST" action="{{ route('registrar.appointments.slots.status', $slot) }}" onsubmit="return confirm('Changing this slot status affects future bookings. Existing appointments remain on record and may need follow-up. Continue?')">
+                <form method="POST" action="{{ route('registrar.appointments.slots.status', $slot) }}" id="slot-status-{{ $slot->id }}">
                     @csrf @method('PUT')
                     <input type="hidden" name="status" value="{{ ($slot->status ?? 'open') === 'open' ? 'closed' : 'open' }}">
-                    <button class="dtc-icon-btn" type="submit" title="{{ ($slot->status ?? 'open') === 'open' ? 'Close slot' : 'Reopen slot' }}"><i data-lucide="{{ ($slot->status ?? 'open') === 'open' ? 'lock' : 'lock-open' }}"></i></button>
+                    <button class="dtc-icon-btn" type="button" title="{{ ($slot->status ?? 'open') === 'open' ? 'Close slot' : 'Reopen slot' }}" data-dtc-confirm data-dtc-confirm-tone="neutral" data-dtc-confirm-title="{{ ($slot->status ?? 'open') === 'open' ? 'Close appointment slot?' : 'Reopen appointment slot?' }}" data-dtc-confirm-message="Changing this slot affects future bookings. Existing appointments remain on record." data-dtc-confirm-ok="{{ ($slot->status ?? 'open') === 'open' ? 'Close Slot' : 'Reopen Slot' }}" data-dtc-confirm-form="#slot-status-{{ $slot->id }}"><i data-lucide="{{ ($slot->status ?? 'open') === 'open' ? 'lock' : 'lock-open' }}"></i></button>
                 </form>
                 {{-- Edit --}}
                 <button type="button"
@@ -191,9 +191,10 @@
                             class="dtc-icon-btn danger"
                             title="Delete slot"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Delete Appointment Slot?"
+                            data-dtc-confirm-title="Delete appointment slot?"
                             data-dtc-confirm-message="Delete this unused slot? Slots with appointment history are protected from deletion."
                             data-dtc-confirm-ok="Delete Slot"
+                            data-dtc-confirm-tone="danger"
                             data-dtc-confirm-form="#del-slot-{{ $slot->id }}">
                         <i data-lucide="trash-2"></i>
                     </button>

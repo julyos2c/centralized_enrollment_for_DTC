@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Application;
 use App\Models\Program;
+use App\Support\ApplicationTextNormalizer;
+use App\Support\NameNormalizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,67 @@ class PublicApplicationEducationTest extends TestCase
         $this->seedRoles();
         config(['services.application_submission.per_ip_per_hour' => 100]);
         Mail::fake();
+    }
+
+    private function personalFormXPath(string $html): \DOMXPath
+    {
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $document->loadHTML($html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        return new \DOMXPath($document);
+    }
+
+    public function test_personal_details_start_collapsed_without_disabling_fields_or_hiding_required_fields(): void
+    {
+        $response = $this->get(route('public.application.create'))->assertOk();
+        $xpath = $this->personalFormXPath($response->getContent());
+        $this->assertSame('false', $xpath->query('//*[@id="personalDetailsToggle"]')->item(0)->getAttribute('aria-expanded'));
+        $this->assertTrue($xpath->query('//*[@id="personalDetailsContent"]')->item(0)->hasAttribute('hidden'));
+        $this->assertSame(0, $xpath->query('//*[@id="personalDetailsContent"]//*[@required or @disabled]')->length);
+        $this->assertSame(4, $xpath->query('//*[@id="step-2"]//*[@required]')->length);
+        $names = [];
+        foreach ($xpath->query('//*[@id="step-2"]//input | //*[@id="step-2"]//select') as $field) {
+            $names[] = $field->getAttribute('name');
+        }
+        $this->assertSame(['honorific', 'first_name', 'middle_name', 'last_name', 'suffix'], array_slice($names, 0, 5));
+        $this->assertSame('Filipino', $xpath->query('//*[@id="nationality"]')->item(0)->getAttribute('value'));
+        $this->assertSame(6, $xpath->query('//*[@id="personalDetailsContent"]//input | //*[@id="personalDetailsContent"]//select')->length);
+    }
+
+    public function test_personal_details_open_for_returned_values_but_not_the_default_nationality(): void
+    {
+        foreach ([
+            [['nationality' => 'Filipino'], 'false'],
+            [['nationality' => 'Canadian'], 'true'],
+            [['birth_place' => 'Danao'], 'true'],
+            [['marital_status' => 'married', 'spouse_name' => 'Test Spouse'], 'true'],
+        ] as [$oldInput, $expanded]) {
+            $response = $this->withSession(['_old_input' => $oldInput])->get(route('public.application.create'))->assertOk();
+            $xpath = $this->personalFormXPath($response->getContent());
+            $this->assertSame($expanded, $xpath->query('//*[@id="personalDetailsToggle"]')->item(0)->getAttribute('aria-expanded'));
+            $this->assertSame($expanded === 'false', $xpath->query('//*[@id="personalDetailsContent"]')->item(0)->hasAttribute('hidden'));
+        }
+    }
+
+    public function test_optional_personal_validation_errors_reopen_the_disclosure(): void
+    {
+        $program = Program::factory()->create();
+        $this->get(route('public.application.create'))->assertOk();
+        $this->from(route('public.application.create'))->post(route('public.application.store'), [
+            'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
+            'academic_status' => 'new_student', 'program_id' => $program->id,
+            'first_name' => 'Test', 'last_name' => 'Applicant', 'gender' => 'female',
+            'birthdate' => '2005-01-01', 'email' => 'optional-error@example.test', 'ack_enrollment' => 'on',
+            'marital_status' => 'invalid-status',
+        ])->assertRedirect(route('public.application.create'))->assertSessionHasErrors('marital_status');
+        $response = $this->get(route('public.application.create'))->assertOk();
+        $xpath = $this->personalFormXPath($response->getContent());
+        $this->assertSame('true', $xpath->query('//*[@id="personalDetailsToggle"]')->item(0)->getAttribute('aria-expanded'));
+        $this->assertFalse($xpath->query('//*[@id="personalDetailsContent"]')->item(0)->hasAttribute('hidden'));
+        $this->assertGreaterThan(0, $xpath->query('//*[@id="personalDetailsContent"]//*[contains(@class,"wiz-err-msg")]')->length);
+        Mail::assertNothingSent();
     }
 
     public function test_education_fields_are_persisted_for_each_applicant_type_and_irrelevant_values_are_discarded(): void
@@ -67,7 +130,7 @@ class PublicApplicationEducationTest extends TestCase
                 'gender' => 'female',
                 'birthdate' => '2005-01-01',
                 'email' => $email,
-                'honorific' => 'Dr.',
+                'honorific' => 'Dr. Emerita',
                 'suffix' => 'Jr.',
                 'region_code' => '0700000000',
                 'province_code' => '0701200000',
@@ -86,7 +149,7 @@ class PublicApplicationEducationTest extends TestCase
             $this->assertSame('Senior High School', $application->education_level);
             $this->assertSame('Graduated', $application->education_status);
             $this->assertSame('Danao National High School', $application->most_recent_school);
-            $this->assertSame('Dr.', $application->honorific);
+            $this->assertSame('Dr. Emerita', $application->honorific);
             $this->assertSame('Jr.', $application->suffix);
             $this->assertSame('Region VII (Central Visayas)', $application->region);
             $this->assertSame('Bohol', $application->province);
@@ -100,6 +163,9 @@ class PublicApplicationEducationTest extends TestCase
 
             foreach (['shs_strand', 'previous_program', 'last_year_level', 'home_institution', 'home_program'] as $field) {
                 $expected = $specificFields[$field] ?? null;
+                if ($expected !== null && ApplicationTextNormalizer::isTitleCaseField($field)) {
+                    $expected = NameNormalizer::normalize($expected);
+                }
                 $isAllowed = match ($field) {
                     'shs_strand' => $type === 'new_student',
                     'previous_program' => in_array($type, ['transferee', 'shiftee', 'returnee'], true),
@@ -117,7 +183,20 @@ class PublicApplicationEducationTest extends TestCase
         $this->get(route('public.application.create'))
             ->assertOk()
             ->assertSee(asset('js/dtc-name-normalizer.js'), false)
-            ->assertSee(asset('js/application-wizard.js'), false);
+            ->assertSee(asset('js/application-wizard.js'), false)
+            ->assertSee('dtcApplicationTitleCaseFields', false)
+            ->assertSee('international_location', false)
+            ->assertSee('aria-label="Application steps"', false)
+            ->assertDontSee('id="wizardBar"', false)
+            ->assertDontSee('id="wizCurrentStep"', false)
+            ->assertSee('aria-controls="screeningNoticeContent"', false)
+            ->assertSee('aria-expanded="false"', false)
+            ->assertSee('About document review')
+            ->assertSee('type="text" name="honorific"', false)
+            ->assertSee('type="text" name="suffix"', false)
+            ->assertDontSee('Optional name details')
+            ->assertSee('id="identity-details-heading"', false)
+            ->assertSee('id="personal-additional-heading"', false);
 
         $this->post(route('public.application.store'), [
             'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
@@ -126,7 +205,8 @@ class PublicApplicationEducationTest extends TestCase
             'first_name' => 'jUAN',
             'middle_name' => '  aNGEL   pAUL  ',
             'last_name' => 'DELA   CRUZ',
-            'suffix' => 'III',
+            'honorific' => 'Atty. Emerita',
+            'suffix' => 'Esq.',
             'father_name' => "O'CONNOR",
             'mother_name' => 'ANNE-MARIE',
             'gender' => 'male',
@@ -140,14 +220,90 @@ class PublicApplicationEducationTest extends TestCase
         $this->assertSame('Juan', $stored->first_name);
         $this->assertSame('Angel Paul', $stored->middle_name);
         $this->assertSame('Dela Cruz', $stored->last_name);
+        $this->assertSame('Atty. Emerita', $stored->honorific);
         $this->assertSame("O'Connor", $stored->father_name);
         $this->assertSame('Anne-Marie', $stored->mother_name);
         $this->assertSame('MiXeD@example.test', $stored->email, 'Email casing must remain untouched.');
-        $this->assertSame('III', $stored->suffix);
+        $this->assertSame('Esq.', $stored->suffix);
 
         $this->get(route('public.application.success'))
             ->assertOk()
-            ->assertSee('Juan Angel Paul Dela Cruz III');
+            ->assertSee('Atty. Emerita Juan Angel Paul Dela Cruz Esq.');
+    }
+
+    public function test_application_human_text_is_title_cased_while_special_format_fields_are_preserved(): void
+    {
+        $program = Program::factory()->create();
+        $this->get(route('public.application.create'))->assertOk();
+
+        $payload = [
+            'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
+            'academic_status' => 'cross_enrollee',
+            'program_id' => $program->id,
+            'first_name' => 'jUAN',
+            'last_name' => 'DELA CRUZ',
+            'gender' => 'male',
+            'birthdate' => '2005-01-01',
+            'email' => ' MiXeD.Email@example.test ',
+            'phone' => ' +63 912-345-6789 ',
+            'current_address' => '  purok 2   remedios danao bohol, near st. john clinic.  ',
+            'international_location' => 'REMedios danao bohol',
+            'country' => '  UNITED states of AMERICA  ',
+            'barangay' => 'poblacion 2',
+            'postal_code' => ' 06004 ',
+            'religion' => 'ROMAN catholic',
+            'nationality' => 'fILIPINO',
+            'lrn' => ' 001234567890 ',
+            'pwd_id' => 'pwd-00Ab-19',
+            'most_recent_school' => 'danao national high school',
+            'school_location' => 'remedios, bohol',
+            'school_year_completed' => ' 2024–2025 ',
+            'home_institution' => 'danao community college',
+            'home_program' => 'bs information systems',
+            'last_year_level' => ' 2ND year, 1st SEMESTER ',
+            'father_occupation' => 'self-employed FARMER',
+            'parent_address' => '  purok 2   poblacion, danao. ',
+            'occupation' => 'part-time student',
+            'disability' => 'visual impairment',
+            'ack_enrollment' => 'on',
+        ];
+
+        $this->post(route('public.application.store'), $payload)
+            ->assertRedirect(route('public.application.success'));
+
+        $application = Application::where('first_name', 'Juan')->firstOrFail();
+        $stored = DB::table('applications')->where('id', $application->id)->first();
+
+        $this->assertSame('Purok 2 Remedios Danao Bohol, Near St. John Clinic.', $stored->current_address);
+        $this->assertSame('Remedios Danao Bohol', $stored->city);
+        $this->assertSame('United States Of America', $stored->country);
+        $this->assertSame('Poblacion 2', $stored->barangay);
+        $this->assertSame('Roman Catholic', $stored->religion);
+        $this->assertSame('Filipino', $stored->nationality);
+        $this->assertSame('Danao National High School', $stored->most_recent_school);
+        $this->assertSame('Remedios, Bohol', $stored->school_location);
+        $this->assertSame('Danao Community College', $stored->home_institution);
+        $this->assertSame('Bs Information Systems', $stored->home_program);
+        $this->assertSame('2nd Year, 1st Semester', $stored->last_year_level);
+        $this->assertSame('Self-Employed Farmer', $stored->father_occupation);
+        $this->assertSame('Purok 2 Poblacion, Danao.', $stored->parent_address);
+        $this->assertSame('Part-Time Student', $stored->occupation);
+        $this->assertSame('Visual Impairment', $stored->disability);
+
+        $this->assertSame('MiXeD.Email@example.test', $stored->email);
+        $this->assertSame('+63 912-345-6789', $stored->phone);
+        $this->assertSame('06004', $stored->postal_code);
+        $this->assertSame('001234567890', $stored->lrn);
+        $this->assertSame('pwd-00Ab-19', $stored->pwd_id);
+        $this->assertSame('2024–2025', $stored->school_year_completed);
+
+        $registrar = $this->makeUserWithRole('registrar');
+        $this->actingAs($registrar)
+            ->get(route('registrar.applications.show', $application))
+            ->assertOk()
+            ->assertSee('Purok 2 Remedios Danao Bohol, Near St. John Clinic.')
+            ->assertSee('Danao National High School')
+            ->assertSee('Danao Community College');
     }
 
     public function test_education_details_are_optional_for_all_five_types_and_submission_requires_the_acknowledgment(): void

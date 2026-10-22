@@ -111,11 +111,13 @@
 
     <div class="public-mobile-nav" id="welcomeMobileNav">
 
-        <a href="{{ route('landing') }}" class="nav-link">
+        <a href="{{ route('landing') }}"
+           class="nav-link {{ request()->routeIs('landing') ? 'active' : '' }}">
             Home
         </a>
 
-        <a href="{{ route('public.application.create') }}" class="nav-link">
+        <a href="{{ route('public.application.create') }}"
+           class="nav-link {{ request()->routeIs('public.application.create') ? 'active' : '' }}">
             Admissions
         </a>
 
@@ -411,7 +413,9 @@
 
         // -- Active navigation while scrolling -----------------------------
         (function () {
-            const navLinks = document.querySelectorAll('.public-nav-links .nav-link');
+            const navLinks = document.querySelectorAll(
+                '.public-nav-links .nav-link, #welcomeMobileNav .nav-link'
+            );
             const sections = document.querySelectorAll('#services, #process, #faqs');
 
             if (!navLinks.length || !sections.length) return;
@@ -439,13 +443,12 @@
 
                 // If we're above all sections, Home is active
                 if (!currentSection && window.scrollY < 300) {
-                    const homeLink = document.querySelector(
-                        '.public-nav-links .nav-link[href="{{ route("landing") }}"]'
+                    const homeLinks = document.querySelectorAll(
+                        '.public-nav-links .nav-link[href="{{ route("landing") }}"], ' +
+                        '#welcomeMobileNav .nav-link[href="{{ route("landing") }}"]'
                     );
 
-                    if (homeLink) {
-                        homeLink.classList.add('active');
-                    }
+                    homeLinks.forEach(link => link.classList.add('active'));
                 }
             }
 

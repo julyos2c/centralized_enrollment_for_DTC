@@ -26,16 +26,17 @@
     </div>
 </div>
 
-<div class="modal fade" id="dashboardAvatarConfirmModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboardAvatarConfirmTitle">
+<div class="modal fade dtc-avatar-confirm-modal" id="dashboardAvatarConfirmModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="dashboardAvatarConfirmTitle" aria-describedby="dashboardAvatarConfirmCopy">
     <div class="modal-dialog modal-dialog-centered dtc-avatar-confirm-dialog" role="document">
         <div class="modal-content dtc-avatar-confirm-card">
+            <button type="button" class="dtc-confirm-close" data-dismiss="modal" aria-label="Close"><i data-lucide="x" aria-hidden="true"></i></button>
             <div class="modal-body text-center">
                 <img id="dashboardAvatarConfirmPreview" class="dtc-avatar-confirm-preview" src="" alt="Cropped profile photo preview">
                 <h5 id="dashboardAvatarConfirmTitle" class="dtc-avatar-confirm-title">Use this profile photo?</h5>
-                <p class="dtc-avatar-confirm-copy">This will replace your current profile photo.</p>
+                <p class="dtc-avatar-confirm-copy" id="dashboardAvatarConfirmCopy">This will replace your current profile photo.</p>
                 <div class="dtc-avatar-confirm-actions">
-                    <button type="button" class="btn dtc-avatar-confirm-cancel" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn dtc-avatar-confirm-apply" id="dashboardAvatarConfirmApply">Save photo</button>
+                    <button type="button" class="dtc-confirm-cancel" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="dtc-confirm-ok" id="dashboardAvatarConfirmApply">Save photo</button>
                 </div>
             </div>
         </div>

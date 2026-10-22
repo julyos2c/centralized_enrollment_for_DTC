@@ -98,10 +98,10 @@
                                             class="dtc-icon-btn success"
                                             title="Verify payment"
                                             data-dtc-confirm
-                                            data-dtc-confirm-title="Verify GCash Payment?"
+                                            data-dtc-confirm-title="Verify GCash payment?"
                                             data-dtc-confirm-message="Confirm that reference number {{ $payment->reference_number }} has been validated in your GCash records."
                                             data-dtc-confirm-ok="Verify"
-                                            data-dtc-confirm-type="success"
+                                            data-dtc-confirm-tone="success"
                                             data-dtc-confirm-form="#verify-pay-{{ $payment->id }}">
                                         <i data-lucide="check-circle"></i>
                                     </button>
@@ -121,7 +121,7 @@
                             <div class="modal fade" id="rejectPayModal{{ $payment->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <form method="POST"
+                                        <form method="POST" id="reject-appointment-payment-{{ $payment->id }}"
                                               action="{{ route('registrar.appointments.payments.reject', $payment) }}">
                                             @csrf
                                             <div class="modal-header">
@@ -152,7 +152,7 @@
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
                                                         data-dismiss="modal">Back</button>
-                                                <button type="submit" class="btn btn-danger">
+                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The GCash payment will be rejected with the entered reason." data-dtc-confirm-ok="Reject Payment" data-dtc-confirm-form="#reject-appointment-payment-{{ $payment->id }}">
                                                     Reject Payment
                                                 </button>
                                             </div>
@@ -281,10 +281,10 @@
                                                 class="dtc-icon-btn success"
                                                 title="Confirm appointment"
                                                 data-dtc-confirm
-                                                data-dtc-confirm-title="Confirm Appointment?"
+                                                data-dtc-confirm-title="Confirm appointment?"
                                                 data-dtc-confirm-message="Confirm this appointment for {{ $appointment->user->name }}?"
                                                 data-dtc-confirm-ok="Confirm"
-                                                data-dtc-confirm-type="success"
+                                                data-dtc-confirm-tone="success"
                                                 data-dtc-confirm-form="#confirm-appt-{{ $appointment->id }}">
                                             <i data-lucide="check"></i>
                                         </button>
@@ -307,7 +307,7 @@
                             <div class="modal fade" id="cancelModal{{ $appointment->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <form method="POST"
+                                        <form method="POST" id="cancel-appointment-{{ $appointment->id }}"
                                               action="{{ route('registrar.appointments.cancel', $appointment) }}">
                                             @csrf
                                             <div class="modal-header">
@@ -329,7 +329,7 @@
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
                                                         data-dismiss="modal">Back</button>
-                                                <button type="submit" class="btn btn-danger">
+                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Cancel appointment?" data-dtc-confirm-message="The appointment will be cancelled with the entered reason." data-dtc-confirm-ok="Cancel Appointment" data-dtc-confirm-form="#cancel-appointment-{{ $appointment->id }}">
                                                     Confirm Cancel
                                                 </button>
                                             </div>

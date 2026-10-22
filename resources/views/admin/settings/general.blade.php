@@ -284,26 +284,26 @@
 @push('js')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    /* Upgrade native confirm() buttons to use DTC confirm modal.
+    /* Route the media removal buttons through the shared DTC confirm modal.
        We set data-dtc-confirm attributes at runtime so the logo/favicon
        buttons are already in the DOM when dtc-feedback.js processes clicks. */
     var logoBtn = document.querySelector('.dtc-remove-logo');
     if (logoBtn) {
         logoBtn.setAttribute('data-dtc-confirm', '');
-        logoBtn.setAttribute('data-dtc-confirm-title', 'Remove Logo?');
+        logoBtn.setAttribute('data-dtc-confirm-title', 'Remove logo?');
         logoBtn.setAttribute('data-dtc-confirm-message', 'The system logo will be removed and reverted to the default. Are you sure?');
         logoBtn.setAttribute('data-dtc-confirm-ok', 'Remove Logo');
-        logoBtn.setAttribute('data-dtc-confirm-type', 'warning');
+        logoBtn.setAttribute('data-dtc-confirm-tone', 'danger');
         logoBtn.setAttribute('data-dtc-confirm-form', '#remove-logo-form');
     }
 
     var faviconBtn = document.querySelector('.dtc-remove-favicon');
     if (faviconBtn) {
         faviconBtn.setAttribute('data-dtc-confirm', '');
-        faviconBtn.setAttribute('data-dtc-confirm-title', 'Remove Favicon?');
+        faviconBtn.setAttribute('data-dtc-confirm-title', 'Remove favicon?');
         faviconBtn.setAttribute('data-dtc-confirm-message', 'The favicon will be removed and reverted to the default. Are you sure?');
         faviconBtn.setAttribute('data-dtc-confirm-ok', 'Remove Favicon');
-        faviconBtn.setAttribute('data-dtc-confirm-type', 'warning');
+        faviconBtn.setAttribute('data-dtc-confirm-tone', 'danger');
         faviconBtn.setAttribute('data-dtc-confirm-form', '#remove-favicon-form');
     }
 });

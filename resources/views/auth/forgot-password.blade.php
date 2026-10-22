@@ -57,7 +57,7 @@
                         type="email"
                         name="email"
                         id="email"
-                        class="auth-input"
+                        class="auth-input @error('email') auth-input--error @enderror"
                         placeholder="Enter your registered email"
                         value="{{ old('email') }}"
                         autocomplete="email"

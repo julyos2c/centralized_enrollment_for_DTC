@@ -136,10 +136,9 @@
                                         data-remarks="{{ $credit->remarks }}">
                                     <i data-lucide="pencil"></i>
                                 </button>
-                                <form method="POST" action="{{ route('registrar.enrollments.credited-subjects.destroy', $credit) }}">
+                                <form method="POST" action="{{ route('registrar.enrollments.credited-subjects.destroy', $credit) }}" id="remove-credit-{{ $credit->id }}">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="dtc-icon-btn danger" title="Remove"
-                                            onclick="return confirm('Remove this credited subject record?')">
+                                    <button type="button" class="dtc-icon-btn danger" title="Remove" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Remove credited subject?" data-dtc-confirm-message="This credited subject record will be removed." data-dtc-confirm-ok="Remove Subject" data-dtc-confirm-form="#remove-credit-{{ $credit->id }}">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 </form>
@@ -250,7 +249,7 @@
                                     data-dtc-confirm-title="Promote to Alumni?"
                                     data-dtc-confirm-message="This will change {{ $enrollment->user->name }}'s role to Alumni and record their graduation year. This action cannot be undone."
                                     data-dtc-confirm-ok="Promote"
-                                    data-dtc-confirm-type="warning"
+                                    data-dtc-confirm-tone="success"
                                     data-dtc-confirm-form="#promote-alumni-submit-{{ $enrollment->id }}">
                                 <i data-lucide="user-check"></i> Confirm Promotion
                             </button>
@@ -295,10 +294,10 @@
                     <button type="button"
                             class="dtc-btn dtc-btn-success"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Approve Enrollment?"
+                            data-dtc-confirm-title="Approve enrollment?"
                             data-dtc-confirm-message="Are you sure you want to approve this enrollment? The student will be officially enrolled."
                             data-dtc-confirm-ok="Approve"
-                            data-dtc-confirm-type="warning"
+                            data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#approve-enrollment-{{ $enrollment->id }}">
                         <i data-lucide="check"></i> Approve
                     </button>
@@ -308,7 +307,7 @@
 
         <div class="dtc-review-footer-reject u-hidden" >
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
-            <button type="submit" form="rejectForm-{{ $enrollment->id }}" class="dtc-btn dtc-btn-danger">
+            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject enrollment?" data-dtc-confirm-message="The enrollment will be rejected with the reason entered above." data-dtc-confirm-ok="Reject Enrollment" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
                 <i data-lucide="check"></i> Confirm Rejection
             </button>
         </div>

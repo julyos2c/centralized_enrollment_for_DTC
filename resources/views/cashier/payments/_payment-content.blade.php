@@ -158,10 +158,10 @@
                         <button type="button"
                                 class="dtc-btn dtc-btn-success"
                                 data-dtc-confirm
-                                data-dtc-confirm-title="Verify GCash Payment?"
+                                data-dtc-confirm-title="Verify GCash payment?"
                                 data-dtc-confirm-message="This will verify the GCash payment and promote the applicant to student status. Are you sure?"
                                 data-dtc-confirm-ok="Verify Payment"
-                                data-dtc-confirm-type="warning"
+                                data-dtc-confirm-tone="success"
                                 data-dtc-confirm-form="#verify-gcash-{{ $latestPayment->id }}">
                             <i data-lucide="check"></i> Verify Payment
                         </button>
@@ -172,10 +172,10 @@
                     <button type="button"
                             class="dtc-btn dtc-btn-success"
                             data-dtc-confirm
-                            data-dtc-confirm-title="Confirm Cash Payment?"
+                            data-dtc-confirm-title="Confirm cash payment?"
                             data-dtc-confirm-message="Confirm that cash payment has been received from the student?"
                             data-dtc-confirm-ok="Confirm Payment"
-                            data-dtc-confirm-type="warning"
+                                data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#walkinForm-{{ $enrollment->id }}">
                         <i data-lucide="check"></i> Confirm Payment Received
                     </button>
@@ -185,7 +185,7 @@
 
         <div class="dtc-review-footer-reject u-hidden" >
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
-            <button type="submit" form="rejectForm-{{ $enrollment->id }}" class="dtc-btn dtc-btn-danger">
+            <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The submitted GCash payment will be marked as rejected." data-dtc-confirm-ok="Reject Payment" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
                 <i data-lucide="check"></i> Confirm Rejection
             </button>
         </div>

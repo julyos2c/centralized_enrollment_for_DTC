@@ -191,6 +191,16 @@ class Application extends Model
         return $this->hasMany(ApplicationDocument::class);
     }
 
+    public function cancellationRequests()
+    {
+        return $this->hasMany(ApplicationCancellationRequest::class);
+    }
+
+    public function pendingCancellationRequest()
+    {
+        return $this->hasOne(ApplicationCancellationRequest::class)->where('status', 'pending')->latestOfMany();
+    }
+
     /**
      * Resolve the enrollment associated with this application for progress
      * display, preferring the verified first academic-year enrollment.
@@ -289,6 +299,25 @@ class Application extends Model
                     'timestamp' => null,
                 ];
                 break;
+
+            case 'cancelled':
+                $timeline[1]['status'] = 'completed';
+                $timeline[1]['timestamp'] = $this->reviewed_at;
+                $timeline[3] = [
+                    'key' => 'decision',
+                    'label' => 'Application cancelled',
+                    'description' => 'The Registrar approved a cancellation request. The application record remains on file.',
+                    'status' => 'completed',
+                    'timestamp' => $this->cancellationRequests()->where('status', 'approved')->latest('id')->first()?->reviewed_at,
+                ];
+                $timeline[4] = [
+                    'key' => 'enrollment',
+                    'label' => 'Enrollment and payment',
+                    'description' => 'Enrollment is not available for a cancelled application.',
+                    'status' => 'skipped',
+                    'timestamp' => null,
+                ];
+                break;
         }
 
         return $timeline;
@@ -371,6 +400,7 @@ class Application extends Model
             'revision_required' => 'Your application requires document corrections. Please review the remarks and take the necessary action.',
             'approved' => 'Your application has been approved. You are eligible to begin enrollment; approval alone does not mean enrollment or payment is complete.',
             'rejected' => 'Your application was not approved. Please review the remarks and contact the Registrar if you have questions.',
+            'cancelled' => 'The Registrar approved your cancellation request. The application remains on file.',
             default => 'Application status unknown.',
         };
     }
@@ -391,6 +421,7 @@ class Application extends Model
             'revision_required' => 'Read the Registrar remarks and contact the Registrar using your reference number. This status page cannot receive corrected documents.',
             'approved' => $this->approvedApplicationNextStep($enrollment),
             'rejected' => 'Review the Registrar remarks and contact the Registrar using your reference number if you need clarification. This page does not offer an appeal or resubmission process.',
+            'cancelled' => 'This application is cancelled and cannot proceed to enrollment. Contact the Registrar if you need guidance about applying again.',
             default => 'Contact the Registrar and provide your application reference number for guidance.',
         };
     }

@@ -18,30 +18,64 @@
 
 <div class="application-success-page">
     <div class="application-success-shell">
-        <header class="application-success-hero">
-            <div class="application-success-icon" aria-hidden="true"><i data-lucide="check"></i></div>
-            <p class="application-success-eyebrow">Admissions application received</p>
-            <h1>Application submitted successfully</h1>
-            <p>Your pre-enrollment application is now awaiting preliminary screening by the Registrar.</p>
-        </header>
+        @if($application->status === 'cancelled')
+            <header class="application-success-hero">
+                <div class="application-success-icon is-cancelled" aria-hidden="true"><i data-lucide="x"></i></div>
+                <p class="application-success-eyebrow">Admissions application</p>
+                <h1>Application cancelled</h1>
+                <p>The Registrar approved your cancellation request. Your application record remains on file.</p>
+            </header>
+        @else
+            <header class="application-success-hero is-compact">
+                <p class="application-success-eyebrow">Admissions application</p>
+                <h1>Your application</h1>
+            </header>
+        @endif
 
         <section class="application-reference-card" aria-labelledby="application-reference-title">
-            <div class="application-reference-heading">
-                <div>
-                    <p class="application-success-eyebrow">Keep this for your records</p>
-                    <h2 id="application-reference-title">Application reference number</h2>
-                </div>
-                <span class="application-submitted-badge"><i data-lucide="clock-3" aria-hidden="true"></i> Submitted</span>
-            </div>
+            <h2 id="application-reference-title" class="application-reference-label">Application reference number</h2>
             <div class="application-reference-value">{{ $application->reference_no }}</div>
             <div class="application-reference-footer">
-                <p>Use this reference number and your email address to check your application status.</p>
-                <button type="button" class="application-copy-reference" data-reference-copy="{{ $application->reference_no }}">
-                    <i data-lucide="copy" aria-hidden="true"></i><span>Copy reference</span>
-                </button>
+                <p>Copy this number, then enter it with your email on the status page.</p>
+                <div class="application-reference-actions">
+                    <button type="button" class="application-copy-reference" data-reference-copy="{{ $application->reference_no }}">
+                        <i data-lucide="copy" aria-hidden="true"></i><span>Copy reference</span>
+                    </button>
+                    <a href="{{ route('public.application.status.form') }}" class="application-reference-link">Go to status page <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+                </div>
             </div>
             <span class="visually-hidden" aria-live="polite" id="referenceCopyStatus"></span>
         </section>
+
+        @if($application->pendingCancellationRequest)
+            <section class="application-screening-notice" role="status">
+                <i data-lucide="hourglass" aria-hidden="true"></i>
+                <div>Your cancellation request is awaiting Registrar review. The application remains {{ str_replace('_', ' ', $application->status) }} until a decision is recorded.</div>
+            </section>
+        @elseif(in_array($application->status, ['submitted', 'under_review', 'revision_required'], true) && !$application->user_id)
+            <section class="application-cancel-card" aria-labelledby="cancel-application-title">
+                <div class="application-cancel-head">
+                    <div class="application-cancel-icon" aria-hidden="true"><i data-lucide="file-x-2"></i></div>
+                    <div>
+                        <h2 id="cancel-application-title">Request application cancellation</h2>
+                        <p>This does not cancel the application immediately. The Registrar will review your request and decide whether it can be cancelled.</p>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('public.application.cancel') }}" class="application-cancel-form" id="application-cancellation-form">
+                    @csrf
+                    <label for="cancellation-reason">Reason for the request</label>
+                    <textarea id="cancellation-reason" name="reason" rows="3" minlength="5" maxlength="500" required placeholder="Tell the Registrar why you want to cancel this application…" data-cancel-reason>{{ old('reason') }}</textarea>
+                    <div class="application-cancel-meta">
+                        <span class="application-cancel-count" data-cancel-count aria-live="off">0 / 500</span>
+                    </div>
+                    @error('reason')<p class="application-cancel-error" role="alert">{{ $message }}</p>@enderror
+                    @if($errors->has('cancellation'))<p class="application-cancel-error" role="alert">{{ $errors->first('cancellation') }}</p>@endif
+                    <div class="application-cancel-actions">
+                        <button type="button" class="application-cancel-button" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Request application cancellation?" data-dtc-confirm-message="This sends a cancellation request to the Registrar for review." data-dtc-confirm-ok="Send Request" data-dtc-confirm-form="#application-cancellation-form"><i data-lucide="send" aria-hidden="true"></i> Request cancellation</button>
+                    </div>
+                </form>
+            </section>
+        @endif
 
         <div class="application-success-grid">
             <section class="application-success-card" aria-labelledby="application-summary-title">
@@ -53,18 +87,22 @@
                     <div><dt>Applicant</dt><dd>{{ $application->full_name }}</dd></div>
                     <div><dt>Applicant type</dt><dd>{{ $applicantType }}</dd></div>
                     <div><dt>Email address</dt><dd>{{ $application->email }}</dd></div>
-                    <div><dt>Current status</dt><dd><span class="application-submitted-badge">Submitted</span></dd></div>
+                    <div><dt>Current status</dt><dd><span class="application-submitted-badge">{{ ucwords(str_replace('_', ' ', $application->status)) }}</span></dd></div>
                 </dl>
             </section>
 
             <aside class="application-next-steps" aria-labelledby="application-next-steps-title">
                 <div class="application-success-card-icon"><i data-lucide="list-checks" aria-hidden="true"></i></div>
                 <h2 id="application-next-steps-title">What happens next</h2>
-                <ol>
-                    <li>The Registrar reviews your submitted information.</li>
-                    <li>Check your status using your reference number and email.</li>
-                    <li>Follow any instructions or document requests from the Registrar.</li>
-                </ol>
+                @if($application->status === 'cancelled')
+                    <p>Your application will not proceed to enrollment. Contact the Registrar if you need guidance about applying again.</p>
+                @else
+                    <ol>
+                        <li>The Registrar reviews your submitted information.</li>
+                        <li>Check your status using your reference number and email.</li>
+                        <li>Follow any instructions or document requests from the Registrar.</li>
+                    </ol>
+                @endif
             </aside>
         </div>
 
@@ -115,15 +153,39 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Copy reference
         var copyButton = document.querySelector('[data-reference-copy]');
         var copyStatus = document.getElementById('referenceCopyStatus');
-        if (!copyButton || !navigator.clipboard) return;
-        copyButton.addEventListener('click', function () {
-            navigator.clipboard.writeText(copyButton.dataset.referenceCopy).then(function () {
-                copyButton.querySelector('span').textContent = 'Copied';
-                copyStatus.textContent = 'Application reference copied to clipboard.';
+        if (copyButton && navigator.clipboard) {
+            copyButton.addEventListener('click', function () {
+                navigator.clipboard.writeText(copyButton.dataset.referenceCopy).then(function () {
+                    copyButton.querySelector('span').textContent = 'Copied';
+                    copyStatus.textContent = 'Application reference copied to clipboard.';
+                });
             });
-        });
+        }
+
+        // Cancellation reason character counter
+        var reason = document.querySelector('[data-cancel-reason]');
+        var count = document.querySelector('[data-cancel-count]');
+        if (reason && count) {
+            var update = function () { count.textContent = reason.value.length + ' / ' + reason.maxLength; };
+            reason.addEventListener('input', update);
+            update();
+        }
+
+        // One-time success toast (not repeated on refresh or revisit in this tab)
+        @if($application->status === 'submitted')
+        var toastKey = 'dtc-application-toast-{{ $application->reference_no }}';
+        try {
+            if (!sessionStorage.getItem(toastKey)) {
+                sessionStorage.setItem(toastKey, '1');
+                window.dtcToast && window.dtcToast.success('Your pre-enrollment application was submitted. Keep your reference number.', { title: 'Application submitted' });
+            }
+        } catch (e) {
+            window.dtcToast && window.dtcToast.success('Your pre-enrollment application was submitted.', { title: 'Application submitted' });
+        }
+        @endif
     });
 </script>
 @endsection
