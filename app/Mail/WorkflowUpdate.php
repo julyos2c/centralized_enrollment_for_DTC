@@ -18,7 +18,7 @@ class WorkflowUpdate extends Mailable implements ShouldQueue
         public string $eventTitle,
         public string $eventMessage,
         public ?string $actionUrl = null,
-        public string $actionLabel = 'View in DTC EMS',
+        public string $actionLabel = 'View in DTC Nexus',
         public ?int $notificationId = null
     ) {
         $this->afterCommit();
@@ -52,7 +52,7 @@ class WorkflowUpdate extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('DTC EMS: '.$this->eventTitle)
+        return $this->subject('DTC Nexus: '.$this->eventTitle)
             ->view('emails.workflow-update');
     }
 }

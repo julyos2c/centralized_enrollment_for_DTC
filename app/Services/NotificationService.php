@@ -95,7 +95,7 @@ class NotificationService
         string $message,
         string $type = 'info',
         ?string $link = null,
-        string $actionLabel = 'View in DTC EMS'
+        string $actionLabel = 'View in DTC Nexus'
     ): bool {
         try {
             $notification = DB::transaction(function () use ($user, $eventKey, $title, $message, $type, $link) {

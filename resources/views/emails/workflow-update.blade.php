@@ -12,7 +12,7 @@
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;overflow:hidden;border:1px solid #e2e8f0;border-radius:14px;background:#ffffff;">
                     <tr>
                         <td style="padding:22px 26px;background:#0f4cdb;color:#ffffff;">
-                            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">DTC EMS</div>
+                            <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">DTC Nexus</div>
                             <div style="margin-top:5px;font-size:21px;font-weight:700;line-height:1.3;">{{ $eventTitle }}</div>
                         </td>
                     </tr>
@@ -25,7 +25,7 @@
                                     <a href="{{ $actionUrl }}" style="display:inline-block;padding:11px 18px;border-radius:9px;background:#0f4cdb;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">{{ $actionLabel }}</a>
                                 </p>
                             @endif
-                            <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;line-height:1.6;">This is a transactional update about your DTC EMS record.</p>
+                            <p style="margin:24px 0 0;color:#94a3b8;font-size:12px;line-height:1.6;">This is a transactional update about your DTC Nexus record.</p>
                         </td>
                     </tr>
                 </table>
