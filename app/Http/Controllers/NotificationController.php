@@ -24,9 +24,15 @@ class NotificationController extends Controller
     public function cashierPoll(Request $request)
     {
         abort_unless($request->user()->hasRole('cashier'), 403);
+        return $this->poll($request);
+    }
+
+    public function poll(Request $request)
+    {
 
         $data = $request->validate([
             'after_id' => ['nullable', 'integer', 'min:0'],
+            'welcome_token' => ['nullable', 'uuid'],
         ]);
         $query = UserNotification::where('user_id', $request->user()->id)
             ->where('id', '>', (int) ($data['after_id'] ?? 0))
@@ -47,9 +53,17 @@ class NotificationController extends Controller
 
         return response()->json([
             'notifications' => $notifications,
+            'student_welcome' => \App\Services\StudentWelcome::pending($request->user(), $data['welcome_token'] ?? null),
             'unread_count' => $request->user()->unreadNotificationsCount(),
             'has_more' => $hasMore,
         ])->header('Cache-Control', 'no-store, private');
+    }
+
+    public function studentWelcome(Request $request)
+    {
+        $data = $request->validate(['action' => ['required', 'in:claim,acknowledge,release'], 'token' => ['required', 'uuid']]);
+        $accepted = \App\Services\StudentWelcome::update($request->user(), $data['action'], $data['token']);
+        return response()->json(['accepted' => $accepted])->header('Cache-Control', 'no-store, private');
     }
 
     /** Mark one notification as read and redirect to its link. */

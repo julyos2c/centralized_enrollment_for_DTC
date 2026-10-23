@@ -108,7 +108,8 @@
         if (stopped || busy) return schedule(1000);
         busy = true;
         try {
-            var response = await fetch(endpoint + '?after_id=' + encodeURIComponent(lastId), {
+            var welcomeQuery = window.dtcStudentWelcome ? window.dtcStudentWelcome.pollQuery() : '';
+            var response = await fetch(endpoint + '?after_id=' + encodeURIComponent(lastId) + welcomeQuery, {
                 credentials: 'same-origin',
                 cache: 'no-store',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -123,6 +124,7 @@
             }
 
             var result = await response.json();
+            if (window.dtcStudentWelcome) window.dtcStudentWelcome.receive(result.student_welcome);
             (result.notifications || []).forEach(function (notification) {
                 appendNotification(notification);
                 lastId = Math.max(lastId, parseInt(notification.id, 10) || 0);

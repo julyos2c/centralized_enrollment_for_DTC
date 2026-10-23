@@ -103,6 +103,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     // ── NOTIFICATIONS & SEARCH (all roles) ───────────────────────────────────────
     Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/poll', [NotificationController::class, 'poll'])->middleware('throttle:120,1')->name('notifications.poll');
+    Route::post('/notifications/student-welcome', [NotificationController::class, 'studentWelcome'])->middleware('throttle:120,1')->name('notifications.student-welcome');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');

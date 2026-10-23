@@ -124,6 +124,7 @@ class PaymentController extends Controller
 
             if ($user->hasRole('new_applicant')) {
                 $user->syncRoles(['student']);
+                \App\Services\StudentWelcome::record($user);
             } elseif (! $user->hasAnyRole(['student', 'alumni', 'admin', 'registrar', 'cashier'])) {
                 $user->assignRole('student');
             }
@@ -206,6 +207,7 @@ class PaymentController extends Controller
                 }
 
                 $user->syncRoles(['student']);
+                \App\Services\StudentWelcome::record($user);
             } elseif (! $user->hasAnyRole(['student', 'alumni', 'admin', 'registrar', 'cashier'])) {
                 $user->assignRole('student');
             }

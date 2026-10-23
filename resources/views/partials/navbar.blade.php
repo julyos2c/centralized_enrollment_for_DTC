@@ -190,8 +190,12 @@
     </div>
 </li>
 
-@if(auth()->user()->hasRole('cashier'))
-<script src="{{ asset('js/cashier-notification-polling.js') }}" data-endpoint="{{ route('cashier.notifications.poll') }}" defer></script>
-@endif
+@include('components.dtc.student-welcome')
+<script src="{{ asset('js/student-welcome.js') }}" defer></script>
+<script src="{{ asset('js/cashier-notification-polling.js') }}" data-endpoint="{{ route(auth()->user()->hasRole('cashier') ? 'cashier.notifications.poll' : 'notifications.poll') }}" defer></script>
 
 @endsection
+
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/student-welcome.css') }}">
+@endpush
