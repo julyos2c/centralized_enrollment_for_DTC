@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verify your email | DTC EMS</title>
+    <title>Verify your email | DTC Nexus</title>
     @include('partials.pwa-head')
     @include('partials.auth-appearance')
 </head>
@@ -12,7 +12,7 @@
     <header class="auth-card-header">
         <div class="auth-brand">
             <img src="{{ asset('images/DTC-LOGO.webp') }}" alt="DTC Logo">
-            <div><p class="auth-brand-name">DTC EMS</p><p class="auth-brand-sub">Danao Technological College</p></div>
+            <div><p class="auth-brand-name">DTC Nexus</p><p class="auth-brand-sub">Danao Technological College</p></div>
         </div>
         <p class="auth-card-tagline">Keep your <span>account secure.</span></p>
     </header>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-    @include('partials.pwa-head')<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up portal account — DTC EMS</title>@include('partials.auth-appearance')</head>
-<body class="auth-activation-page"><main class="auth-card"><header class="auth-card-header"><div class="auth-brand"><img src="{{ asset('images/DTC-LOGO.webp') }}" alt="DTC Logo"><div><p class="auth-brand-name">DTC EMS</p><p class="auth-brand-sub">Danao Technological College</p></div></div><p class="auth-card-tagline">Set up your <span>portal account.</span></p></header>
+    @include('partials.pwa-head')<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Set up portal account — DTC Nexus</title>@include('partials.auth-appearance')</head>
+<body class="auth-activation-page"><main class="auth-card"><header class="auth-card-header"><div class="auth-brand"><img src="{{ asset('images/DTC-LOGO.webp') }}" alt="DTC Logo"><div><p class="auth-brand-name">DTC Nexus</p><p class="auth-brand-sub">Danao Technological College</p></div></div><p class="auth-card-tagline">Set up your <span>portal account.</span></p></header>
 <section class="auth-card-body"><h1 class="auth-card-title">Choose your password</h1>
 @if ($valid)
     <p class="auth-card-subtitle">Create a password to verify your email and activate your account.</p>
