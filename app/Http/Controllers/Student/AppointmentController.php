@@ -233,18 +233,6 @@ class AppointmentController extends Controller
             'purpose'             => ['required', 'string', 'max:500'],
         ]);
 
-        $appointment->load('documentRequest');
-        $linkedRequest = $appointment->documentRequest;
-        if ($linkedRequest
-            && $linkedRequest->document_type !== match ($validated['document_type']) {
-                'transcript' => 'tor',
-                'tor' => 'true_copy',
-                default => $validated['document_type'],
-            }
-            && in_array($linkedRequest->payment_status, ['pending_verification', 'verified'], true)) {
-            return back()->withErrors(['document_type' => 'The document type cannot be changed after payment has been submitted. Contact the Registrar for help.'])->withInput();
-        }
-
         $original = $appointment->getOriginal();
         $changes = [];
         if ($original['document_type'] !== $validated['document_type']) $changes[] = 'document type changed to ' . ucfirst($validated['document_type']);
@@ -254,7 +242,21 @@ class AppointmentController extends Controller
         }
         if ($original['purpose'] !== $validated['purpose']) $changes[] = 'purpose updated';
 
-        DB::transaction(function () use ($validated, $appointment, $linkedRequest) {
+        DB::transaction(function () use ($validated, $appointment) {
+            $appointment = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
+            if ($appointment->status !== 'pending') {
+                throw ValidationException::withMessages(['appointment' => 'This booking has changed. Only pending appointments can be edited.']);
+            }
+            $linkedRequest = DocumentRequest::where('appointment_id', $appointment->id)->lockForUpdate()->first();
+            $requestType = match ($validated['document_type']) {
+                'transcript' => 'tor',
+                'tor' => 'true_copy',
+                default => $validated['document_type'],
+            };
+            $typeChanged = $linkedRequest && $linkedRequest->document_type !== $requestType;
+            if ($typeChanged && ($linkedRequest->is_paid || in_array($linkedRequest->payment_status, ['pending_verification', 'verified'], true))) {
+                throw ValidationException::withMessages(['document_type' => 'The document type cannot be changed after payment has been submitted. Contact the Registrar for help.']);
+            }
             if ($validated['appointment_slot_id'] != $appointment->appointment_slot_id) {
                 $slot = AppointmentSlot::whereKey($validated['appointment_slot_id'])->lockForUpdate()->firstOrFail();
                 if (! $slot->isAvailable() || app(AppointmentScheduleService::class)->isClosed($slot->date, $slot->start_time, $slot->end_time) || $slot->date < today()->toDateString() || ($slot->date === today()->toDateString() && $slot->start_time <= now()->format('H:i:s'))) {
@@ -267,14 +269,12 @@ class AppointmentController extends Controller
 
             $appointment->update($validated);
             if ($linkedRequest) {
-                $requestType = match ($validated['document_type']) {
-                    'transcript' => 'tor',
-                    'tor' => 'true_copy',
-                    default => $validated['document_type'],
-                };
-                $fee = (float) Setting::get('document_fee_' . $requestType, match ($requestType) {
-                    'tor' => 50, 'diploma' => 100, 'certification' => 30, 'true_copy' => 50,
-                });
+                $fee = $linkedRequest->fee;
+                if ($typeChanged) {
+                    $fee = (float) Setting::get('document_fee_' . $requestType, match ($requestType) {
+                        'tor' => 50, 'diploma' => 100, 'certification' => 30, 'true_copy' => 50,
+                    }) * $linkedRequest->copies;
+                }
                 $linkedRequest->update([
                     'document_type' => $requestType,
                     'purpose' => $validated['purpose'],
@@ -312,9 +312,9 @@ class AppointmentController extends Controller
 
         return match ($result['result']) {
             'already_cancelled' => back()->with('error', 'This appointment has already been cancelled.'),
-            'invalid_status' => back()->withErrors(['error' => 'Only pending appointments can be cancelled.']),
+            'invalid_status' => back()->withErrors(['error' => 'Only pending appointments can be cancelled here. Contact the Registrar to change a confirmed booking.']),
             'verified_legacy_payment' => back()->withErrors(['error' => 'This appointment has a verified payment. Contact the Registrar to resolve it before cancellation.']),
-            default => redirect()->route('portal.appointments.index')->with('success', 'Appointment cancelled.'),
+            default => redirect()->route('portal.appointments.index')->with('success', $result['user_message']),
         };
     }
 
@@ -378,11 +378,11 @@ class AppointmentController extends Controller
             'GCash Proof Received',
             'We received your appointment payment proof. It is awaiting verification.',
             'info',
-            route('portal.appointments.index'),
+            route('portal.payments.appointment', $appointment),
             'View payment status'
         );
 
-        return back()->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
+        return redirect()->route('portal.payments.appointment', $appointment)->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
     }
 
     public function viewProof(AppointmentPayment $payment)
@@ -482,7 +482,7 @@ class AppointmentController extends Controller
             'Your GCash payment proof was submitted. The Cashier will verify it against the received funds.'
         );
 
-        return redirect()->route('portal.appointments.index')->with('success', 'GCash proof submitted. The Cashier will verify it.');
+        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'GCash proof submitted. The Cashier will verify it.');
     }
 
     public function viewDocumentProof(DocumentRequest $documentRequest)

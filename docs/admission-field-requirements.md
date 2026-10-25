@@ -53,7 +53,7 @@ All education fields are currently optional because exact DTC requirements have 
 
 | Field | Requirement / applicant type | Frontend label and indicator | Laravel validation | Persisted | Review / Registrar detail |
 |---|---|---|---|---|---|
-| `education_level` | Optional; all five | Highest or current education level (Optional) | nullable; Junior High School, Senior High School, College, Other | `education_level` | Yes / Yes |
+| `education_level` | Optional; choices depend on applicant type | Highest or current education level | nullable; New Student: Senior High School or Other; Transferee/Shiftee/Returnee/Cross-Enrollee: College. Shared rules in ApplicationEducation. | `education_level` | Yes / Yes |
 | `education_status` | Optional; all five | Completion status (Optional) | nullable; Graduated, Currently attending, Not completed | `education_status` | Yes / Yes |
 | `most_recent_school` | Optional; all five | Most recent school attended (Optional) | nullable string, max 255 | `most_recent_school` | Yes / Yes |
 | `school_year_completed` | Optional; all five | School year completed or last attended (Optional) | nullable string, max 30 | `school_year_completed` | Yes / Yes |

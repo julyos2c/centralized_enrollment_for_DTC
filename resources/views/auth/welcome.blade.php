@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DTC Nexus — Admissions &amp; Enrollment System</title>
@@ -18,7 +19,9 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem('dtc-ems-theme') === 'dark') {
+                var saved;
+                try { saved = localStorage.getItem('dtc-ems-theme'); } catch (e) {}
+                if (saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dtc-dark-preload');
                     document.documentElement.classList.add('dtc-dark');
                 }
@@ -160,7 +163,7 @@
                         </a>
 
                         <button type="button" class="btn-secondary-cta" data-signin-modal="trigger">
-                            Sign In to Portal 
+                            Sign in to your account
                         </button>
                     </div>
 
@@ -481,9 +484,17 @@
             toggle.addEventListener('click', toggleMobileNav);
 
             // Close menu when clicking a mobile navigation link
-            mobileNav.querySelectorAll('a').forEach(link => {
+            mobileNav.querySelectorAll('a, button').forEach(link => {
                 link.addEventListener('click', closeMobileNav);
             });
+
+            function dismissOutside(event) {
+                if (!toggle.contains(event.target) && !mobileNav.contains(event.target)) closeMobileNav();
+            }
+            document.addEventListener('pointerdown', dismissOutside, { passive: true });
+            document.addEventListener('touchstart', dismissOutside, { passive: true });
+            document.addEventListener('click', dismissOutside);
+            document.addEventListener('scroll', closeMobileNav, { passive: true, capture: true });
 
             // Close menu when pressing Escape
             document.addEventListener('keydown', function (e) {
@@ -494,7 +505,7 @@
 
             // Close menu if resized back to desktop
             window.addEventListener('resize', function () {
-                if (window.innerWidth > 768) {
+                if (window.innerWidth >= 992) {
                     closeMobileNav();
                 }
             });

@@ -1,20 +1,34 @@
 @extends('layouts.public')
 @section('title', 'Change temporary password')
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/required-password.css') }}">
+@endsection
 @section('content')
-<div class="container py-5" style="max-width:520px">
-    <h1 class="h4">Change your temporary password</h1>
-    <p>Choose a new password before continuing to your account.</p>
+<div class="required-password-page">
+<section class="required-password-card" aria-labelledby="required-password-title">
+    <header>
+        <p class="required-password-eyebrow">Account setup</p>
+        <h1 id="required-password-title">Set a new password</h1>
+        <p>Replace your temporary password to continue.</p>
+    </header>
     @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
-    <form method="POST" action="{{ route('account.password.update') }}">
+    <form method="POST" action="{{ route('account.password.update') }}" data-password-distinct data-password-icon-toggles>
         @csrf
-        <label for="temporary-password">Temporary password</label>
-        <input id="temporary-password" name="current_password" type="password" class="form-control mb-3" autocomplete="current-password" required>
-        <label for="required-password">New password</label>
-        <input id="required-password" name="password" type="password" class="form-control mb-3" autocomplete="new-password" minlength="8" required>
-        <label for="required-confirmation">Confirm new password</label>
-        <input id="required-confirmation" name="password_confirmation" type="password" class="form-control mb-3" autocomplete="new-password" minlength="8" required>
-        <button class="btn btn-primary" type="submit">Change password</button>
+        <div class="form-group">
+            <label for="temporary-password">Temporary password</label>
+            <div class="required-password-control"><input id="temporary-password" name="current_password" type="password" class="form-control" autocomplete="current-password" required></div>
+        </div>
+        <div class="form-group">
+            <label for="required-password">New password</label>
+            <div class="required-password-control"><input id="required-password" name="password" type="password" class="form-control" autocomplete="new-password" minlength="8" required></div>
+        </div>
+        <div class="form-group">
+            <label for="required-confirmation">Confirm new password</label>
+            <div class="required-password-control"><input id="required-confirmation" name="password_confirmation" type="password" class="form-control" autocomplete="new-password" minlength="8" required></div>
+        </div>
+        <button class="btn btn-primary required-password-submit" type="submit">Save password</button>
     </form>
-    <form method="POST" action="{{ route('logout') }}" class="mt-3">@csrf<button class="btn btn-secondary" type="submit">Log out</button></form>
+    <form method="POST" action="{{ route('logout') }}" class="required-password-exit">@csrf<button type="submit">Log out</button></form>
+</section>
 </div>
 @endsection

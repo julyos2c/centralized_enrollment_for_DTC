@@ -320,7 +320,7 @@ class DocumentRequestController extends Controller
             'We received your updated GCash proof. Your payment is awaiting Cashier verification.'
         );
 
-        return redirect()->route('portal.documents.index')->with('success', 'Payment proof resubmitted and awaiting Cashier verification.');
+        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'Payment proof resubmitted and awaiting Cashier verification.');
     }
 
     public function viewProof(DocumentRequest $documentRequest)

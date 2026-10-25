@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password — DTC Nexus</title>
@@ -8,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth-pages.css') }}">
 </head>
-<body>
+<body class="auth-activation-page">
 
 <div class="auth-card">
 
@@ -30,23 +31,17 @@
     <div class="auth-card-body">
 
         @if (session('status'))
-            <div class="auth-alert auth-alert--success">
-                <i data-lucide="check-circle"></i>
-                {{ session('status') }}
+            <div class="auth-alert auth-alert--success" role="status">
+                <div>{{ session('status') }}<p class="auth-message-help">No email? Check your spam folder or try again later.</p></div>
             </div>
         @endif
 
-        <div class="auth-icon-badge">
-            <i data-lucide="key"></i>
-        </div>
-
-        <h1 class="auth-card-title">Forgot Password?</h1>
+        <h1 class="auth-card-title">Forgot password?</h1>
         <p class="auth-card-subtitle">
-            Enter the email address linked to your account and
-            we'll send you a secure reset link.
+            Enter your account email.
         </p>
 
-        <form method="POST" action="{{ route('password.email') }}">
+        <form method="POST" action="{{ route('password.email') }}" data-link-request>
             @csrf
 
             <div class="auth-field">
@@ -74,8 +69,7 @@
             </div>
 
             <button type="submit" class="auth-btn" data-loading-text="Sending link…">
-                <i data-lucide="send" aria-hidden="true"></i>
-                Send Reset Link
+                Send reset link
             </button>
         </form>
 
@@ -100,5 +94,6 @@
             if (window.lucide) lucide.createIcons();
         });
     </script>
+<script src="{{ asset('js/auth-link-request.js') }}" defer></script>
 </body>
 </html>

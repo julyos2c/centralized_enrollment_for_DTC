@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -44,7 +45,9 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem('dtc-ems-theme') === 'dark') {
+                var saved;
+                try { saved = localStorage.getItem('dtc-ems-theme'); } catch (e) {}
+                if (saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dtc-dark-preload');
                     document.documentElement.classList.add('dtc-dark');
                 }
@@ -86,6 +89,7 @@
 
     {{-- Page-specific scripts --}}
     @yield('scripts')
+    @include('components.dtc.password-guidance')
 
     {{-- Lucide icon initialisation — runs after all page content is in the DOM --}}
     <script>

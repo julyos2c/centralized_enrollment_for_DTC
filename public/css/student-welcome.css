@@ -1,0 +1,52 @@
+.student-welcome[hidden] { display: none !important; }
+.student-welcome {
+    --welcome-surface: var(--dtc-surface, #fff);
+    --welcome-heading: #0f172a;
+    --welcome-secondary: #475569;
+    --welcome-primary: var(--dtc-primary, #0f4cdb);
+    --welcome-primary-hover: var(--dtc-primary-hover, #0b43c1);
+    --welcome-focus: #2563eb;
+    --welcome-backdrop: rgba(15, 23, 42, .55);
+    --welcome-emblem-outer: #e7eeff;
+    --welcome-emblem-shadow: rgba(15, 76, 219, .2);
+}
+:is(html.dtc-dark, body.dtc-dark) .student-welcome {
+    --welcome-surface: var(--dtc-surface-soft, #1e293b);
+    --welcome-heading: #f1f5f9;
+    --welcome-secondary: var(--dtc-text-secondary, #cbd5e1);
+    --welcome-primary: #2563eb;
+    --welcome-primary-hover: #1d4ed8;
+    --welcome-focus: #93c5fd;
+    --welcome-backdrop: rgba(2, 6, 23, .7);
+    --welcome-emblem-outer: rgba(47, 107, 255, .18);
+    --welcome-emblem-shadow: rgba(0, 0, 0, .4);
+}
+.student-welcome-emblem { display: grid; place-items: center; width: 120px; height: 120px; margin: 0 auto 28px; border-radius: 50%; background: var(--welcome-emblem-outer); }
+.student-welcome-emblem > span { display: grid; place-items: center; width: 88px; height: 88px; border-radius: 50%; background: var(--welcome-primary); color: #fff; box-shadow: 0 8px 20px var(--welcome-emblem-shadow); }
+.student-welcome-emblem svg { width: 38px; height: 38px; }
+.student-welcome { position: fixed; inset: 0; z-index: 1080; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--welcome-backdrop); font-family: Poppins, sans-serif; }
+.student-welcome-dialog { box-sizing: border-box; width: 440px; max-width: 100%; max-height: calc(100dvh - 48px); overflow-y: auto; padding: 48px 40px 36px; border-radius: 16px; background: var(--welcome-surface); text-align: center; color: var(--welcome-heading); }
+.student-welcome-dialog h2 { margin: 0; color: var(--welcome-heading); font: 700 26px/1.3 Poppins, sans-serif; }
+.student-welcome-congrats { display: block; margin-bottom: 12px; color: var(--welcome-secondary); font-size: 13px; font-weight: 600; letter-spacing: .12em; }
+.student-welcome-dialog p { margin: 16px 0 0; color: var(--welcome-secondary); font-size: 15px; line-height: 1.6; }
+.student-welcome-primary { display: flex; justify-content: center; align-items: center; min-height: 48px; margin-top: 32px; padding: 8px 12px; border-radius: 11px; background: var(--welcome-primary); color: #fff !important; font-size: 15px; font-weight: 600; text-decoration: none !important; }
+.student-welcome-primary:hover { background: var(--welcome-primary-hover); }
+.student-welcome-primary { width: 100%; border: 0; font-family: inherit; cursor: pointer; }
+.student-welcome :is(a, button):focus-visible { outline: 3px solid var(--welcome-focus); outline-offset: 3px; }
+.student-welcome [aria-disabled="true"], .student-welcome button:disabled { opacity: .6; cursor: wait; }
+.student-welcome-confetti { position: fixed; inset: 0; z-index: 1081; overflow: hidden; pointer-events: none; }
+.student-welcome-confetti span { position: absolute; top: -24px; animation: student-welcome-fall 6s linear forwards; }
+.student-welcome-confetti span:nth-child(4n + 1) { background: #0f4cdb; }
+.student-welcome-confetti span:nth-child(4n + 2) { background: #f5b700; }
+.student-welcome-confetti span:nth-child(4n + 3) { background: #14b8a6; }
+.student-welcome-confetti span:nth-child(4n) { background: #e5484d; }
+@keyframes student-welcome-fall { to { transform: translate3d(40px, 105vh, 0) rotate(480deg); } }
+@media (max-width: 599px) {
+    .student-welcome-dialog { padding: 40px 24px 24px; }
+    .student-welcome-emblem { width: 104px; height: 104px; margin-bottom: 24px; }
+    .student-welcome-emblem > span { width: 76px; height: 76px; }
+    .student-welcome-dialog h2 { font-size: 22px; }
+    .student-welcome-dialog p { font-size: 14px; }
+    .student-welcome-primary { margin-top: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .student-welcome-confetti { display: none; } }

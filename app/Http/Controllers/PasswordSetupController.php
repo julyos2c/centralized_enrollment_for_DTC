@@ -108,9 +108,9 @@ class PasswordSetupController extends Controller
             ]);
         }
 
-        return back()->with(
+        return back()->withInput($request->only('email'))->with(
             'success',
-            'If that email is associated with an approved application awaiting activation, a new activation link has been sent. Please check your inbox.'
+            'If your account is eligible, an activation link will arrive shortly.'
         );
     }
 

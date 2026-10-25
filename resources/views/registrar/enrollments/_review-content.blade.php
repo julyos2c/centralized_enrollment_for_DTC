@@ -61,7 +61,7 @@
                     <span class="dtc-review-info-value">
                         @php $classification = $enrollment->resolveClassification(); @endphp
                         @if($classification === 'new_student')
-                            <span class="dtc-status-badge is-neutral">Regular</span>
+                            <span class="dtc-status-badge is-neutral">New student</span>
                         @else
                             <span class="dtc-status-badge is-info">{{ ucfirst(str_replace('_', ' ', $classification)) }}</span>
                         @endif
@@ -71,9 +71,9 @@
                     <span class="dtc-review-info-label">Subject Load</span>
                     <span class="dtc-review-info-value">
                         @if($enrollment->is_irregular)
-                            <span class="dtc-status-badge is-warning">Irregular</span>
+                            <span class="dtc-status-badge is-warning">Irregular subjects</span>
                         @else
-                            <span class="dtc-status-badge is-neutral">Regular</span>
+                            <span class="dtc-status-badge is-neutral">Regular subjects</span>
                         @endif
                     </span>
                 </div>
@@ -81,6 +81,9 @@
         </div>
 
         <div class="dtc-review-section">
+            @if($classification === 'transferee')
+                <p class="u-text-secondary-sm">Transferee: verify the selected subjects against evaluated transfer records before approval. Admission classification and subject selection are separate.</p>
+            @endif
             <div class="dtc-review-section-title">
                 <span><i data-lucide="book"></i> Selected Subjects</span>
                 <span class="dtc-review-subject-count">{{ $subjectCount }} subject{{ $subjectCount === 1 ? '' : 's' }}</span>
@@ -255,22 +258,22 @@
         @endif
 
         {{-- Reject reason — hidden until "Reject" is clicked --}}
-        <div class="dtc-review-reject-panel" id="rejectPanel-{{ $enrollment->id }}">
+        <div class="dtc-review-reject-panel rg-rejection-panel" id="rejectPanel-{{ $enrollment->id }}">
             <form method="POST" action="{{ route('registrar.enrollments.reject', $enrollment) }}" id="rejectForm-{{ $enrollment->id }}">
                 @csrf
                 <label class="dtc-form-label" for="remarks-{{ $enrollment->id }}">
-                    Reason / Remarks <span class="dtc-required">*</span>
+                    Reason for rejection <span class="dtc-required">*</span>
                 </label>
-                <textarea name="remarks" id="remarks-{{ $enrollment->id }}" class="dtc-form-control" rows="3" required
-                          placeholder="Let the applicant know why this enrollment is being rejected…"></textarea>
-                <p class="dtc-form-help">This message will be shared with the applicant.</p>
+                <textarea name="remarks" id="remarks-{{ $enrollment->id }}" class="dtc-form-control" rows="4" required aria-describedby="rejection-help-{{ $enrollment->id }}"
+                          placeholder="Explain what needs to be corrected."></textarea>
+                <p class="dtc-form-help" id="rejection-help-{{ $enrollment->id }}">The applicant will receive this reason.</p>
             </form>
         </div>
 
     </div>
 
     {{-- ── Footer ─────────────────────────────────────────────────────── --}}
-    <div class="dtc-review-footer">
+    <div class="dtc-review-footer rg-enrollment-decisions">
 
         <div class="dtc-review-footer-default">
             <button type="button" class="dtc-btn dtc-btn-secondary" data-dismiss="modal">Close</button>
@@ -301,10 +304,12 @@
         </div>
 
         <div class="dtc-review-footer-reject u-hidden" >
+            <div class="rg-rejection-buttons">
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
             <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject enrollment?" data-dtc-confirm-message="The enrollment for {subject} will be rejected with the reason entered above." data-dtc-confirm-subject="{{ $enrollment->user->name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
-                <i data-lucide="check"></i> Confirm Rejection
+                <i data-lucide="circle-x"></i> Confirm Rejection
             </button>
+            </div>
         </div>
 
     </div>

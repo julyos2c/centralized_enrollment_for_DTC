@@ -1,0 +1,19 @@
+.student-cor { overflow: hidden; }
+.student-cor-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--dtc-border, #e2e8f0); }
+.student-cor-header h2 { margin: 0; color: var(--dtc-text, #1e293b); font-size: 15px; font-weight: 600; line-height: 1.5; }
+.student-cor-header p { margin: 4px 0 0; color: var(--dtc-text-secondary, #64748b); font-size: 12px; line-height: 1.5; }
+.student-cor-link { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 8px 10px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 8px; color: var(--dtc-on-primary-soft, #0f4cdb); background: var(--dtc-surface, #fff); font-size: 12px; font-weight: 600; text-decoration: none; }
+.student-cor-link :is(i, svg) { width: 14px; height: 14px; }
+.student-cor-link:hover { color: var(--dtc-on-primary-soft, #0f4cdb); border-color: currentColor; text-decoration: none; }
+.student-cor-link:focus-visible { outline: 2px solid var(--dtc-on-primary-soft, #0f4cdb); outline-offset: 3px; }
+.student-cor-status { padding: 12px 20px 0; }
+.student-cor-list { margin: 0; padding: 0 20px; list-style: none; }
+.student-cor-list li { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 0; }
+.student-cor-list li + li { border-top: 1px solid var(--dtc-border-soft, #e2e8f0); }
+.student-cor-subject { min-width: 0; }
+.student-cor-code { color: var(--dtc-text-secondary, #64748b); font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+.student-cor-subject h3 { margin: 5px 0 0; color: var(--dtc-text, #1e293b); font-size: 13px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+.student-cor-units { flex: 0 0 auto; color: var(--dtc-text-secondary, #64748b); font-size: 11px; white-space: nowrap; }
+.student-cor-units strong { color: var(--dtc-text, #1e293b); font-size: 13px; font-weight: 600; }
+.student-cor-empty { padding: 24px 20px; color: var(--dtc-text-secondary, #64748b); font-size: 13px; }
+@media (max-width: 359px) { .student-cor-header { flex-wrap: wrap; } }

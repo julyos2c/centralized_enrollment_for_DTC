@@ -168,39 +168,18 @@ document.querySelectorAll('.ps-pw-toggle').forEach(function (btn) {
         if (!input) return;
         const show = input.type === 'password';
         input.type = show ? 'text' : 'password';
-        const icon = this.querySelector('[data-lucide]');
-        if (icon) {
-            icon.setAttribute('data-lucide', show ? 'eye-off' : 'eye');
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
+        const icon = document.createElement('i');
+        icon.setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.style.width = '16px';
+        icon.style.height = '16px';
+        this.replaceChildren(icon);
+        this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        this.setAttribute('aria-pressed', String(show));
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 });
 
 /* ═══════════════════════════════════════════════════════════
    PASSWORD STRENGTH METER
    ═══════════════════════════════════════════════════════════ */
-function updateStrength(value) {
-    const fill  = document.getElementById('strengthFill');
-    const label = document.getElementById('strengthLabel');
-    if (!fill || !label) return;
-
-    let score = 0;
-    if (value.length >= 8)          score++;
-    if (/[A-Z]/.test(value))        score++;
-    if (/[0-9]/.test(value))        score++;
-    if (/[^A-Za-z0-9]/.test(value)) score++;
-
-    const levels = [
-        { pct: '0%',   color: '#e5e9f0', text: 'Enter a new password', textColor: '#9ca3af' },
-        { pct: '25%',  color: '#ef4444', text: 'Weak',                  textColor: '#dc2626' },
-        { pct: '50%',  color: '#f59e0b', text: 'Fair',                  textColor: '#b45309' },
-        { pct: '75%',  color: '#3b82f6', text: 'Good',                  textColor: '#1d4ed8' },
-        { pct: '100%', color: '#22c55e', text: 'Strong',                textColor: '#15803d' },
-    ];
-
-    const lvl = value.length === 0 ? levels[0] : (levels[score] || levels[1]);
-    fill.style.width      = lvl.pct;
-    fill.style.background = lvl.color;
-    label.textContent     = lvl.text;
-    label.style.color     = lvl.textColor;
-}

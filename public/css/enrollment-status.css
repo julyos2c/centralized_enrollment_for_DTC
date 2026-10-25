@@ -1,0 +1,39 @@
+.enrollment-status-page .dtc-enrollment-status-card { border:1px solid var(--dtc-border) !important; border-radius:14px; box-shadow:none; }
+.enrollment-status-page .dtc-enrollment-status-body { padding:20px; }
+.enrollment-status-page .enrollment-academic-meta { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; color:var(--dtc-text-secondary); font-size:12px; line-height:1.6; }
+.enrollment-status-page .enrollment-submitted { margin:5px 0 0; color:var(--dtc-text-muted); font-size:11px; }
+.enrollment-status-page .dtc-enrollment-status-action a { min-height:44px; padding:10px 16px; border-radius:9px; box-shadow:none; font-size:13px; }
+.enrollment-status-page .enrollment-payment-hint { margin:12px 0 0; color:var(--dtc-text-secondary); font-size:12px; line-height:1.6; }
+.enrollment-status-page .enrollment-verification-note { margin-top:16px; padding-top:14px; border-top:1px solid var(--dtc-border); }
+.enrollment-status-page .enrollment-verification-note p { margin:0; font-size:12px; line-height:1.7; color:var(--dtc-text-secondary); }
+.enrollment-status-page .enrollment-proof-link { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; margin-top:12px; padding:10px 14px; border:1px solid var(--dtc-border); border-radius:8px; background:transparent; color:var(--dtc-text); font-size:12px; font-weight:600; text-decoration:none; }
+.enrollment-status-page .enrollment-proof-link svg { width:16px; height:16px; flex-shrink:0; color:var(--dtc-primary); }
+.enrollment-status-page .enrollment-proof-link:hover { border-color:var(--dtc-primary); color:var(--dtc-primary); }
+.enrollment-status-page .enrollment-proof-link:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+.enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-icon { display:none; }
+.enrollment-status-page .enrollment-rejection-note { margin-top:18px; padding:14px 16px; border:1px solid var(--dtc-border); border-radius:9px; background:var(--dtc-surface-soft); }
+.enrollment-status-page .enrollment-rejection-note h2 { margin:0 0 6px; font-size:11px; font-weight:600; color:var(--dtc-text-secondary); }
+.enrollment-status-page .enrollment-rejection-note p { margin:0; font-size:13px; line-height:1.7; color:var(--dtc-text); white-space:pre-line; overflow-wrap:anywhere; }
+.enrollment-status-page .enrollment-rejection-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 20px; margin-top:16px; }
+.enrollment-status-page .enrollment-rejection-actions p { flex:1 1 220px; margin:0; font-size:12px; line-height:1.7; color:var(--dtc-text-secondary); }
+.enrollment-status-page .enrollment-rejection-actions a { min-height:42px; display:inline-flex; align-items:center; justify-content:center; padding:10px 16px; font-size:12px; box-shadow:none; }
+.enrollment-status-page .enrollment-rejection-actions a:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+@media(max-width:767.98px) {
+    .enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-summary { grid-template-columns:minmax(0,1fr); gap:10px; }
+    .enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-details { grid-column:1; }
+    .enrollment-status-page .enrollment-rejection-actions p { flex-basis:100%; }
+    .enrollment-status-page .enrollment-rejection-actions a { width:100%; }
+}
+@media(max-width:767.98px) { .enrollment-status-page .enrollment-proof-link { display:flex; width:100%; } }
+@media(max-width:767.98px) {
+    .enrollment-status-page .dtc-enrollment-status-summary { display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; margin:0; align-items:start !important; }
+    .enrollment-status-page .dtc-enrollment-status-summary > div { padding:0; width:auto; max-width:none; }
+    .enrollment-status-page .dtc-enrollment-status-icon { grid-column:1; grid-row:1; }
+    .enrollment-status-page .dtc-enrollment-status-icon .dtc-icon-swatch { width:38px !important; height:38px !important; border-radius:10px !important; }
+    .enrollment-status-page .dtc-enrollment-status-details { grid-column:2; grid-row:1; min-width:0; }
+    .enrollment-status-page .dtc-enrollment-status-badge { grid-column:1/-1; margin:0 !important; }
+    .enrollment-status-page .dtc-enrollment-status-badge .dtc-status-badge { font-size:11px !important; padding:5px 10px !important; }
+    .enrollment-status-page .dtc-enrollment-status-action { grid-column:1/-1; margin:2px 0 0 !important; }
+    .enrollment-status-page .dtc-enrollment-status-action a { display:flex; align-items:center; justify-content:center; width:100%; min-height:46px; }
+    .enrollment-status-page .dtc-enrollment-status-body { padding:18px; }
+}

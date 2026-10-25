@@ -2338,3 +2338,45 @@ body.dtc-dark .dtc-faq-note {
         font-size: 18px;
     }
 }
+
+/* Keep the services link readable, including after it has been visited. */
+.hero .hero-explore-link a,
+.hero .hero-explore-link a:visited {
+    color: var(--dtc-on-primary-soft, #0f4cdb);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.hero .hero-explore-link a:focus-visible {
+    outline: 2px solid var(--dtc-on-primary-soft, #0f4cdb);
+    outline-offset: 4px;
+    border-radius: 2px;
+}
+
+/* Account sign-in action: clear secondary emphasis beside admissions. */
+.hero-cta-group .btn-secondary-cta {
+    min-height: 48px;
+    padding: 12px 22px;
+    border: 1px solid var(--dtc-border, #cbd5e1);
+    border-radius: 10px;
+    background: var(--dtc-surface, #fff);
+    color: var(--dtc-text, #1e293b);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    box-shadow: none;
+    transition: border-color .15s ease, background .15s ease;
+}
+.hero-cta-group .btn-secondary-cta:hover {
+    background: var(--dtc-surface-soft, #f8fafc);
+    border-color: var(--dtc-on-primary-soft, #0f4cdb);
+    color: var(--dtc-text, #1e293b);
+    transform: none;
+}
+.hero-cta-group .btn-secondary-cta:focus-visible {
+    outline: 3px solid var(--dtc-on-primary-soft, #2563eb);
+    outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-cta-group .btn-secondary-cta { transition: none; }
+}

@@ -28,7 +28,7 @@
                 My Application
             </h4>
             <p class="mb-0 u-text-secondary-sm" >
-                View your submitted pre-enrollment application and its current status.
+                Track your application and next steps.
             </p>
         </div>
 
@@ -38,9 +38,12 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/portal-application.css') }}">
+@endpush
 @section('content')
 
-<div class="row">
+<div class="row portal-application-page">
     <div class="col-lg-8">
 
         {{-- ===================================================== --}}
@@ -51,7 +54,7 @@
                 <span class="font-weight-bold">Application Status</span>
             </div>
             <div class="card-body">
-                <div class="row">
+                <div class="row application-status-facts">
                     <div class="col-md-4 mb-3">
                         <div class="text-muted small">Reference Number</div>
                         <div class="font-weight-bold">{{ $application->reference_no }}</div>
@@ -70,42 +73,13 @@
                     </div>
                 </div>
 
-                {{-- Status Description --}}
-                <div class="alert {{ $application->status === 'revision_required' ? 'alert-warning' : ($application->status === 'rejected' ? 'alert-danger' : 'alert-info') }}" style="border-radius: 12px; margin-top: 16px;">
-                    <div style="display: flex; align-items: flex-start; gap: 12px;">
-                        <div style="flex-shrink: 0;">
-                            @if($application->status === 'revision_required')
-                                <i data-lucide="alert-circle" style="width: 20px; height: 20px;"></i>
-                            @elseif($application->status === 'rejected')
-                                <i data-lucide="x-circle" style="width: 20px; height: 20px;"></i>
-                            @elseif($application->status === 'approved')
-                                <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
-                            @else
-                                <i data-lucide="info" style="width: 20px; height: 20px;"></i>
-                            @endif
-                        </div>
-                        <div>
-                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">
-                                @if($application->status === 'revision_required')
-                                    Action Required
-                                @elseif($application->status === 'rejected')
-                                    Application Not Approved
-                                @elseif($application->status === 'approved')
-                                    Application Approved
-                                @else
-                                    Current Status
-                                @endif
-                            </div>
-                            <div style="font-size: 12px; opacity: 0.9;">
-                                {{ $application->getStatusDescription() }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-light border mb-0" role="status">
-                    <strong>Next step:</strong> {{ $nextStep }}
-                </div>
+                <section class="application-next-step" aria-label="Next step">
+                    <h2>Next step</h2>
+                    <p>{{ $nextStep }}</p>
+                    @if($nextActionUrl)
+                        <a class="btn btn-primary" href="{{ $nextActionUrl }}">{{ $nextActionLabel }}</a>
+                    @endif
+                </section>
             </div>
         </div>
 
@@ -121,47 +95,25 @@
                     $timeline = $progressTimeline;
                 @endphp
 
-                <div class="application-timeline">
-                    @foreach ($timeline as $index => $step)
-                        <div class="timeline-step timeline-step-{{ $step['status'] }}">
-                            <div class="timeline-marker">
-                                @if($step['status'] === 'completed')
-                                    <i data-lucide="check" style="width: 16px; height: 16px;"></i>
-                                @elseif($step['status'] === 'current')
-                                    <div class="timeline-marker-pulse"></div>
-                                    <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
-                                @elseif($step['status'] === 'action_required')
-                                    <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i>
-                                @elseif($step['status'] === 'rejected')
-                                    <i data-lucide="x" style="width: 16px; height: 16px;"></i>
-                                @else
-                                    <div style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--dtc-border);"></div>
-                                @endif
-                            </div>
+                <ol class="application-timeline" aria-label="Application progress">
+                    @foreach ($timeline as $step)
+                        @continue($step['key'] === 'corrections' && $step['status'] === 'skipped')
+                        <li class="timeline-step timeline-step-{{ $step['status'] }}" @if(in_array($step['status'], ['current', 'action_required'])) aria-current="step" @endif>
+                            <span class="timeline-marker" aria-hidden="true">
+                                @if($step['status'] === 'completed')<i data-lucide="check"></i>
+                                @elseif($step['status'] === 'rejected')<i data-lucide="x"></i>
+                                @else<span></span>@endif
+                            </span>
                             <div class="timeline-content">
-                                <div class="timeline-label">{{ $step['label'] }}</div>
-                                <div class="timeline-description">{{ $step['description'] }}</div>
-                                @if($step['timestamp'])
-                                    <div class="timeline-timestamp">
-                                        <i data-lucide="calendar" style="width: 12px; height: 12px; margin-right: 4px;"></i>
-                                        {{ $step['timestamp']->format('M d, Y · h:i A') }}
-                                    </div>
-                                @elseif($step['status'] === 'completed')
-                                    <div class="timeline-timestamp">
-                                        <i data-lucide="check" style="width: 12px; height: 12px; margin-right: 4px;"></i>
-                                        Completed
-                                    </div>
-                                @endif
+                                <div class="timeline-label">{{ $step['label'] }}<span class="sr-only"> — {{ str_replace('_', ' ', $step['status']) }}</span></div>
+                                <p class="timeline-description">{{ $step['description'] }}</p>
+                                @if($step['timestamp'])<time class="timeline-timestamp" datetime="{{ $step['timestamp']->toIso8601String() }}">{{ $step['timestamp']->format('M d, Y · h:i A') }}</time>@endif
                             </div>
-                        </div>
-                        @if($loop->last === false)
-                            <div class="timeline-connector {{ $step['status'] === 'completed' ? 'completed' : '' }}"></div>
-                        @endif
+                        </li>
                     @endforeach
-                </div>
+                </ol>
             </div>
         </div>
-
         {{-- ===================================================== --}}
         {{-- SECTION 3 — APPLICATION SUMMARY                        --}}
         {{-- ===================================================== --}}
@@ -413,7 +365,7 @@
                             {{ $application->reviewed_at->format('M d, Y · h:i A') }}
                         </div>
                         @if($application->remarks)
-                            <div style="font-size: 12px; padding: 8px; background: #fff; border-radius: 6px; border-left: 3px solid var(--dtc-primary);">
+                            <div style="font-size: 12px; padding: 8px; background: var(--dtc-surface); border-radius: 6px; border-left: 3px solid var(--dtc-primary);">
                                 {{ $application->remarks }}
                             </div>
                         @endif
@@ -448,182 +400,4 @@
     </div>
 </div>
 
-@endsection
-
-@section('css')
-<style>
-/* Application Timeline Styles */
-.application-timeline {
-    position: relative;
-    padding: 8px 0;
-}
-
-.timeline-step {
-    display: flex;
-    gap: 16px;
-    position: relative;
-    padding-bottom: 24px;
-}
-
-.timeline-step:last-child {
-    padding-bottom: 0;
-}
-
-.timeline-marker {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 2;
-}
-
-.timeline-step-completed .timeline-marker {
-    background: var(--dtc-success);
-    color: #fff;
-}
-
-.timeline-step-current .timeline-marker {
-    background: var(--dtc-primary);
-    color: #fff;
-}
-
-.timeline-step-action_required .timeline-marker {
-    background: var(--dtc-accent);
-    color: #fff;
-}
-
-.timeline-step-rejected .timeline-marker {
-    background: var(--dtc-danger);
-    color: #fff;
-}
-
-.timeline-step-pending .timeline-marker {
-    background: var(--dtc-surface-soft);
-    color: var(--dtc-text-muted);
-}
-
-.timeline-step-skipped .timeline-marker {
-    background: var(--dtc-surface-soft);
-    color: var(--dtc-text-muted);
-    opacity: 0.5;
-}
-
-.timeline-marker-pulse {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: var(--dtc-primary);
-    animation: pulse 2s infinite;
-    opacity: 0.3;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.3;
-    }
-    50% {
-        transform: scale(1.3);
-        opacity: 0.1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0.3;
-    }
-}
-
-.timeline-content {
-    flex: 1;
-    padding-top: 4px;
-}
-
-.timeline-label {
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--dtc-text);
-    margin-bottom: 4px;
-}
-
-.timeline-step-completed .timeline-label {
-    color: var(--dtc-success);
-}
-
-.timeline-step-current .timeline-label {
-    color: var(--dtc-primary);
-}
-
-.timeline-step-action_required .timeline-label {
-    color: var(--dtc-accent);
-}
-
-.timeline-step-rejected .timeline-label {
-    color: var(--dtc-danger);
-}
-
-.timeline-step-pending .timeline-label {
-    color: var(--dtc-text-muted);
-}
-
-.timeline-step-skipped .timeline-label {
-    color: var(--dtc-text-muted);
-    text-decoration: line-through;
-}
-
-.timeline-description {
-    font-size: 12px;
-    color: var(--dtc-text-secondary);
-    margin-bottom: 4px;
-    line-height: 1.4;
-}
-
-.timeline-step-action_required .timeline-description {
-    color: var(--dtc-accent);
-    font-weight: 500;
-}
-
-.timeline-timestamp {
-    font-size: 11px;
-    color: var(--dtc-text-muted);
-    display: flex;
-    align-items: center;
-}
-
-.timeline-connector {
-    position: absolute;
-    left: 16px;
-    top: 32px;
-    bottom: 0;
-    width: 2px;
-    background: var(--dtc-border);
-    z-index: 1;
-}
-
-.timeline-connector.completed {
-    background: var(--dtc-success);
-}
-
-/* Dark mode support */
-body.dtc-dark .timeline-marker-pulse {
-    background: var(--dtc-primary);
-}
-
-body.dtc-dark .timeline-step-pending .timeline-marker,
-body.dtc-dark .timeline-step-skipped .timeline-marker {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-}
-
-body.dtc-dark .timeline-connector {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-body.dtc-dark .timeline-connector.completed {
-    background: var(--dtc-success);
-}
-</style>
 @endsection

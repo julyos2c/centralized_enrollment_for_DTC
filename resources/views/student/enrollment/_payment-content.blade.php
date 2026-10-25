@@ -1,61 +1,40 @@
-{{-- Shared "Enrollment Payment" content.
-     Rendered both as the standalone payment-info page and, via AJAX,
-     inside the lazy-loaded payment modal (see _payment-modal.blade.php). --}}
+{{-- Shared enrollment payment details, rendered on the dedicated payment page. --}}
 
 <div id="payment-content">
 
     {{-- ── Header ─────────────────────────────────────────────────────── --}}
-    <div class="dtc-review-header">
-        <div class="dtc-review-identity">
-            <div class="dtc-review-avatar">
-                <i data-lucide="wallet"></i>
-            </div>
-            <div class="dtc-review-identity-copy">
-                <h5 class="dtc-review-name">Enrollment Payment</h5>
-                <p class="dtc-review-email">
-                    <i data-lucide="graduation-cap"></i>
-                    {{ $enrollment->program->name }} — Year {{ $enrollment->year_level }}, {{ $enrollment->semester }} Semester
-                </p>
-            </div>
-        </div>
-        <div class="dtc-review-header-right">
-            <button type="button" class="dtc-review-close" data-dismiss="modal" aria-label="Close">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-    </div>
-
+    <header class="portal-payment-heading">
+        <h1>Enrollment payment</h1>
+        <p class="portal-payment-description">{{ $enrollment->program->name }}</p>
+        <p class="portal-payment-description">Year {{ $enrollment->year_level }} &middot; {{ $enrollment->semester }} Semester</p>
+    </header>
     {{-- ── Body ───────────────────────────────────────────────────────── --}}
-    <div class="dtc-review-body">
+    <div class="portal-payment-body">
 
         {{-- Payment Status Block --}}
+        @if($enrollment->is_paid && !$latestPayment)
+            <section class="portal-payment-card"><h2>Payment verified</h2><p>Your enrollment payment has been recorded.</p></section>
+        @endif
         @if ($latestPayment)
             @php
                 $statusToneMap = [
-                    'verified' => ['tone' => 'success', 'icon' => 'check-circle', 'label' => 'Payment Verified'],
-                    'pending'  => ['tone' => 'warning', 'icon' => 'hourglass',     'label' => 'Payment Pending Verification'],
+                    'verified' => ['tone' => 'success', 'icon' => 'check-circle', 'label' => 'Payment verified'],
+                    'pending'  => ['tone' => 'warning', 'icon' => 'hourglass',     'label' => 'Payment under review'],
                     'rejected' => ['tone' => 'danger',  'icon' => 'x-circle',      'label' => 'Payment Rejected — Please resubmit below'],
                 ];
                 $statusKey = $latestPayment->isVerified() ? 'verified' : ($latestPayment->isPending() ? 'pending' : 'rejected');
                 $s = $statusToneMap[$statusKey];
             @endphp
-            <div class="dtc-review-section" data-pay-status="{{ $statusKey }}">
-                <div class="card mb-0 border-{{ $s['tone'] === 'success' ? 'success' : ($s['tone'] === 'danger' ? 'danger' : 'warning') }}"
-                         style="border-left-width:4px; border-left-style:solid;">
-                    <div class="card-body d-flex align-items-center" style="gap:14px;">
-                        <div class="dtc-icon-swatch is-{{ $s['tone'] }}" style="width:44px; height:44px; border-radius:12px; flex-shrink:0;">
-                            <i data-lucide="{{ $s['icon'] }}" style="font-size:18px;"></i>
-                        </div>
-                        <div>
-                            <div class="dtc-pay-status-label" style="font-weight:700; font-size:14px;">{{ $s['label'] }}</div>
-                            @if ($latestPayment->isVerified())
-                                <div  class="u-text-xxs-secondary">
-                                    Receipt No: {{ $latestPayment->receipt_no }} &mdash; ₱{{ number_format($latestPayment->amount, 2) }}
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
+            <div class="portal-payment-section" data-pay-status="{{ $statusKey }}">
+                <section class="portal-payment-card portal-payment-status">
+                    <h2>{{ $s['label'] }}</h2>
+                    @if($latestPayment->isVerified())
+                        <p>Receipt: {{ $latestPayment->receipt_no }} &middot; ₱{{ number_format($latestPayment->amount, 2) }}</p>
+                    @endif
+                    @if($latestPayment->proof_of_payment)
+                        <a href="{{ route('portal.enrollment.payment.proof', $latestPayment) }}" target="_blank" rel="noopener">View submitted proof</a>
+                    @endif
+                </section>
             </div>
             @if ($statusKey === 'rejected')
                 <div class="alert alert-danger mt-3" role="alert">
@@ -67,43 +46,44 @@
             @endif
         @endif
 
-        @if (! $enrollment->is_paid)
+        @if (! $enrollment->is_paid && ! ($latestPayment && ($latestPayment->isVerified() || $latestPayment->isPending())))
         {{-- Payment Options --}}
-        <div class="dtc-review-section">
-            <div class="dtc-review-section-title">
-                <span><i data-lucide="coins"></i> Enrollment Fee</span>
-                <span class="dtc-review-subject-count">₱{{ number_format($fee, 2) }}</span>
+        <div class="portal-payment-section">
+            <div class="portal-payment-total">
+                <span>Enrollment fee</span>
+                <span class="portal-payment-fee">₱{{ number_format($fee, 2) }}</span>
             </div>
 
-            <div class="row">
+            <div class="portal-payment-methods">
 
                 {{-- Walk-in Card --}}
-                <div class="col-md-6 mb-3">
-                    <div class="card h-100">
-                        <div class="card-header font-weight-bold">
-                            <i data-lucide="building-2" class="mr-1"></i> Walk-in (Cashier)
+                <div class="portal-payment-method">
+                    <div class="portal-payment-card">
+                        <div class="portal-payment-method-title">
+                            Walk-in payment
                         </div>
-                        <div class="card-body">
+                        <div class="portal-payment-method-body">
                             <p  class="u-text-sm-secondary-primary">
-                                Pay in person at the Cashier's Office. Bring this confirmation and a valid ID.
+                                Pay in person at the Cashier's Office. Bring your enrollment details and a valid ID.
                             </p>
                             <p style="font-size:12px; color:var(--dtc-text-muted); margin:0;">
-                                No online action needed — the Cashier will record your payment.
+                                The Cashier records your payment. No proof upload needed.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {{-- GCash Card --}}
-                <div class="col-md-6 mb-3">
-                    <div class="card h-100">
-                        <div class="card-header font-weight-bold">
-                            <i data-lucide="smartphone" class="mr-1"></i> GCash
+                <div class="portal-payment-method">
+                    <div class="portal-payment-card">
+                        <div class="portal-payment-method-title">
+                            GCash payment
                         </div>
-                        <div class="card-body">
+                        <div class="portal-payment-method-body">
+
+                            <p class="u-text-sm-secondary-primary">Send your payment through GCash, then submit the reference number and payment proof below for Cashier verification.</p>
 
                             <div class="dtc-gcash-mobile-note">
-                                <i data-lucide="smartphone" aria-hidden="true"></i>
                                 <div><strong>Paying on this phone?</strong> Use the GCash number below. You do not need to scan the QR.</div>
                             </div>
 
@@ -145,17 +125,20 @@
                                 </a>
                             @endif
 
-                            <p class="dtc-gcash-proof-guide">After paying, enter the reference number and upload the successful transaction screenshot.</p>
-
                             @php $pendingExists = $latestPayment && $latestPayment->isPending(); @endphp
+                            @unless($pendingExists)
+                                <p class="dtc-gcash-proof-guide">After paying, enter the reference number and upload the successful transaction screenshot.</p>
+                            @endunless
 
                             @if ($pendingExists)
-                                <div class="alert alert-warning" style="font-size:12px; border-radius:8px; padding:10px 12px;">
-                                    Your proof has been submitted and is awaiting Cashier review.
-                                    <a href="{{ route('portal.enrollment.payment.proof', $latestPayment) }}" target="_blank"
-                                       style="color:inherit; font-weight:600; text-decoration:underline;">
-                                        View submitted proof
-                                    </a>
+                                <div class="dtc-proof-review">
+                                    <div class="dtc-proof-review-heading" role="status"><strong>Payment under review</strong></div>
+                                    <p>Your proof is with the Cashier. No action needed.</p>
+                                    @if($latestPayment->proof_of_payment)
+                                        <a href="{{ route('portal.enrollment.payment.proof', $latestPayment) }}" target="_blank" rel="noopener" class="dtc-proof-review-link">
+                                            <i data-lucide="file-image" aria-hidden="true"></i>View submitted proof<i data-lucide="arrow-up-right" aria-hidden="true"></i><span class="sr-only"> (opens in a new tab)</span>
+                                        </a>
+                                    @endif
                                 </div>
                             @else
                                 <form method="POST" action="{{ route('portal.enrollment.payment.gcash', $enrollment) }}" enctype="multipart/form-data">
@@ -182,7 +165,7 @@
                                         @error('proof_of_payment') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-block">
-                                        Submit GCash Proof
+                                        Submit proof
                                     </button>
                                 </form>
                             @endif

@@ -221,8 +221,6 @@ class DocumentPaymentController extends Controller
 
     private function requesterDestination(DocumentRequest $documentRequest): string
     {
-        return $documentRequest->user->hasRole('alumni')
-            ? route('portal.documents.index')
-            : route('portal.appointments.index');
+        return route('portal.payments.document', $documentRequest);
     }
 }

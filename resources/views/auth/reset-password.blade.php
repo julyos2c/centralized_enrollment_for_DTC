@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password — DTC Nexus</title>
@@ -8,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth-pages.css') }}">
 </head>
-<body>
+<body class="auth-activation-page">
 
 <div class="auth-card">
 
@@ -36,15 +37,11 @@
             </div>
         @endif
 
-        <div class="auth-icon-badge">
-            <i data-lucide="lock"></i>
-        </div>
-
-        <h1 class="auth-card-title">Set New Password</h1>
+        <h1 class="auth-card-title">Reset password</h1>
         <p class="auth-card-subtitle">
-            Resetting password for
-            <strong style="color:#1E293B;">{{ $email }}</strong>
+            Choose a new password.
         </p>
+        <p class="auth-account-email">{{ $email }}</p>
 
         <form method="POST" action="{{ route('password.update') }}">
             @csrf
@@ -95,8 +92,7 @@
             </div>
 
             <button type="submit" class="auth-btn" data-loading-text="Resetting…">
-                <i data-lucide="check" aria-hidden="true"></i>
-                Reset Password
+                Reset password
             </button>
         </form>
 
@@ -119,11 +115,15 @@
 <script>
 function togglePw(id, btn) {
     const input = document.getElementById(id);
-    const icon  = btn.querySelector('i');
+    if (!input || !btn) return;
     const hidden = input.type === 'password';
     input.type = hidden ? 'text' : 'password';
-    icon.classList.toggle('fa-eye', !hidden);
-    icon.classList.toggle('fa-eye-slash', hidden);
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', hidden ? 'eye-off' : 'eye');
+    icon.setAttribute('aria-hidden', 'true');
+    btn.replaceChildren(icon);
+    if (window.lucide) lucide.createIcons();
+    btn.setAttribute('aria-pressed', String(hidden));
     btn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
 }
 </script>
@@ -133,5 +133,6 @@ function togglePw(id, btn) {
             if (window.lucide) lucide.createIcons();
         });
     </script>
+@include('components.dtc.password-guidance')
 </body>
 </html>

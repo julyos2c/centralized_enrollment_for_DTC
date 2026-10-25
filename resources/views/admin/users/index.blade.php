@@ -277,7 +277,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('admin.users.store') }}">
+            <form method="POST" action="{{ route('admin.users.store') }}" data-password-admin>
                 @csrf
                 <div class="modal-body dtc-modal-body">
 
@@ -311,7 +311,7 @@
                         <div class="dtc-input-icon-group">
                             <i data-lucide="lock" class="dtc-input-icon"></i>
                             <input type="password" name="password" class="form-control dtc-input-with-icon"
-                                   placeholder="Min. 6 characters" autocomplete="new-password" required>
+                                   placeholder="Min. 6 characters" autocomplete="new-password" minlength="6" required>
                         </div>
                         <small class="dtc-form-hint">
                             The user should change this after first login.
@@ -493,7 +493,7 @@
 
                 {{-- Tab 2: Security --}}
                 <div class="tab-pane fade" id="modal-pane-security" role="tabpanel">
-                    <form method="POST" id="reset-password-form" action="">
+                    <form method="POST" id="reset-password-form" action="" data-password-admin>
                         @csrf @method('PUT')
                         <div class="modal-body dtc-modal-body">
 
@@ -531,7 +531,7 @@
                         <div class="modal-footer dtc-modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn dtc-btn-reset" id="modal-pw-submit">
-                                <i data-lucide="key" class="mr-1"></i> Reset Password
+                                <i data-lucide="key" class="mr-1"></i> Reset user password
                             </button>
                         </div>
                     </form>
@@ -564,6 +564,7 @@ function openEditModal(btn) {
 
     document.getElementById('reset-new-password').value       = '';
     document.getElementById('reset-confirm-password').value   = '';
+    document.getElementById('reset-new-password').dispatchEvent(new Event('input', { bubbles: true }));
     document.getElementById('modal-pw-match-hint').textContent = '';
 
     document.getElementById('modal-tab-account').click();
@@ -738,26 +739,6 @@ document.addEventListener('change', function (e) {
     e.target.nextElementSibling.style.borderColor = 'var(--dtc-primary)';
     e.target.nextElementSibling.style.background  = 'var(--dtc-primary-soft)';
 });
-
-// -- Password match feedback ---------------------------------------------------
-(function () {
-    var pwNew     = document.getElementById('reset-new-password');
-    var pwConfirm = document.getElementById('reset-confirm-password');
-    var pwHint    = document.getElementById('modal-pw-match-hint');
-
-    function checkMatch() {
-        if (!pwConfirm.value) { pwHint.textContent = ''; return; }
-        if (pwNew.value === pwConfirm.value) {
-            pwHint.textContent = '(ok) Passwords match';
-            pwHint.style.color = 'var(--dtc-success)';
-        } else {
-            pwHint.textContent = 'Passwords do not match';
-            pwHint.style.color = 'var(--dtc-danger)';
-        }
-    }
-    pwNew.addEventListener('input', checkMatch);
-    pwConfirm.addEventListener('input', checkMatch);
-})();
 
 // -- Accessibility: blur focused element before Bootstrap sets aria-hidden -----
 ['#editUserModal', '#createUserModal'].forEach(function (id) {

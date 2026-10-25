@@ -359,7 +359,7 @@ class AppointmentController extends Controller
             ucfirst($payment->appointment->document_type) .
             ' appointment has been verified.',
             'success',
-            route('portal.appointments.index'),
+            route('portal.payments.appointment', $payment->appointment),
             'View appointment'
         );
 
@@ -395,7 +395,7 @@ class AppointmentController extends Controller
             'Your GCash payment was rejected. Reason: ' . $validated['rejection_reason'] .
             '. Please resubmit with the correct details.',
             'danger',
-            route('portal.appointments.index'),
+            route('portal.payments.appointment', $payment->appointment),
             'Review payment details'
         );
 

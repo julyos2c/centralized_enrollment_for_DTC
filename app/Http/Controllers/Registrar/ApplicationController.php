@@ -443,4 +443,20 @@ class ApplicationController extends Controller
             $document->original_name
         );
     }
+
+    public function viewDocument(Application $application, ApplicationDocument $document)
+    {
+        abort_unless($document->application_id === $application->id, 404);
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($document->file_path), 404, 'The requested document could not be found.');
+        $mime = $disk->mimeType($document->file_path);
+        abort_unless(in_array($mime, ['application/pdf', 'image/jpeg', 'image/png'], true), 415,
+            'This file cannot be previewed. Use Download instead.');
+
+        return $disk->response($document->file_path, $document->original_name, [
+            'Content-Type' => $mime,
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ], 'inline');
+    }
 }

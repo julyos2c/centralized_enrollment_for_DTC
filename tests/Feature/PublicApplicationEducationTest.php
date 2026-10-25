@@ -47,6 +47,7 @@ class PublicApplicationEducationTest extends TestCase
             $names[] = $field->getAttribute('name');
         }
         $this->assertSame(['honorific', 'first_name', 'last_name', 'suffix', 'middle_name'], array_slice($names, 0, 5));
+        $this->assertSame(5, $xpath->query('//*[contains(@class, "wiz-personal-names")]//div[contains(@class, "wiz-field")]/input')->length);
         $this->assertSame('Filipino', $xpath->query('//*[@id="nationality"]')->item(0)->getAttribute('value'));
         $this->assertSame(6, $xpath->query('//*[@id="personalDetailsContent"]//input | //*[@id="personalDetailsContent"]//select')->length);
     }
@@ -137,7 +138,7 @@ class PublicApplicationEducationTest extends TestCase
                 'city_code' => '0701218000',
                 'barangay' => 'Poblacion',
                 'ack_enrollment' => 'on',
-                'education_level' => 'Senior High School',
+                'education_level' => $type === 'new_student' ? 'Senior High School' : 'College',
                 'education_status' => 'Graduated',
                 'most_recent_school' => 'Danao National High School',
                 'school_year_completed' => '2024-2025',
@@ -146,7 +147,7 @@ class PublicApplicationEducationTest extends TestCase
                 ->assertRedirect(route('public.application.success'));
 
             $application = Application::where('email', $email)->firstOrFail();
-            $this->assertSame('Senior High School', $application->education_level);
+            $this->assertSame($type === 'new_student' ? 'Senior High School' : 'College', $application->education_level);
             $this->assertSame('Graduated', $application->education_status);
             $this->assertSame('Danao National High School', $application->most_recent_school);
             $this->assertSame('Dr. Emerita', $application->honorific);

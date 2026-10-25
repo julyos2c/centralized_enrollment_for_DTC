@@ -19,35 +19,40 @@
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
 @endpush
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-cards.css') }}">
+@endpush
 @section('content')
 
 {{-- KPI ROW --}}
-<div class="row mb-2">
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="dashboard-kpis"><div class="dtc-kpi-grid cashier-kpis">
+<div class="kpi-collection">
         <x-dtc.stat-card
-            icon="coins" color="primary"
+            icon="circle-dollar-sign" color="primary" :featured="true"
             label="Today's Collection" value="₱{{ number_format($todayCollection, 2) }}"
-            note="Total Amount" />
+            />
     </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="kpi-payments">
         <x-dtc.stat-card
             icon="clock" color="warning"
             label="Pending Payments" value="{{ $pendingPayments }}"
-            href="{{ route('cashier.payments.index') }}" link-text="For Processing" />
+            href="{{ route('cashier.payments.index') }}" link-text="Review payments" />
     </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="kpi-paid">
         <x-dtc.stat-card
             icon="check-circle" color="success"
             label="Paid This Month" value="{{ $paidThisMonth }}"
             note="Transactions" />
     </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="kpi-walkin">
         <x-dtc.stat-card
-            icon="footprints" color="info"
+            icon="banknote" color="info"
             label="Walk-in Payments" value="{{ $walkinPayments }}"
             note="This Month" />
     </div>
-</div>
+</div></div>
+
+@include('partials.staff-dashboard-welcome', ['staffRoleLabel' => 'Cashier', 'staffWelcomeMessage' => 'Review payments and issue receipts.'])
 
 {{-- MAIN ROW --}}
 <div class="row">

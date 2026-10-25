@@ -1,0 +1,27 @@
+.portal-payment-page { width: 100%; max-width: 780px; margin: 0 auto; padding: 20px 0 32px; color: var(--dtc-text, #1e293b); }
+.portal-payment-back { display: inline-block; padding: 8px 0; margin-bottom: 12px; color: var(--dtc-text-secondary, #64748b); font-size: 12px; }
+.portal-payment-page h1 { margin: 0 0 8px; font-size: 24px; font-weight: 700; }
+.portal-payment-description { color: var(--dtc-text-secondary, #64748b); font-size: 13px; overflow-wrap: anywhere; }
+.portal-payment-card { padding: 24px; margin-top: 20px; border: 1px solid var(--dtc-border, #e2e8f0); border-radius: 14px; background: var(--dtc-surface, #fff); }
+.portal-payment-card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+.portal-payment-card p, .portal-payment-card label { font-size: 13px; line-height: 1.65; }
+.portal-payment-total { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--dtc-border, #e2e8f0); font-size: 13px; }
+.portal-payment-total strong { font-size: 20px; }
+.portal-payment-account { padding: 16px; border-radius: 10px; background: var(--dtc-surface-soft, #f8fafc); }
+.portal-payment-account dt { font-size: 11px; color: var(--dtc-text-secondary, #64748b); }
+.portal-payment-account dd { margin-bottom: 12px; font-size: 14px; overflow-wrap: anywhere; }
+.portal-payment-account button { margin-left: 10px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 6px; background: transparent; color: var(--dtc-on-primary-soft, #0f4cdb); font-size: 12px; }
+.portal-payment-qr { margin-bottom: 22px; font-size: 13px; }
+.portal-payment-qr img { display: block; margin: 16px auto; max-width: 100%; object-fit: contain; }
+.portal-payment-heading { padding: 4px 0 20px; border-bottom: 1px solid var(--dtc-border, #e2e8f0); }
+.portal-payment-heading p { margin: 4px 0 0; }
+.portal-payment-body { padding-top: 24px; }
+.portal-payment-section { margin-bottom: 20px; }
+.portal-payment-fee { font-weight: 700; font-size: 24px; }
+.portal-payment-methods { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; align-items: start; }
+.portal-payment-methods .portal-payment-card { margin-top: 0; }
+.portal-payment-method-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.portal-payment-method-body p:last-child { margin-bottom: 0; }
+.portal-payment-method-body .dtc-gcash-mobile-note { margin-top: 0; }
+@media(max-width: 767px) { .portal-payment-methods { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+@media(max-width: 575px) { .portal-payment-card { padding: 20px 16px; } .portal-payment-page h1 { font-size: 22px; } }

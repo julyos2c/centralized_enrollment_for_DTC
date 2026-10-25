@@ -45,8 +45,12 @@ class ProfileController extends Controller
 
         $redirectRoute = $request->boolean('return_to_dashboard')
             && $request->hasFile('avatar')
-            && $user->hasAnyRole(['student', 'alumni', 'new_applicant'])
-                ? 'portal.dashboard'
+                ? match (true) {
+                    $user->hasRole('admin') => 'admin.dashboard',
+                    $user->hasRole('registrar') => 'registrar.dashboard',
+                    $user->hasRole('cashier') => 'cashier.dashboard',
+                    default => 'portal.dashboard',
+                }
                 : $this->routePrefix($user) . '.show';
 
         return redirect()->route($redirectRoute)

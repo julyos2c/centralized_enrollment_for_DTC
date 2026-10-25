@@ -20,6 +20,7 @@
 
 @push('css')
     <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin-records.css') }}">
 @endpush
 
 @push('js')
@@ -27,7 +28,7 @@
 @endpush
 
 @section('content')
-<div class="row">
+<div class="row admin-records-page">
     <div class="col-12">
 
         {{-- Filters --}}
@@ -63,6 +64,14 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="dtc-fl-field">
+                        <label for="audit-per-page">Rows per page</label>
+                        <select name="per_page" id="audit-per-page" class="form-control">
+                            @foreach(\App\Support\TablePagination::OPTIONS as $limit)
+                                <option value="{{ $limit }}" @selected($logs->perPage() === $limit)>{{ $limit }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="dtc-fl-actions">
                         <button type="submit" class="btn btn-primary">Apply</button>
                         <a href="{{ route('admin.settings.audit') }}" class="dtc-fl-clear" data-dtc-clear @if(!$auditHasFilters) hidden @endif>Clear all</a>
@@ -80,8 +89,7 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    @include('partials.table-rows', ['tableRecords' => $logs])
-<table class="table table-bordered mb-0">
+<table class="table mb-0 audit-records-table">
                         <thead>
                             <tr>
                                 <th>User</th>
@@ -94,7 +102,7 @@
                         <tbody>
                             @forelse ($logs as $log)
                                 <tr>
-                                    <td style="white-space:nowrap;">
+                                    <td data-label="User" class="audit-user">
                                         <div class="u-flex-center-gap-12">
                                             <x-dtc.user-avatar :user="$log->user" :name="$log->user?->name ?? 'System'" style="width:30px; height:30px; border-radius:50%;
                                                         background:linear-gradient(135deg,var(--dtc-primary),#1a5feb);
@@ -105,14 +113,14 @@
                                             </span>
                                         </div>
                                     </td>
-                                    <td style="white-space:nowrap;">
+                                    <td data-label="Action" class="audit-action">
                                         <span class="badge badge-secondary" style="font-weight:600;">
                                             {{ ucwords(str_replace(['.', '_'], ' ', $log->action)) }}
                                         </span>
                                     </td>
-                                    <td style="color:var(--dtc-text-secondary);">{{ $log->description }}</td>
-                                    <td style="white-space:nowrap; color:var(--dtc-text-muted);">{{ $log->ip_address ?? '—' }}</td>
-                                    <td style="white-space:nowrap; color:var(--dtc-text-muted);" title="{{ $log->created_at }}">
+                                    <td data-label="Description" class="audit-description">{{ $log->description }}</td>
+                                    <td data-label="IP address" class="audit-ip">{{ $log->ip_address ?? '—' }}</td>
+                                    <td data-label="When" class="audit-time" title="{{ $log->created_at }}">
                                         {{ $log->created_at->diffForHumans() }}
                                     </td>
                                 </tr>

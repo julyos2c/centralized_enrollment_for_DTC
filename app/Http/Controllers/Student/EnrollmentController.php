@@ -68,14 +68,20 @@ class EnrollmentController extends Controller
         ]);
     }
     // ── index() — NEW ────────────────────────────────────────────
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $request->validate(['payment' => ['nullable', 'integer', 'min:1']]);
+        $linkedPaymentEnrollment = $request->filled('payment')
+            ? Enrollment::where('user_id', $user->id)->whereKey($request->integer('payment'))->first()
+            : null;
+        if ($linkedPaymentEnrollment) return redirect()->route('portal.enrollment.payment-info', $linkedPaymentEnrollment);
+
 
         $enrollments = Enrollment::where('user_id', $user->id)
             ->with(['program', 'payment'])
             ->latest()
-            ->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
+            ->paginate(\App\Support\TablePagination::perPage(10))->appends($request->except('payment'));
 
         // Resolve subject names for each enrollment's subject_ids
         $enrollments->each(function ($enrollment) {
@@ -83,7 +89,7 @@ class EnrollmentController extends Controller
                 ->get(['id', 'subject_code', 'subject_name']);
         });
 
-        return view('student.enrollment.index', compact('enrollments'));
+        return view('student.enrollment.index', compact('enrollments', 'linkedPaymentEnrollment'));
     }
     // ── store() ───────────────────────────────────────────────────
 
@@ -151,6 +157,19 @@ class EnrollmentController extends Controller
 
             if ($existingEnrollment) {
                 return null;
+            }
+
+            if (! $isIrregular) {
+                $termSubjectCount = \App\Models\CourseSubject::where('program_id', $validated['program_id'])
+                    ->where('year_level', $validated['year_level'])
+                    ->where('semester', $validated['semester'])
+                    ->whereIn('id', $validated['subject_ids'])
+                    ->count();
+                if ($termSubjectCount !== count($validated['subject_ids'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'subject_ids' => 'Regular subjects must match your selected year and semester. Choose irregular subjects for a mixed load.',
+                    ]);
+                }
             }
 
             return Enrollment::create([
@@ -312,7 +331,7 @@ class EnrollmentController extends Controller
             'View payment status'
         );
 
-        return back()->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
+        return redirect()->route('portal.enrollment.payment-info', $enrollment)->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
     }
 
     // ── viewProof() — NEW (student viewing their own proof) ────────
@@ -399,7 +418,7 @@ class EnrollmentController extends Controller
 
     // ── paymentInfo() — unchanged signature, view gains new data ──
 
-    public function paymentInfo(Enrollment $enrollment)
+    public function paymentInfo(Request $request, Enrollment $enrollment)
     {
         if ($enrollment->user_id !== Auth::id()) {
             abort(403);
@@ -417,7 +436,7 @@ class EnrollmentController extends Controller
             ->latest()
             ->first();
 
-        return view('student.enrollment.payment-info', compact(
+        return view('student.enrollment.payment', compact(
             'enrollment',
             'gcashNumber',
             'gcashName',

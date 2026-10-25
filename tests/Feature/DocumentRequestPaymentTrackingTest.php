@@ -365,7 +365,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
             'proof_of_payment' => UploadedFile::fake()->image('new-proof.png'),
         ]);
 
-        $response->assertRedirect(route('portal.documents.index'))->assertSessionHasNoErrors();
+        $response->assertRedirect(route('portal.payments.document', $documentRequest))->assertSessionHasNoErrors();
         $documentRequest->refresh();
         $this->assertSame('pending_verification', $documentRequest->payment_status);
         $this->assertSame('NEW-REF', $documentRequest->reference_number);

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>You're offline — DTC Nexus</title>
+        <style>
+            :root {
+                color-scheme: light dark;
+                font-family: system-ui, sans-serif;
+            }
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                background: light-dark(#f8fafc, #0f172a);
+                color: light-dark(#1e293b, #f1f5f9);
+            }
+            main {
+                max-width: 360px;
+                margin: 24px;
+            }
+            small {
+                font-weight: 600;
+                letter-spacing: 0.04em;
+            }
+            h1 {
+                margin: 24px 0 12px;
+                font-size: 26px;
+            }
+            p {
+                font-size: 15px;
+                line-height: 1.7;
+            }
+            button {
+                margin-top: 12px;
+                padding: 12px 20px;
+                border: 0;
+                border-radius: 8px;
+                background: #2563eb;
+                color: white;
+                font: inherit;
+                cursor: pointer;
+            }
+            button:focus-visible {
+                outline: 3px solid #60a5fa;
+                outline-offset: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <small>DTC Nexus</small>
+            <h1>You're offline</h1>
+            <p>Reconnect to view your account or continue a transaction.</p>
+            <button type="button" id="retry">Try again</button>
+        </main>
+        <script>
+            document
+                .getElementById("retry")
+                .addEventListener("click", function () {
+                    location.reload();
+                });
+        </script>
+    </body>
+</html>

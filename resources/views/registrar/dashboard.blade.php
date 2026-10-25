@@ -19,41 +19,46 @@
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
 @endpush
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-cards.css') }}">
+@endpush
 @section('content')
 
 {{-- KPI ROW --}}
-<div class="row mb-2">
-    <div class="col-lg col-md-6 col-12 mb-3">
+<div class="dashboard-kpis"><div class="dtc-kpi-grid registrar-kpis">
+<div class="kpi-enrollments">
         <x-dtc.stat-card
             icon="hourglass" color="warning"
             label="Pending Enrollments" value="{{ $pendingEnrollments }}"
-            href="{{ route('registrar.enrollments.index') }}" link-text="For Approval" />
+            href="{{ route('registrar.enrollments.index') }}" link-text="Review" />
     </div>
-    <div class="col-lg col-md-6 col-12 mb-3">
+<div class="kpi-appointments">
         <x-dtc.stat-card
             icon="calendar-check" color="primary"
             label="Pending Appointments" value="{{ $pendingAppointments }}"
-            href="{{ route('registrar.appointments.index') }}" link-text="For Review" />
+            href="{{ route('registrar.appointments.index') }}" link-text="Review" />
     </div>
-    <div class="col-lg col-md-6 col-12 mb-3">
+<div class="kpi-applications">
         <x-dtc.stat-card
-            icon="check-check" color="success"
-            label="Approved Today" value="{{ $approvedToday }}"
-            note="Total" />
+            icon="file-text" color="info"
+            label="Pending Applications" value="{{ $pendingApplications }}"
+            href="{{ route('registrar.applications.index') }}" link-text="Review" />
     </div>
-    <div class="col-lg col-md-6 col-12 mb-3">
+<div class="kpi-approved">
+        <x-dtc.stat-card
+            icon="check" color="success"
+            label="Approved Today" value="{{ $approvedToday }}"
+            />
+    </div>
+<div class="kpi-rejected">
         <x-dtc.stat-card
             icon="x-circle" color="danger"
             label="Rejected Requests" value="{{ $rejectedRequests }}"
             href="{{ route('notifications.index') }}" link-text="Review notices" />
     </div>
-    <div class="col-lg col-md-6 col-12 mb-3">
-        <x-dtc.stat-card
-            icon="file-text" color="info"
-            label="Pending Applications" value="{{ $pendingApplications }}"
-            href="{{ route('registrar.applications.index') }}" link-text="For Review" />
-    </div>
-</div>
+</div></div>
+
+@include('partials.staff-dashboard-welcome', ['staffRoleLabel' => 'Registrar', 'staffWelcomeMessage' => 'Review applications and enrollment requests.'])
 
 {{-- MAIN ROW --}}
 <div class="row">

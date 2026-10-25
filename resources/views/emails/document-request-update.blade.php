@@ -1,11 +1,7 @@
-<h1>Document request update</h1>
-
-<p>Hello {{ $documentRequest->user->name }},</p>
-
-<p>{{ $eventMessage }}</p>
-
-<p><strong>Request:</strong> {{ $documentRequest->document_label }} ({{ $documentRequest->copies }} {{ $documentRequest->copies === 1 ? 'copy' : 'copies' }})</p>
-<p><strong>Current status:</strong> {{ ucfirst($documentRequest->status) }}</p>
-<p><strong>Payment status:</strong> {{ ucfirst(str_replace('_', ' ', $documentRequest->payment_status)) }}</p>
-
-<p>Sign in to DTC Nexus to view your request details.</p>
+@component('emails.layout', ['heading' => 'Document request update', 'emailMessage' => $message ?? null])
+<p style="margin:0 0 12px;">Hello {{ $documentRequest->user->name }},</p>
+<p style="margin:0 0 18px;">{{ $eventMessage }}</p>
+<p style="margin:0 0 8px;"><strong>{{ $documentRequest->document_label }}</strong> · {{ $documentRequest->copies }} {{ $documentRequest->copies === 1 ? 'copy' : 'copies' }}</p>
+<p style="margin:0;color:#475569;">Status: {{ ucfirst(str_replace('_', ' ', $documentRequest->status)) }}<br>Payment: {{ ucfirst(str_replace('_', ' ', $documentRequest->payment_status)) }}</p>
+@include('emails.action', ['url' => route('portal.dashboard'), 'label' => 'Open portal'])
+@endcomponent

@@ -28,15 +28,7 @@
                     @if ($lockedProgram)
                         <div class="form-group">
                             <label>Program</label>
-                            <div class="alert alert-success dtc-enrollment-locked-program" style="border-radius:8px; padding:14px 16px;
-                                        display:flex; align-items:center; gap:12px;">
-                                <i data-lucide="check-circle" style="font-size:18px;"></i>
-                                <div>
-                                    <div style="font-size:14px; font-weight:600; color:var(--dtc-text);">
-                                        {{ $lockedProgram->name }}
-                                    </div>
-                                </div>
-                            </div>
+                            <p class="dtc-enrollment-locked-program">{{ $lockedProgram->name }}</p>
                             <input type="hidden" name="program_id" id="program_id" value="{{ $lockedProgram->id }}">
                         </div>
                     @else
@@ -55,22 +47,22 @@
                     @endif
 
                     {{-- Enrollment Type --}}
-                    <div class="form-group dtc-enrollment-type-group">
-                        <label>Enrollment Type</label>
-                        <div class="d-flex u-gap-15 dtc-enrollment-type-options">
-                            <label class="dtc-enrollment-type-option" style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
-                                <input type="radio" name="is_irregular" value="0" id="type-regular" {{ old('is_irregular', '0') === '0' ? 'checked' : '' }}>
-                                Regular
+                    <fieldset class="form-group dtc-enrollment-type-group" aria-describedby="subject-selection-help">
+                        <legend>Which subjects will you take?</legend>
+                        <div class="dtc-enrollment-type-options">
+                            <label class="dtc-enrollment-type-option">
+                                <input type="radio" name="is_irregular" value="0" id="type-regular" {{ (string) old('is_irregular', '0') === '0' ? 'checked' : '' }} aria-describedby="standard-subjects-help">
+                                <span><strong>Regular subjects</strong><small id="standard-subjects-help">Subjects for your selected year and semester.</small></span>
                             </label>
-                            <label class="dtc-enrollment-type-option" style="display:flex; align-items:center; gap:8px; font-weight:400; cursor:pointer; margin:0;">
-                                <input type="radio" name="is_irregular" value="1" id="type-irregular" {{ old('is_irregular') === '1' ? 'checked' : '' }}>
-                                Irregular / Shiftee / Transferee
+                            <label class="dtc-enrollment-type-option">
+                                <input type="radio" name="is_irregular" value="1" id="type-irregular" {{ (string) old('is_irregular') === '1' ? 'checked' : '' }} aria-describedby="custom-subjects-help">
+                                <span><strong>Irregular subjects</strong><small id="custom-subjects-help">Subjects from different year levels or semesters.</small></span>
                             </label>
                         </div>
-                        <small style="color:var(--dtc-text-muted); display:block; margin-top:4px;">
-                            Irregular enrollment allows subjects from different year levels or semesters.
+                        <small id="subject-selection-help">
+                            Transferee or unsure? Ask the Registrar which subjects to take.
                         </small>
-                    </div>
+                    </fieldset>
 
                     {{-- Year + Semester --}}
                     <div class="row dtc-enrollment-term-row">
@@ -338,10 +330,11 @@ document.getElementById('type-irregular').addEventListener('change', function ()
     loadSubjects();
 });
 
-@if ($lockedProgram)
 document.addEventListener('DOMContentLoaded', function () {
-    loadSubjects();
+    document.getElementById('subjects-hint').textContent = isIrregularMode()
+        ? 'Showing all subjects grouped by year and semester.'
+        : 'Showing subjects for the selected year and semester.';
+    if (document.getElementById('program_id').value) loadSubjects();
 });
-@endif
 </script>
 @endsection

@@ -1,0 +1,60 @@
+/* Dashboard-only layouts follow available content width, including sidebar changes. */
+.dashboard-kpis { container-type: inline-size; }
+.dashboard-kpis .dtc-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dashboard-kpis .dtc-stat-card { padding: 14px; min-height: 112px; border-radius: 14px; }
+.dashboard-kpis .dtc-stat-card-top { flex-direction: row; align-items: center; gap: 10px; }
+.dashboard-kpis .dtc-stat-icon { width: 32px; height: 32px; flex-basis: 32px; border-radius: 9px; }
+.dashboard-kpis .dtc-stat-copy { width: auto; }
+.dashboard-kpis .dtc-stat-icon :is(svg, [data-lucide]) { width: 16px; height: 16px; }
+.dashboard-kpis .dtc-stat-label { font-size: 10px !important; letter-spacing: .035em; line-height: 1.5; }
+.dashboard-kpis .dtc-stat-value { margin-top: 4px; font-size: 22px !important; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dashboard-kpis .dtc-stat-note { margin-top: 8px; padding: 0; font-size: 11px; color: var(--dtc-text-secondary); }
+.dashboard-kpis .dtc-stat-link { margin-top: 10px; padding: 6px 10px; min-height: 32px; max-width: 100%; border-radius: 999px; background: var(--dtc-primary-soft); color: var(--dtc-on-primary-soft) !important; font-size: 11px; }
+.dashboard-kpis .dtc-stat-warning .dtc-stat-link { background: var(--dtc-warning-soft, #fef3c7); color: #854d0e !important; }
+.dashboard-kpis .dtc-stat-danger .dtc-stat-link { background: var(--dtc-danger-soft, #fee2e2); color: #b91c1c !important; }
+.dashboard-kpis .dtc-stat-info .dtc-stat-link { background: #ede9fe; color: #6d28d9 !important; }
+body.dtc-dark .dashboard-kpis .dtc-stat-warning .dtc-stat-link { background: #392b14; color: #fde68a !important; }
+body.dtc-dark .dashboard-kpis .dtc-stat-danger .dtc-stat-link { background: #3e1c29; color: #fda4af !important; }
+body.dtc-dark .dashboard-kpis .dtc-stat-info .dtc-stat-link { background: #2b2050; color: #c4b5fd !important; }
+.dashboard-kpis .dtc-stat-featured { background: var(--dtc-primary-soft); }
+.dashboard-kpis .dtc-stat-featured .dtc-stat-value { font-size: clamp(24px, 3cqi, 30px) !important; }
+.dashboard-kpis .kpi-revenue, .dashboard-kpis .kpi-collection, .dashboard-kpis .kpi-payments, .dashboard-kpis .kpi-students, .dashboard-kpis .kpi-alumni, .dashboard-kpis .kpi-rejected { grid-column: 1 / -1; }
+.dashboard-kpis .kpi-revenue { order: -1; }
+.dashboard-kpis .kpi-alumni { order: 5; }
+.dashboard-kpis .kpi-rejected { order: 5; }
+.dtc-stat-metrics { display: flex; flex-wrap: wrap; gap: 10px 22px; width: 100%; border-top: 1px solid var(--dtc-border); padding-top: 10px; margin: 12px 0 0; }
+.dtc-stat-metrics dt { font-size: 11px; font-weight: 400; color: var(--dtc-text-secondary); }
+.dtc-stat-metrics dd { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--dtc-text); overflow-wrap: anywhere; }
+@container (min-width: 600px) {
+    .dashboard-kpis .dtc-kpi-grid { gap: 12px; }
+    .dashboard-kpis .dtc-stat-card { padding: 16px; }
+    .dashboard-kpis .kpi-students, .dashboard-kpis .kpi-alumni { grid-column: auto; }
+    .dashboard-kpis .kpi-revenue .dtc-stat-card { flex-direction: row; align-items: center; gap: 24px; }
+    .dashboard-kpis .kpi-revenue .dtc-stat-card-top { flex: 1; }
+    .dashboard-kpis .kpi-revenue .dtc-stat-metrics { width: auto; margin: 0; padding: 0 0 0 20px; border-top: 0; border-left: 1px solid var(--dtc-border); }
+    .dashboard-kpis .cashier-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .dashboard-kpis .kpi-payments { grid-column: auto; }
+    .dashboard-kpis .registrar-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .dashboard-kpis .registrar-kpis > div { grid-column: span 2; }
+    .dashboard-kpis .registrar-kpis > :nth-child(n+4) { grid-column: span 3; }
+}
+@container (min-width: 1060px) {
+    .dashboard-kpis .cashier-kpis { grid-template-columns: 1.65fr repeat(3, minmax(0, 1fr)); }
+    .dashboard-kpis .kpi-collection { grid-column: auto; }
+    .dashboard-kpis .registrar-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .dashboard-kpis .registrar-kpis > div, .dashboard-kpis .registrar-kpis > :nth-child(n+4) { grid-column: auto; }
+    .dashboard-kpis .admin-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dashboard-kpis .kpi-revenue { grid-column: 1 / -1; grid-row: auto; }
+    .dashboard-kpis .kpi-revenue .dtc-stat-card { min-height: 100px; }
+}
+@container (min-width: 320px) and (max-width: 599px) {
+    .dashboard-kpis .dtc-stat-card-top { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .dashboard-kpis .kpi-alumni .dtc-stat-card-top { flex-direction: row; align-items: center; }
+    .dashboard-kpis :is(.kpi-payments, .kpi-students, .kpi-rejected) .dtc-stat-card { min-height: 0; flex-direction: row; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .dashboard-kpis :is(.kpi-payments, .kpi-students, .kpi-rejected) .dtc-stat-card-top { flex: 1 1 135px; width: auto; flex-direction: row; align-items: center; }
+    .dashboard-kpis :is(.kpi-payments, .kpi-students, .kpi-rejected) .dtc-stat-link { margin: 0; }
+}
+@container (max-width: 319px) {
+    .dashboard-kpis .dtc-kpi-grid { grid-template-columns: minmax(0, 1fr); }
+    .dashboard-kpis .dtc-stat-card { min-height: 0; }
+}

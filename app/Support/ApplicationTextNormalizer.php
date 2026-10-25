@@ -21,6 +21,11 @@ class ApplicationTextNormalizer
 
     public static function normalizeFields(array $values): array
     {
+        foreach (['honorific', 'suffix'] as $field) {
+            if (array_key_exists($field, $values) && (is_string($values[$field]) || $values[$field] === null)) {
+                $values[$field] = NameNormalizer::normalizeAffix($values[$field], $field);
+            }
+        }
         foreach (self::TITLE_CASE_FIELDS as $field) {
             if (array_key_exists($field, $values) && (is_string($values[$field]) || $values[$field] === null)) {
                 $values[$field] = NameNormalizer::normalize($values[$field]);

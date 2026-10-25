@@ -37,19 +37,19 @@ Login throttling, password hashing, account-status checks, CSRF middleware, role
 
 The new migration was applied to the local application database; deploy it before this code in other environments. Email states are:
 
-| State | Meaning / recovery |
-|---|---|
-| null | Historical/non-workflow notification; never automatically replayed |
-| pending | Event committed; email awaits enqueue |
-| enqueueing | Enqueue claimed; do not blindly reset after a process crash |
-| enqueue_failed | Broker/queue call failed; `php artisan workflow-emails:retry NOTIFICATION_ID` |
-| queued | Queue accepted the mail; repeating the workflow does not enqueue another |
-| job_retrying | Mail execution threw; Laravel retries the original queued job |
-| job_failed | Native attempts exhausted; inspect failure and use Laravel `queue:retry` for an asynchronous failed job |
-| sent | Mail transport returned a sent-message result; timestamp recorded; **not confirmed inbox delivery** |
-| suppressed | Mailer returned no sent message (for example, a cancelled send); not automatically resent |
+| State          | Meaning / recovery                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------- |
+| null           | Historical/non-workflow notification; never automatically replayed                                      |
+| pending        | Event committed; email awaits enqueue                                                                   |
+| enqueueing     | Enqueue claimed; do not blindly reset after a process crash                                             |
+| enqueue_failed | Broker/queue call failed; `php artisan workflow-emails:retry NOTIFICATION_ID`                           |
+| queued         | Queue accepted the mail; repeating the workflow does not enqueue another                                |
+| job_retrying   | Mail execution threw; Laravel retries the original queued job                                           |
+| job_failed     | Native attempts exhausted; inspect failure and use Laravel `queue:retry` for an asynchronous failed job |
+| sent           | Mail transport returned a sent-message result; timestamp recorded; **not confirmed inbox delivery**     |
+| suppressed     | Mailer returned no sent message (for example, a cancelled send); not automatically resent               |
 
-For a synchronous queue, execution failures require operator investigation; there may be no asynchronous failed job to retry. State updates do not reset workflow/payment status. Existing historical email events are not resent on deployment. The retry command's action label defaults to “View in DTC EMS”; the stored destination remains unchanged.
+For a synchronous queue, execution failures require operator investigation; there may be no asynchronous failed job to retry. State updates do not reset workflow/payment status. Existing historical email events are not resent on deployment. The retry command's action label defaults to “View in DTC Nexus”; the stored destination remains unchanged.
 
 Ordinary duplicate jobs are guarded by a database row lock and the sent state. Exactly-once delivery cannot be guaranteed across an external SMTP acceptance followed by a process crash/database failure before the sent-state commit, nor can an ambiguous queue acknowledgement be interpreted as proof of delivery. Reconcile those cases with broker/provider logs before manual recovery. No provider delivery webhook is available here. Real SMTP delivery and concurrent multi-worker failure/crash testing were not performed.
 

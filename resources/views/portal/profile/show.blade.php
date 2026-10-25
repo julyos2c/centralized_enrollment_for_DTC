@@ -308,7 +308,7 @@
                                autocomplete="new-password"
                                required
                                minlength="8"
-                               oninput="updateStrength(this.value)">
+                               >
                         <button type="button"
                                 class="ps-pw-toggle"
                                 data-target="password"
@@ -316,11 +316,6 @@
                             <i data-lucide="eye" style="width:16px;height:16px;"></i>
                         </button>
                     </div>
-                    {{-- Strength bar --}}
-                    <div class="ps-strength-bar mt-1">
-                        <div class="ps-strength-fill" id="strengthFill"></div>
-                    </div>
-                    <div class="ps-strength-label" id="strengthLabel">Enter a new password</div>
                 </div>
 
                 <div class="col-12 col-sm-6 mb-3">
@@ -348,7 +343,7 @@
 
             <button type="submit" class="btn btn-primary">
                 <i data-lucide="lock" class="mr-1" style="width:15px;height:15px;"></i>
-                Update Password
+                Change password
             </button>
         </form>
     </div>

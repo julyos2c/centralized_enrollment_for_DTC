@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/application-wizard.css') }}">
+<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
 @stop
 
 
@@ -179,7 +180,7 @@
             </div>
             <div class="wiz-panel-body">
 
-                {{-- Name controls remain separate form fields while related parts share a visual group. --}}
+                {{-- Each name control has its own label, input, and validation message. --}}
                 <section class="wiz-name-section" aria-labelledby="applicant-name-heading">
                     <div class="wiz-name-section-header">
                         <h3 id="applicant-name-heading">Your name</h3>
@@ -245,6 +246,7 @@
                             <input type="date" name="birthdate" id="birthdate"
                                 class="wiz-input @error('birthdate') wiz-invalid @enderror"
                                 value="{{ old('birthdate') }}"
+                                max="{{ today()->toDateString() }}"
                                 autocomplete="bday" required>
                             @error('birthdate')<span class="wiz-err-msg"><i data-lucide="alert-circle"></i>{{ $message }}</span>@enderror
                         </div>
@@ -431,13 +433,14 @@
                 <div class="wiz-row wiz-row--2">
                     <div class="wiz-field">
                         <label for="education_level">Highest or current education level</label>
-                        <select name="education_level" id="education_level" class="wiz-input">
+                        <select name="education_level" id="education_level" class="wiz-input @error('education_level') wiz-invalid @enderror" aria-describedby="educationLevelHint">
                             <option value="">Select education level</option>
-                            <option value="Junior High School" {{ old('education_level') === 'Junior High School' ? 'selected' : '' }}>Junior High School</option>
-                            <option value="Senior High School" {{ old('education_level') === 'Senior High School' ? 'selected' : '' }}>Senior High School</option>
-                            <option value="College" {{ old('education_level') === 'College' ? 'selected' : '' }}>College</option>
-                            <option value="Other" {{ old('education_level') === 'Other' ? 'selected' : '' }}>Other</option>
+                            @foreach(\App\Support\ApplicationEducation::levelsFor(is_string(old('academic_status')) ? old('academic_status') : null) as $level)
+                                <option value="{{ $level }}" {{ old('education_level') === $level ? 'selected' : '' }}>{{ $level === 'Other' ? 'Other / equivalent qualification' : $level }}</option>
+                            @endforeach
                         </select>
+                        <span class="wiz-hint" id="educationLevelHint" aria-live="polite">Education levels depend on your applicant type.</span>
+                        @error('education_level')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                     <div class="wiz-field">
                         <label for="education_status">Completion status</label>
@@ -696,15 +699,12 @@
                 {{-- â”€â”€ Tab Panel: Requirements Checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
                 <div class="doc-tab-panel" data-tab-panel="checklist" role="tabpanel">
 
-                    <div id="physicalRequirementsCard" class="wiz-reqs">
+                    <div id="physicalRequirementsCard" class="wiz-reqs physical-requirements-panel">
                         <div class="wiz-reqs-header">
                             <i data-lucide="folder-open"></i>
                             Physical Requirements to Bring
                         </div>
-                        <p class="wiz-reqs-sub">
-                            These must be presented at the Registrar's Office regardless of digital uploads.
-                            Tick each item off as you prepare it â€” this checklist is for your reference only.
-                        </p>
+                        <p class="wiz-reqs-sub">Bring physical copies to the Registrar's Office, even if uploaded. Check items as you prepare them; this does not confirm submission.</p>
                         <ul id="physicalRequirementsList" class="wiz-reqs-checklist">
                             <li>
                                 <span class="wiz-reqs-empty">
@@ -850,6 +850,7 @@
 
 @section('scripts')
 <script>window.dtcApplicationTitleCaseFields = @json($titleCaseFields);</script>
+<script>window.dtcApplicationEducationLevels = @json(\App\Support\ApplicationEducation::LEVELS);</script>
 <script src="{{ asset('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset('js/application-wizard.js') }}" defer></script>
 @php

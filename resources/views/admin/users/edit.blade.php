@@ -155,13 +155,13 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('admin.users.resetPassword', $user) }}">
+                        <form method="POST" action="{{ route('admin.users.resetPassword', $user) }}" data-password-admin data-password-account="{{ $user->name }}">
                             @csrf @method('PUT')
 
                             {{-- Info banner --}}
                             <div class="dtc-security-info mb-3">
                                 <i data-lucide="info" class="dtc-security-info-icon"></i>
-                                <span>Set a temporary password for this user. They'll be required to change it after their next login. Passwords are always stored hashed.</span>
+                                <span>Set a temporary password for {{ $user->name }}. They must change it at their next login.</span>
                             </div>
 
                             <div class="form-group">
@@ -191,7 +191,7 @@
                                 <a href="{{ route('admin.users.index') }}"
                                    class="btn btn-secondary flex-fill">Cancel</a>
                                 <button type="submit" class="btn dtc-btn-reset flex-fill" id="pw-submit-btn">
-                                    <i data-lucide="key" class="mr-1"></i> Reset Password
+                                    <i data-lucide="key" class="mr-1"></i> Reset user password
                                 </button>
                             </div>
                         </form>
@@ -220,26 +220,6 @@ document.querySelectorAll('.edit-status-radio').forEach(function(radio) {
     });
     if (radio.checked) radio.dispatchEvent(new Event('change'));
 });
-
-/* -- Password match feedback -- */
-var pwNew     = document.getElementById('pw-new');
-var pwConfirm = document.getElementById('pw-confirm');
-var pwHint    = document.getElementById('pw-match-hint');
-var pwSubmit  = document.getElementById('pw-submit-btn');
-
-function checkPwMatch() {
-    if (!pwConfirm.value) { pwHint.textContent = ''; return; }
-    if (pwNew.value === pwConfirm.value) {
-        pwHint.textContent = '(ok) Passwords match';
-        pwHint.style.color = 'var(--dtc-success)';
-    } else {
-        pwHint.textContent = 'Passwords do not match';
-        pwHint.style.color = 'var(--dtc-danger)';
-    }
-}
-
-pwNew.addEventListener('input', checkPwMatch);
-pwConfirm.addEventListener('input', checkPwMatch);
 
 /* -- Re-open Security tab if there were password errors -- */
 @if($errors->has('password') || $errors->has('password_confirmation') || session('active_tab') === 'security')

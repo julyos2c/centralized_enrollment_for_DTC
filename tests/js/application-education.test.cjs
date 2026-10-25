@@ -8,7 +8,7 @@ test('education profiles switch labels and applicable fields without clearing va
     const source = fs.readFileSync(path.join(__dirname, '../../public/js/application-wizard.js'), 'utf8');
     const nodes = new Map();
     const node = key => {
-        if (!nodes.has(key)) nodes.set(key, { value: 'Saved applicant entry', setAttribute() {} });
+        if (!nodes.has(key)) nodes.set(key, { value: 'Saved applicant entry', setAttribute() {}, replaceChildren() {}, appendChild() {}, dispatchEvent() {} });
         return nodes.get(key);
     };
     const sections = [
@@ -21,7 +21,8 @@ test('education profiles switch labels and applicable fields without clearing va
         querySelectorAll() { return [this.field]; }
     }));
     const context = vm.createContext({
-        document: { getElementById: node, querySelector: node },
+        document: { getElementById: node, querySelector: node, createElement: () => ({}) },
+        window: {}, Event,
         applicantType: { value: '' }, educationSections: sections,
         documentSections: [],
         noDocumentNotice: { classList: { toggle() {} } },

@@ -1,304 +1,80 @@
 @extends('adminlte::page')
 @include('partials.navbar')
-
 @section('title', 'Notifications')
-
 @section('content_header')
-    <div class="dtc-notif-page-header">
-        <div class="dtc-notif-page-header-left">
-            <h4 class="mb-0 font-weight-bold u-text">Notifications</h4>
-            <p class="mb-0 u-text-secondary-sm">Your system alerts and updates</p>
-        </div>
-        <div class="dtc-notif-page-header-right">
-            @if($notifications->isNotEmpty())
-                @if($unreadCount > 0)
-                <button id="btn-mark-all-read" class="btn btn-sm btn-outline-primary">
-                    <i data-lucide="check-check" style="width:13px;height:13px;margin-right:4px;"></i>
-                    Mark all read
-                </button>
-                @endif
-                <button id="btn-delete-read" class="btn btn-sm btn-outline-danger"
-                        {{ $notifications->filter(fn($n) => $n->isRead())->isEmpty() ? 'disabled' : '' }}>
-                    <i data-lucide="trash-2" style="width:13px;height:13px;margin-right:4px;"></i>
-                    <span class="dtc-notif-btn-label">Delete read</span>
-                </button>
-            @endif
-        </div>
+<div class="notice-heading">
+    <div><h4 class="mb-1 font-weight-bold u-text">Notifications</h4><p class="u-text-secondary-sm mb-0">Updates and next steps, all in one place.</p></div>
+    <div class="notice-heading-actions">
+        <button type="button" class="notice-button" data-notice-all data-url="{{ route('notifications.markAllRead') }}" @disabled(!$unreadCount)><i data-lucide="check-check" aria-hidden="true"></i>Mark all as read</button>
+        <button type="button" class="notice-button notice-button--muted" data-notice-delete-read data-url="{{ route('notifications.destroyRead') }}" @disabled(!$readCount)><i data-lucide="trash-2" aria-hidden="true"></i>Delete read</button>
     </div>
+</div>
 @endsection
-
 @section('content')
-
-@if ($notifications->isEmpty())
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i data-lucide="bell-off" class="mb-3" style="width:52px;height:52px;color:var(--dtc-text-muted);display:block;margin:0 auto 12px;"></i>
-            <h5 style="color:var(--dtc-text);font-weight:700;">You're all caught up</h5>
-            <p class="u-text-secondary-sm mb-0">No notifications at the moment.</p>
-        </div>
+<section class="notice-page" aria-label="Your notifications">
+    <div class="notice-new-updates" id="notice-new-updates" hidden role="status">
+        <span>New notifications are available.</span>
+        <a href="{{ route('notifications.index', request()->only(['search', 'state', 'category', 'per_page'])) }}">Show new updates</a>
     </div>
-@else
-
-{{-- Tabs --}}
-<div class="dtc-notif-tabs mb-3">
-    <button class="dtc-notif-tab active" data-tab="all">
-        All
-        <span class="dtc-notif-tab-count">{{ $notifications->count() }}</span>
-    </button>
-    <button class="dtc-notif-tab" data-tab="unread">
-        Unread
-        @if($unreadCount > 0)
-        <span class="dtc-notif-tab-count is-danger">{{ $unreadCount }}</span>
-        @endif
-    </button>
-    <button class="dtc-notif-tab" data-tab="read">
-        Read
-        <span class="dtc-notif-tab-count">{{ $notifications->filter(fn($n) => $n->isRead())->count() }}</span>
-    </button>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-lg-8 dtc-notif-col">
-
-        @php
-            $grouped = $notifications->groupBy(function ($n) {
-                if ($n->created_at->isToday())     return 'Today';
-                if ($n->created_at->isYesterday()) return 'Yesterday';
-                return 'Earlier';
-            });
-            $groupOrder = ['Today', 'Yesterday', 'Earlier'];
-        @endphp
-
-        @foreach ($groupOrder as $group)
-            @if(isset($grouped[$group]))
-            <div class="dtc-notif-group" data-group="{{ $group }}">
-                <div class="dtc-notif-group-label">{{ $group }}</div>
-
-                @foreach ($grouped[$group] as $notification)
-                @php
-                    $tone = match($notification->type) {
-                        'success' => 'success',
-                        'danger'  => 'danger',
-                        'warning' => 'warning',
-                        default   => 'info',
-                    };
-                    $icon = match($notification->type) {
-                        'success' => 'check-circle',
-                        'danger'  => 'x-circle',
-                        'warning' => 'alert-circle',
-                        default   => 'info',
-                    };
-                    $borderColor = match($notification->type) {
-                        'success' => 'var(--dtc-success)',
-                        'danger'  => 'var(--dtc-danger)',
-                        'warning' => 'var(--dtc-accent)',
-                        default   => 'var(--dtc-primary)',
-                    };
-                @endphp
-
-                <div class="dtc-notif-item {{ $notification->isRead() ? 'is-read' : 'is-unread' }}"
-                     data-id="{{ $notification->id }}"
-                     data-read="{{ $notification->isRead() ? '1' : '0' }}"
-                     style="border-left:3px solid {{ $borderColor }};">
-
-                    {{-- Unread dot --}}
-                    @if(!$notification->isRead())
-                    <div class="dtc-notif-unread-dot"></div>
-                    @endif
-
-                    {{-- Icon --}}
-                    <div class="dtc-icon-swatch is-{{ $tone }}" style="width:40px;height:40px;border-radius:12px;flex-shrink:0;">
-                        <i data-lucide="{{ $icon }}"></i>
-                    </div>
-
-                    {{-- Content --}}
-                    <div class="dtc-notif-content">
-                        <div class="dtc-notif-title-row">
-                            <span class="dtc-notif-title">{{ $notification->title }}</span>
-                            @if(!$notification->isRead())
-                            <span class="dtc-status-badge is-danger" style="font-size:9px;font-weight:700;padding:2px 7px;">NEW</span>
-                            @endif
-                        </div>
-                        <p class="dtc-notif-message">{{ $notification->message }}</p>
-                        <div class="dtc-notif-meta">
-                            <i data-lucide="clock" style="width:11px;height:11px;margin-right:3px;"></i>
-                            {{ $notification->created_at->diffForHumans() }}
-                        </div>
-                    </div>
-
-                    {{-- Actions: delete on top, view on bottom --}}
-                    <div class="dtc-notif-actions">
-                        <button class="dtc-notif-btn-delete" title="Delete"
-                                data-id="{{ $notification->id }}"
-                                data-url="{{ route('notifications.destroy', $notification) }}">
-                            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                        </button>
-                        @if($notification->link)
-                        <a href="{{ route('notifications.read', $notification) }}"
-                           class="dtc-notif-btn-view" title="View">
-                            <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
-                            <span class="dtc-notif-btn-view-text">View</span>
-                        </a>
-                        @endif
-                    </div>
-                </div>
-                @endforeach
+    @if(session('info'))<div class="alert alert-info" role="status">{{ session('info') }}</div>@endif
+    <form method="GET" action="{{ route('notifications.index') }}" class="dtc-fl notice-filter-form">
+        <input type="hidden" name="state" value="{{ $state }}">
+        <div class="dtc-fl-toolbar">
+            <div class="notice-search"><i data-lucide="search" aria-hidden="true"></i><input type="search" name="search" value="{{ request('search') }}" maxlength="200" placeholder="Search notifications" aria-label="Search notifications"></div>
+            <button type="button" class="dtc-fl-toggle" data-toggle="collapse" data-target="#noticeFilters" aria-controls="noticeFilters" aria-expanded="{{ request('category') ? 'true' : 'false' }}"><i data-lucide="sliders-horizontal" aria-hidden="true"></i>Filters</button>
+            <button type="submit" class="sr-only">Search notifications</button>
+        </div>
+        <div id="noticeFilters" class="collapse {{ request('category') ? 'show' : '' }}">
+            <div class="dtc-fl-panel">
+                <div class="dtc-fl-field"><label for="notice-category">Notification type</label><select id="notice-category" name="category" class="form-control"><option value="">All types</option>@foreach(\App\Models\UserNotification::CATEGORIES as $key => $category)<option value="{{ $key }}" @selected(request('category') === $key)>{{ $category['label'] }}</option>@endforeach</select></div>
+                <div class="dtc-fl-field"><label for="notice-limit">Rows per page</label><select id="notice-limit" name="per_page" class="form-control">@foreach(\App\Support\TablePagination::OPTIONS as $limit)<option value="{{ $limit }}" @selected($notifications->perPage() === $limit)>{{ $limit }}</option>@endforeach</select></div>
+                <div class="dtc-fl-actions"><button type="submit" class="btn btn-primary">Apply</button><a href="{{ route('notifications.index') }}" class="dtc-fl-clear">Reset</a></div>
             </div>
-            @endif
-        @endforeach
-
-        {{-- Per-tab empty states (shown by JS) --}}
-        <div id="dtc-notif-empty-unread" class="dtc-notif-empty" style="display:none;">
-            <i data-lucide="check-circle" style="width:40px;height:40px;color:var(--dtc-success);display:block;margin:0 auto 10px;"></i>
-            <p class="mb-0" style="font-weight:600;color:var(--dtc-text);">All caught up!</p>
-            <p class="u-text-secondary-sm mb-0">No unread notifications.</p>
         </div>
-        <div id="dtc-notif-empty-read" class="dtc-notif-empty" style="display:none;">
-            <i data-lucide="inbox" style="width:40px;height:40px;color:var(--dtc-text-muted);display:block;margin:0 auto 10px;"></i>
-            <p class="mb-0" style="font-weight:600;color:var(--dtc-text);">No read notifications.</p>
-        </div>
-
+    </form>
+    <div class="notice-panel">
+        <nav class="notice-tabs" aria-label="Notification read status">
+            @foreach(['all' => ['All', $totalCount], 'unread' => ['Unread', $unreadCount], 'read' => ['Read', $readCount]] as $key => $tab)
+                <a href="{{ route('notifications.index', array_merge(request()->only(['search', 'category', 'per_page']), ['state' => $key])) }}" class="notice-tab {{ $state === $key ? 'is-active' : '' }}" aria-current="{{ $state === $key ? 'page' : 'false' }}">{{ $tab[0] }}<span data-notice-count="{{ $key }}">{{ $tab[1] }}</span></a>
+            @endforeach
+        </nav>
+        @if($notifications->isEmpty())
+            <div class="notice-empty"><i data-lucide="{{ $totalCount ? 'search' : 'bell-off' }}" aria-hidden="true"></i><h5>{{ $totalCount ? 'No matching notifications' : 'You?re all caught up' }}</h5><p>{{ $totalCount ? 'Try another search or change your filters.' : 'New updates will appear here.' }}</p>@if($totalCount)<a href="{{ route('notifications.index') }}">View all notifications</a>@endif</div>
+        @else
+            <ul class="notice-list">
+                @foreach($notifications as $notification)
+                    @php
+                        $category = \App\Models\UserNotification::CATEGORIES[$notification->category];
+                        $tone = in_array($notification->type, ['success', 'danger', 'warning'], true) ? $notification->type : 'info';
+                    @endphp
+                    <li class="notice-card {{ $notification->isRead() ? 'is-read' : 'is-unread' }}" data-notice-id="{{ $notification->id }}" data-read="{{ $notification->isRead() ? '1' : '0' }}">
+                        <span class="notice-icon is-{{ $tone }}"><i data-lucide="{{ $category['icon'] }}" aria-hidden="true"></i></span>
+                        <div class="notice-content">
+                            <div class="notice-title-row"><h2>{{ $notification->title }}</h2><span class="notice-unread-dot" @if($notification->isRead()) hidden @endif><span class="sr-only">Unread</span></span></div>
+                            <p>{{ $notification->message }}</p>
+                            <div class="notice-meta"><span>{{ $category['label'] }}</span><time datetime="{{ $notification->created_at->toIso8601String() }}" title="{{ $notification->created_at->format('M j, Y, g:i A') }}">{{ $notification->created_at->diffForHumans() }}</time></div>
+                            <div class="notice-actions">
+                                @if($notification->link)<a class="notice-open" href="{{ route('notifications.open', $notification) }}">View update<i data-lucide="arrow-up-right" aria-hidden="true"></i></a>@endif
+                                <button type="button" class="notice-state" data-notice-state data-url="{{ route('notifications.state', $notification) }}" data-read="{{ $notification->isRead() ? '1' : '0' }}">{{ $notification->isRead() ? 'Mark unread' : 'Mark as read' }}</button>
+                                <button type="button" class="notice-delete" data-notice-delete data-url="{{ route('notifications.destroy', $notification) }}" aria-label="Delete notification: {{ $notification->title }}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+            <footer class="notice-pagination">
+                <span>{{ $notifications->firstItem() }}&ndash;{{ $notifications->lastItem() }} of {{ $notifications->total() }} updates</span>
+                <div class="notice-desktop-pages">{{ $notifications->onEachSide(1)->links('pagination::bootstrap-4') }}</div>
+                @if($notifications->hasPages())
+                <nav class="notice-mobile-pages" aria-label="Notification pages">
+                    @if($notifications->onFirstPage())<span aria-disabled="true">Previous</span>@else<a href="{{ $notifications->previousPageUrl() }}" rel="prev">Previous</a>@endif
+                    <span class="notice-page-number">{{ $notifications->currentPage() }} / {{ $notifications->lastPage() }}</span>
+                    @if($notifications->hasMorePages())<a href="{{ $notifications->nextPageUrl() }}" rel="next">Next</a>@else<span aria-disabled="true">Next</span>@endif
+                </nav>
+                @endif
+            </footer>
+        @endif
     </div>
-</div>
-@endif
-
+</section>
 @endsection
-
-@section('js')
-<script>
-(function () {
-
-    var MARK_ALL_URL    = '{{ route("notifications.markAllRead") }}';
-    var DELETE_READ_URL = '{{ route("notifications.destroyRead") }}';
-    var CSRF            = '{{ csrf_token() }}';
-
-    // -- Tabs ------------------------------------------------------------------
-    var tabs   = document.querySelectorAll('.dtc-notif-tab');
-    var items  = document.querySelectorAll('.dtc-notif-item');
-    var groups = document.querySelectorAll('.dtc-notif-group');
-
-    function applyTab(tab) {
-        tabs.forEach(function (t) { t.classList.toggle('active', t.dataset.tab === tab); });
-
-        var visibleCount = 0;
-        items.forEach(function (item) {
-            var show = tab === 'all'
-                     || (tab === 'unread' && item.dataset.read === '0')
-                     || (tab === 'read'   && item.dataset.read === '1');
-            item.style.display = show ? '' : 'none';
-            if (show) visibleCount++;
-        });
-
-        groups.forEach(function (g) {
-            var visible = Array.from(g.querySelectorAll('.dtc-notif-item'))
-                              .some(function (i) { return i.style.display !== 'none'; });
-            g.style.display = visible ? '' : 'none';
-        });
-
-        var emptyUnread = document.getElementById('dtc-notif-empty-unread');
-        var emptyRead   = document.getElementById('dtc-notif-empty-read');
-        if (emptyUnread) emptyUnread.style.display = (tab === 'unread' && visibleCount === 0) ? 'block' : 'none';
-        if (emptyRead)   emptyRead.style.display   = (tab === 'read'   && visibleCount === 0) ? 'block' : 'none';
-    }
-
-    tabs.forEach(function (t) {
-        t.addEventListener('click', function () { applyTab(t.dataset.tab); });
-    });
-
-    // -- Mark all read ---------------------------------------------------------
-    var btnMarkAll = document.getElementById('btn-mark-all-read');
-    if (btnMarkAll) {
-        btnMarkAll.addEventListener('click', function () {
-            window.dtcFetch(MARK_ALL_URL, {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-            }).then(function () {
-                items.forEach(function (item) {
-                    item.classList.remove('is-unread');
-                    item.classList.add('is-read');
-                    item.dataset.read = '1';
-                    var dot   = item.querySelector('.dtc-notif-unread-dot');
-                    var badge = item.querySelector('.dtc-status-badge.is-danger');
-                    if (dot)   dot.remove();
-                    if (badge) badge.remove();
-                });
-                btnMarkAll.style.display = 'none';
-                var activeTab = document.querySelector('.dtc-notif-tab.active');
-                if (activeTab) applyTab(activeTab.dataset.tab);
-                var btnDel = document.getElementById('btn-delete-read');
-                if (btnDel) btnDel.disabled = false;
-                if (window.dtcToast) dtcToast.success('All notifications marked as read.');
-            }).catch(window.dtcRequestFailure);
-        });
-    }
-
-    // -- Delete individual - with dtcConfirmModal ------------------------------
-    document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.dtc-notif-btn-delete');
-        if (!btn) return;
-
-        var item = btn.closest('.dtc-notif-item');
-        var url  = btn.dataset.url;
-
-        function doDelete() {
-            window.dtcFetch(url, {
-                method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-            }).then(function (r) {
-                if (!r.ok) return;
-                item.style.transition = 'opacity 0.2s, transform 0.2s';
-                item.style.opacity    = '0';
-                item.style.transform  = 'translateX(20px)';
-                setTimeout(function () {
-                    var group = item.closest('.dtc-notif-group');
-                    item.remove();
-                    if (group && !group.querySelector('.dtc-notif-item')) group.remove();
-                    var activeTab = document.querySelector('.dtc-notif-tab.active');
-                    if (activeTab) applyTab(activeTab.dataset.tab);
-                }, 200);
-            }).catch(window.dtcRequestFailure);
-        }
-
-        if (window.dtcConfirm) window.dtcConfirm.open({
-            trigger: btn,
-            tone: 'danger',
-            title: 'Delete notification?',
-            message: 'This notification will be permanently removed.',
-            okLabel: 'Delete',
-            onConfirm: doDelete
-        });
-    });
-
-    // -- Delete all read - with dtcConfirmModal --------------------------------
-    var btnDeleteRead = document.getElementById('btn-delete-read');
-    if (btnDeleteRead) {
-        btnDeleteRead.addEventListener('click', function () {
-            if (window.dtcConfirm) window.dtcConfirm.open({
-                trigger: btnDeleteRead,
-                tone: 'danger',
-                title: 'Delete read notifications?',
-                message: 'All read notifications will be permanently removed.',
-                okLabel: 'Delete All Read',
-                onConfirm: function () {
-                    window.dtcFetch(DELETE_READ_URL, {
-                        method: 'DELETE',
-                        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-                    }).then(function () {
-                        document.querySelectorAll('.dtc-notif-item.is-read').forEach(function (item) {
-                            var group = item.closest('.dtc-notif-group');
-                            item.remove();
-                            if (group && !group.querySelector('.dtc-notif-item')) group.remove();
-                        });
-                        if (btnDeleteRead) btnDeleteRead.disabled = true;
-                        var activeTab = document.querySelector('.dtc-notif-tab.active');
-                        if (activeTab) applyTab(activeTab.dataset.tab);
-                        if (window.dtcToast) dtcToast.success('All read notifications deleted.');
-                    }).catch(window.dtcRequestFailure);
-                }
-            });
-        });
-    }
-
-})();
-</script>
-@endsection
+@push('css')<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">@endpush

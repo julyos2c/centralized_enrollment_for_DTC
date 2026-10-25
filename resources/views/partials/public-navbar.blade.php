@@ -53,6 +53,9 @@
                 type="button"
                 class="public-navbar-toggle"
                 id="applicationNavbarToggle"
+                aria-label="Toggle navigation"
+                aria-controls="applicationMobileNav"
+                aria-expanded="false"
             >
                 <i data-lucide="menu"></i>
             </button>
@@ -99,11 +102,27 @@
         this.setAttribute('aria-expanded', isOpen);
     });
 
-    // Close mobile menu after clicking a link
-    applicationMobileNav.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function () {
-            applicationMobileNav.classList.remove('open');
-            applicationNavbarToggle.setAttribute('aria-expanded', 'false');
-        });
+    function closeApplicationMobileNav() {
+        applicationMobileNav.classList.remove('open');
+        applicationNavbarToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    applicationMobileNav.addEventListener('click', function (event) {
+        if (event.target.closest('a, button')) closeApplicationMobileNav();
+    });
+    function dismissApplicationNavOutside(event) {
+        if (!applicationNavbarToggle.contains(event.target) && !applicationMobileNav.contains(event.target)) {
+            closeApplicationMobileNav();
+        }
+    }
+    document.addEventListener('pointerdown', dismissApplicationNavOutside, { passive: true });
+    document.addEventListener('touchstart', dismissApplicationNavOutside, { passive: true });
+    document.addEventListener('click', dismissApplicationNavOutside);
+    document.addEventListener('scroll', closeApplicationMobileNav, { passive: true, capture: true });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeApplicationMobileNav();
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth >= 992) closeApplicationMobileNav();
     });
 </script>

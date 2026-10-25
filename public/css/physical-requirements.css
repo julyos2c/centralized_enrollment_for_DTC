@@ -1,0 +1,21 @@
+/* Shared requirements presentation; preparation is separate from submission. */
+.physical-requirements-note { margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--dtc-border, #dbe3ee); border-radius: 10px; background: var(--dtc-surface-soft, #f8fafc); color: var(--dtc-text-secondary, #475569); font-size: 12px; line-height: 1.65; }
+.physical-requirements-list, .application-requirements-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.physical-requirements-list li, .application-requirements-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; color: var(--dtc-text, #1e293b); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.physical-requirements-list li + li, .application-requirements-list li + li { border-top: 1px solid var(--dtc-border, #e2e8f0); }
+.physical-requirements-list li::before { content: ''; flex: 0 0 7px; width: 7px; height: 7px; margin-top: 7px; border: 1px solid var(--dtc-text-secondary, #64748b); border-radius: 50%; }
+.application-requirements-list li :is(i, svg) { width: 13px; height: 13px; flex: 0 0 13px; margin-top: 4px; color: var(--dtc-text-secondary, #64748b); }
+.app-wizard-page .physical-requirements-panel { padding: 20px; border: 1px solid var(--dtc-border, #dbe3ee); border-radius: 14px; background: var(--dtc-surface, #fff); }
+.physical-requirements-panel .wiz-reqs-header { color: var(--dtc-text, #1e293b); font-size: 14px; }
+.physical-requirements-panel .wiz-reqs-sub { margin: 8px 0 18px; color: var(--dtc-text-secondary, #64748b); font-size: 12px; line-height: 1.65; }
+.physical-requirements-panel .wiz-reqs-checklist { gap: 0; }
+.physical-requirements-panel .wiz-reqs-checklist li + li { border-top: 1px solid var(--dtc-border, #e2e8f0); }
+.physical-requirements-panel .wiz-req-label { min-height: 48px; margin: 0; padding: 12px 0; align-items: flex-start; color: var(--dtc-text, #1e293b); font-size: 13px; line-height: 1.65; }
+.physical-requirements-panel .wiz-req-box { margin-top: 1px; border-color: var(--dtc-border, #94a3b8); background: var(--dtc-surface-soft, #f8fafc); }
+.physical-requirements-panel .wiz-req-checkbox:checked + .wiz-req-label .wiz-req-box { background: var(--dtc-primary, #0f4cdb); border-color: var(--dtc-primary, #0f4cdb); }
+.physical-requirements-panel .wiz-req-checkbox:focus-visible + .wiz-req-label { outline: 2px solid var(--dtc-on-primary-soft, #0f4cdb); outline-offset: 3px; border-radius: 6px; }
+:is(html.dtc-dark, body.dtc-dark) .physical-requirements-panel { background: #111c2e; border-color: #334155; }
+:is(html.dtc-dark, body.dtc-dark) .physical-requirements-note { background: #152034; border-color: #334155; color: #cbd5e1; }
+:is(html.dtc-dark, body.dtc-dark) .physical-requirements-panel :is(.wiz-reqs-header, .wiz-req-label) { color: #e2e8f0; }
+:is(html.dtc-dark, body.dtc-dark) .physical-requirements-panel .wiz-reqs-sub { color: #cbd5e1; }
+@media (max-width: 599px) { .app-wizard-page .physical-requirements-panel { padding: 16px; } }
