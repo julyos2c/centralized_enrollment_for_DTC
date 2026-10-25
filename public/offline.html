@@ -1,67 +1,56 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>You're offline — DTC Nexus</title>
-        <style>
-            :root {
-                color-scheme: light dark;
-                font-family: system-ui, sans-serif;
-            }
-            body {
-                margin: 0;
-                min-height: 100vh;
-                display: grid;
-                place-items: center;
-                background: light-dark(#f8fafc, #0f172a);
-                color: light-dark(#1e293b, #f1f5f9);
-            }
-            main {
-                max-width: 360px;
-                margin: 24px;
-            }
-            small {
-                font-weight: 600;
-                letter-spacing: 0.04em;
-            }
-            h1 {
-                margin: 24px 0 12px;
-                font-size: 26px;
-            }
-            p {
-                font-size: 15px;
-                line-height: 1.7;
-            }
-            button {
-                margin-top: 12px;
-                padding: 12px 20px;
-                border: 0;
-                border-radius: 8px;
-                background: #2563eb;
-                color: white;
-                font: inherit;
-                cursor: pointer;
-            }
-            button:focus-visible {
-                outline: 3px solid #60a5fa;
-                outline-offset: 4px;
-            }
-        </style>
-    </head>
-    <body>
-        <main>
-            <small>DTC Nexus</small>
-            <h1>You're offline</h1>
-            <p>Reconnect to view your account or continue a transaction.</p>
-            <button type="button" id="retry">Try again</button>
-        </main>
-        <script>
-            document
-                .getElementById("retry")
-                .addEventListener("click", function () {
-                    location.reload();
-                });
-        </script>
-    </body>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>You're offline — DTC Nexus</title>
+    <meta name="theme-color" content="#0f172a">
+    <script>
+        try {
+            var savedTheme = localStorage.getItem('dtc-ems-theme');
+            if (savedTheme === 'dark' || savedTheme === 'light') document.documentElement.classList.add('dtc-' + savedTheme);
+        } catch (error) {}
+    </script>
+    <style>
+        :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+        html.dtc-dark { color-scheme: dark; }
+        html.dtc-light { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 24px 18px; background: light-dark(#f7f8fa, #0f172a); color: light-dark(#1e293b, #f1f5f9); }
+        main { width: 100%; max-width: 380px; padding: 28px; border: 1px solid light-dark(#e2e8f0, #334155); border-radius: 16px; background: light-dark(#ffffff, #111c2e); }
+        .brand { margin: 0 0 28px; font-size: 11px; font-weight: 600; letter-spacing: .05em; color: light-dark(#475569, #cbd5e1); }
+        .connection-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: light-dark(#f1f5f9, #1e293b); color: light-dark(#475569, #cbd5e1); }
+        .connection-icon svg { width: 22px; height: 22px; }
+        h1 { margin: 18px 0 10px; font-size: 23px; line-height: 1.35; font-weight: 650; letter-spacing: -.02em; }
+        .description { margin: 0; font-size: 14px; line-height: 1.7; color: light-dark(#475569, #cbd5e1); }
+        button { display: block; width: 100%; min-height: 46px; margin-top: 24px; padding: 12px 18px; border: 0; border-radius: 9px; background: #2563eb; color: #fff; font: 600 13px/1.5 system-ui, sans-serif; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        button:focus-visible { outline: 3px solid light-dark(#2563eb, #93c5fd); outline-offset: 4px; }
+        button:disabled { opacity: .75; cursor: wait; }
+        @media (max-width: 359px) { main { padding: 24px 20px; } }
+    </style>
+</head>
+<body>
+    <main aria-labelledby="offline-title">
+        <p class="brand">DTC Nexus</p>
+        <div class="connection-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m2 2 20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5-2.7M14 10.3a10 10 0 0 1 5 2.7M2 9a15 15 0 0 1 4-2.4M10 5a15 15 0 0 1 12 4"/><circle cx="12" cy="20" r=".8" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <h1 id="offline-title">You're offline</h1>
+        <p class="description">Check your internet connection to continue using your account.</p>
+        <button type="button" id="retry">Try again</button>
+    </main>
+    <script>
+        document.getElementById('retry').addEventListener('click', function () {
+            this.disabled = true;
+            this.textContent = 'Reconnecting…';
+            location.reload();
+        });
+        window.addEventListener('pageshow', function () {
+            var retry = document.getElementById('retry');
+            retry.disabled = false;
+            retry.textContent = 'Try again';
+        });
+    </script>
+</body>
 </html>

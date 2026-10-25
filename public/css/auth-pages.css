@@ -4,11 +4,9 @@
    Include this via @push('styles') or a shared link tag.
    ============================================================ */
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light; }
+html.dtc-dark { color-scheme: dark; }
 
 body {
     margin: 0;
@@ -135,23 +133,8 @@ body {
     line-height: 1.65;
 }
 
-.auth-account-email {
-    margin: -8px 0 24px;
-    padding: 10px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 9px;
-    background: #f8fafc;
-    color: #334155;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-}
-body.dtc-dark .auth-account-email {
-    background: #152034;
-    border-color: #334155;
-    color: #e2e8f0;
-}
+.auth-account-email { margin: -8px 0 24px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 9px; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-account-email { background: #152034; border-color: #334155; color: #e2e8f0; }
 
 /* ── Alert boxes ─────────────────────────────────────────── */
 .auth-alert {
@@ -179,35 +162,11 @@ body.dtc-dark .auth-account-email {
     color: #166534;
 }
 
-.auth-activation-page .auth-alert--success {
-    padding: 11px 13px;
-    border: 1px solid #dce9df;
-    border-radius: 8px;
-    background: #f4f8f5;
-    color: #245b35;
-    font-size: 12px;
-    line-height: 1.6;
-}
-.auth-activation-page .auth-btn {
-    min-height: 46px;
-    font-weight: 600;
-    box-shadow: none;
-}
-.auth-activation-page .auth-btn:hover {
-    transform: none;
-    box-shadow: none;
-}
-.auth-message-help {
-    margin: 6px 0 0;
-    font-size: 12px;
-    line-height: 1.6;
-    font-weight: 400;
-}
-body.dtc-dark.auth-activation-page .auth-alert--success {
-    background: #152a21;
-    border-color: #294737;
-    color: #bbdfc7;
-}
+.auth-activation-page .auth-alert--success { padding: 11px 13px; border: 1px solid #dce9df; border-radius: 8px; background: #f4f8f5; color: #245b35; font-size: 12px; line-height: 1.6; }
+.auth-activation-page .auth-btn { min-height: 46px; font-weight: 600; box-shadow: none; }
+.auth-activation-page .auth-btn:hover { transform: none; box-shadow: none; }
+.auth-message-help { margin: 6px 0 0; font-size: 12px; line-height: 1.6; font-weight: 400; }
+:is(html.dtc-dark body, body.dtc-dark).auth-activation-page .auth-alert--success { background: #152a21; border-color: #294737; color: #bbdfc7; }
 
 .auth-alert i {
     margin-top: 1px;
@@ -344,9 +303,19 @@ body.dtc-dark.auth-activation-page .auth-alert--success {
     transition: color 0.2s ease;
 }
 
-.auth-back:hover {
-    color: #0f4cdb;
-}
+.auth-back:hover { color: #0F4CDB; }
+.auth-verification-help { margin: -4px 0 18px; color: #64748b; }
+.auth-secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.auth-secondary-actions form { margin: 0; }
+.auth-secondary-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #dbe2ec; border-radius: 9px; background: transparent; color: #475569; font: 500 12px/1.5 Poppins, sans-serif; text-align: center; text-decoration: none; cursor: pointer; }
+.auth-secondary-btn:hover { background: #f1f5f9; color: #0f4cdb; }
+.auth-account-email { max-width: 100%; }
+:is(.auth-btn, .auth-secondary-btn, .auth-back):focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-secondary-btn { border-color: #334155; color: #cbd5e1; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-secondary-btn:hover { background: #1e293b; color: #bfdbfe; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-verification-help { color: #94a3b8; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-alert--error { background: #301b24; border-color: #71323e; color: #fecaca; }
+@media (max-width: 359.98px) { .auth-secondary-actions { grid-template-columns: 1fr; } }
 
 .auth-back i {
     font-size: 11px;
@@ -458,47 +427,31 @@ body.dtc-dark.auth-activation-page .auth-alert--success {
     );
 }
 
-body.dtc-dark {
-    background: #0f172a;
-}
-body.dtc-dark .auth-card {
-    background: #111827;
-    border-color: #334155;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
-}
-body.dtc-dark .auth-card-body {
-    background: #111827;
-}
-body.dtc-dark .auth-card-title {
-    color: #f8fafc;
-}
-body.dtc-dark .auth-card-subtitle,
-body.dtc-dark .auth-back {
-    color: #94a3b8;
-}
-body.dtc-dark .auth-card-footer {
-    border-top-color: #1e293b;
-}
-body.dtc-dark .auth-input {
+:is(html.dtc-dark body, body.dtc-dark) { background: #0f172a; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-card { background: #111827; border-color: #334155; box-shadow: 0 8px 28px rgba(0, 0, 0, .16); }
+:is(html.dtc-dark body, body.dtc-dark) .auth-card-body { background: #111827; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-card-title { color: #f8fafc; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-card-subtitle,
+:is(html.dtc-dark body, body.dtc-dark) .auth-back { color: #94a3b8; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-card-footer { border-top-color: #1e293b; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-input {
     border-color: #334155;
     background: #111827;
     color: #f8fafc;
 }
-body.dtc-dark .auth-input:focus {
+:is(html.dtc-dark body, body.dtc-dark) .auth-input:focus {
     border-color: #6c9bff;
     background: #111827;
     box-shadow: 0 0 0 3px rgba(108, 155, 255, 0.18);
 }
-body.dtc-dark .auth-field .auth-label {
+:is(html.dtc-dark body, body.dtc-dark) .auth-field .auth-label {
     background: #111827;
     color: #94a3b8;
 }
-body.dtc-dark .auth-field:has(.auth-input:focus) > .auth-label,
-body.dtc-dark
-    .auth-field:has(.auth-input:not(:placeholder-shown))
-    > .auth-label,
-body.dtc-dark .auth-field:has(.auth-input:-webkit-autofill) > .auth-label,
-body.dtc-dark .auth-field:has(.auth-input:autofill) > .auth-label {
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:focus) > .auth-label,
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:not(:placeholder-shown)) > .auth-label,
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:-webkit-autofill) > .auth-label,
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:autofill) > .auth-label {
     background: linear-gradient(
         to bottom,
         transparent calc(50% - 2px),
@@ -508,12 +461,12 @@ body.dtc-dark .auth-field:has(.auth-input:autofill) > .auth-label {
     );
     color: #93c5fd;
 }
-body.dtc-dark .auth-input.auth-input--error {
+:is(html.dtc-dark body, body.dtc-dark) .auth-input.auth-input--error {
     border-color: #ef4444;
     background: #111827;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
 }
-body.dtc-dark .auth-field:has(.auth-input.auth-input--error) > .auth-label {
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input.auth-input--error) > .auth-label {
     background: linear-gradient(
         to bottom,
         transparent calc(50% - 2px),
@@ -523,17 +476,12 @@ body.dtc-dark .auth-field:has(.auth-input.auth-input--error) > .auth-label {
     );
     color: #fca5a5;
 }
-body.dtc-dark .auth-input:disabled {
+:is(html.dtc-dark body, body.dtc-dark) .auth-input:disabled { background: #172033; color: #94a3b8; }
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:disabled) > .auth-label {
     background: #172033;
     color: #94a3b8;
 }
-body.dtc-dark .auth-field:has(.auth-input:disabled) > .auth-label {
-    background: #172033;
-    color: #94a3b8;
-}
-body.dtc-dark
-    .auth-field:has(.auth-input:disabled:not(:placeholder-shown))
-    > .auth-label {
+:is(html.dtc-dark body, body.dtc-dark) .auth-field:has(.auth-input:disabled:not(:placeholder-shown)) > .auth-label {
     background: linear-gradient(
         to bottom,
         transparent calc(50% - 2px),
@@ -543,9 +491,9 @@ body.dtc-dark
     );
 }
 
-body.dtc-dark .auth-input:-webkit-autofill,
-body.dtc-dark .auth-input:-webkit-autofill:hover,
-body.dtc-dark .auth-input:-webkit-autofill:focus {
+:is(html.dtc-dark body, body.dtc-dark) .auth-input:-webkit-autofill,
+:is(html.dtc-dark body, body.dtc-dark) .auth-input:-webkit-autofill:hover,
+:is(html.dtc-dark body, body.dtc-dark) .auth-input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px #111827 inset !important;
     box-shadow: 0 0 0 1000px #111827 inset !important;
     -webkit-text-fill-color: #f8fafc !important;

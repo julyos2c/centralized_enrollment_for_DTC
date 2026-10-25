@@ -9,7 +9,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Notifications\DtcResetPasswordNotification;
 
-class User extends Authenticatable
+class User extends Authenticatable implements \Illuminate\Contracts\Auth\MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -30,11 +30,18 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'must_change_password' => 'boolean',
+        'email_verification_required' => 'boolean',
     ];
 
     protected static function booted(): void
     {
         static::updating(function (User $user) {
+            if ($user->isDirty('email')) {
+                $user->email_verified_at = null;
+                $user->email_verification_required = true;
+            } elseif ($user->isDirty('email_verified_at') && $user->email_verified_at !== null) {
+                $user->email_verification_required = false;
+            }
             if ($user->isDirty('password') || $user->isDirty('status')) {
                 $user->auth_session_token = \Illuminate\Support\Str::random(64);
                 $user->remember_token = \Illuminate\Support\Str::random(60);

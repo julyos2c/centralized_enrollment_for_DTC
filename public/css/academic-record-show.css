@@ -1,0 +1,35 @@
+.academic-record-page { max-width: 1080px; margin: 0 auto; }
+.content-wrapper .content-header .academic-record-heading { max-width: 1080px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center !important; }
+.content-wrapper .academic-record-heading > .btn { width: auto; min-height: 44px; padding: 10px 18px; border-radius: 9px; box-shadow: none; font-size: 12px; }
+.academic-record-page .ar-record-card { border: 0; background: transparent; box-shadow: none; }
+.academic-record-page .ar-record-card > .card-body { padding: 0; }
+.record-portal, .record-information { padding: 22px; border: 1px solid var(--dtc-border); border-radius: 12px; background: var(--dtc-surface); margin-bottom: 16px; }
+.record-portal { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; }
+.record-portal h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--dtc-text); align-self: center; }
+.record-account-state { padding: 4px 10px; border-radius: 6px; background: var(--dtc-surface-soft); border: 1px solid var(--dtc-border); color: var(--dtc-text-secondary); font-size: 11px; }
+.record-account-email, .record-account-help { grid-column: 1 / -1; margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; color: var(--dtc-text); }
+.record-account-help { color: var(--dtc-text-secondary); font-size: 12px; }
+.record-account-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.academic-record-page .record-account-actions .btn { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--dtc-primary) !important; font-size: 12px; font-weight: 600; line-height: 1.4; white-space: nowrap; box-shadow: none !important; }
+.academic-record-page .record-account-actions .btn-outline-primary { background: var(--dtc-primary) !important; color: #fff !important; }
+.academic-record-page .record-account-actions .btn-outline-primary:hover { filter: brightness(1.1); }
+.academic-record-page .record-account-actions .btn-outline-danger { border-color: var(--dtc-border) !important; color: var(--dtc-danger) !important; background: var(--dtc-surface) !important; }
+.academic-record-page .record-account-actions .btn-outline-danger:hover { border-color: var(--dtc-danger) !important; background: var(--dtc-surface-soft) !important; }
+.record-person { padding-bottom: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--dtc-border); }
+.record-person h2 { margin: 0 0 5px; font-size: 17px; line-height: 1.5; font-weight: 600; color: var(--dtc-text); overflow-wrap: anywhere; }
+.record-person p { margin: 0; font-size: 12px; color: var(--dtc-text-secondary); }
+.academic-record-page .ar-record-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 0; }
+.academic-record-page .ar-record-field { padding: 14px 0; min-width: 0; }
+.academic-record-page .ar-record-field dt { font-size: 11px; color: var(--dtc-text-secondary); font-weight: 400; margin-bottom: 5px; }
+.academic-record-page .ar-record-field dd { margin: 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; color: var(--dtc-text); }
+.record-notice { padding: 12px 16px; margin-bottom: 16px; border: 1px solid var(--dtc-border); border-left: 3px solid var(--dtc-primary); border-radius: 8px; background: var(--dtc-surface); color: var(--dtc-text); font-size: 12px; line-height: 1.7; }
+.record-notice-error { border-left-color: var(--dtc-danger); }
+.academic-record-page .record-back { min-height: 44px; padding: 10px 16px; border: 1px solid var(--dtc-border); border-radius: 8px; color: var(--dtc-text-secondary); font-size: 12px; }
+.academic-record-page .btn:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: 3px; }
+@media (max-width: 575.98px) {
+    .content-wrapper .content-header .academic-record-heading { flex-direction: row; align-items: center !important; }
+    .record-portal, .record-information { padding: 18px; }
+    .academic-record-page .ar-record-grid { grid-template-columns: 1fr; }
+    .record-account-actions > form { flex: 1 1 130px; margin: 0; }
+    .record-account-actions > form .btn { width: 100%; }
+}

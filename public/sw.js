@@ -1,6 +1,6 @@
 /* Only this public offline notice is cached. All app data and writes stay online-only. */
 const CACHE_PREFIX = 'dtc-ems-offline-';
-const CACHE_NAME = CACHE_PREFIX + 'v1';
+const CACHE_NAME = CACHE_PREFIX + 'v2';
 const OFFLINE_URL = new URL('offline.html', self.registration.scope).href;
 
 self.addEventListener('install', function (event) {

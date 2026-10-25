@@ -23,6 +23,41 @@ class AcademicRecordManagementTest extends TestCase
         return $this->makeUserWithRole($role);
     }
 
+    public function test_record_type_and_academic_status_must_agree(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        foreach ([['alumni', 'active'], ['students', 'alumni']] as [$type, $status]) {
+            $this->post(route('registrar.students.store'), [
+                'student_number' => 'TYPE-CHECK', 'first_name' => 'Ana', 'last_name' => 'Santos',
+                'record_type' => $type, 'academic_status' => $status,
+            ])->assertSessionHasErrors('academic_status');
+        }
+        $this->assertDatabaseMissing('student_profiles', ['student_number' => 'TYPE-CHECK']);
+    }
+
+    public function test_alumni_graduation_fields_are_optional_but_must_agree_when_both_are_provided(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        $payload = ['student_number' => 'ALUMNI-CHECK', 'first_name' => 'Ana', 'last_name' => 'Santos', 'record_type' => 'alumni', 'academic_status' => 'alumni'];
+        $this->post(route('registrar.students.store'), $payload + ['graduation_year' => 2020, 'graduation_date' => '2021-04-01'])
+            ->assertSessionHasErrors('graduation_date');
+        $this->assertDatabaseMissing('student_profiles', ['student_number' => 'ALUMNI-CHECK']);
+        $this->post(route('registrar.students.store'), $payload)->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('student_profiles', ['student_number' => 'ALUMNI-CHECK', 'academic_status' => 'alumni', 'user_id' => null]);
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_record_forms_render_the_correct_initial_fields_for_student_and_alumni(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        foreach (['students', 'alumni'] as $type) {
+            $response = $this->get(route('registrar.students.create', ['type' => $type]))->assertOk()
+                ->assertSee('Personal details')->assertSee('Academic details')->assertSee('data-academic-record-form', false);
+            $hiddenFields = $type === 'students' ? 'data-alumni-fields' : 'data-student-fields';
+            $this->assertMatchesRegularExpression('/'.$hiddenFields.'\s+hidden disabled/', $response->getContent());
+        }
+    }
+
     public function test_registrar_can_create_account_free_academic_record(): void
     {
         $registrar = $this->staff('registrar');

@@ -4,7 +4,7 @@
 @section('title', 'Academic Record')
 
 @section('content_header')
-    <div class="ar-page-heading">
+    <div class="ar-page-heading academic-record-heading">
         <div>
             <h1>Academic Record</h1>
             <p>Record {{ $record->student_number }}</p>
@@ -15,9 +15,10 @@
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset('css/academic-record-show.css') }}">
 @endpush
 @section('content')
-<div class="registrar-workspace">
+<div class="registrar-workspace academic-record-page">
 
     @php
         $fullName = trim(implode(' ', array_filter([
@@ -42,20 +43,24 @@
 
     <section class="card ar-record-card" aria-label="Student academic details">
         <div class="card-body">
-            @if (session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
-            @if (session('error'))<div class="alert alert-danger" role="alert">{{ session('error') }}</div>@endif
-            @if ($errors->has('account'))<div class="alert alert-danger" role="alert">{{ $errors->first('account') }}</div>@endif
+            @if (session('success'))<div class="record-notice record-notice-success" role="status">{{ session('success') }}</div>@endif
+            @if (session('error'))<div class="record-notice record-notice-error" role="alert">{{ session('error') }}</div>@endif
+            @if ($errors->has('account'))<div class="record-notice record-notice-error" role="alert">{{ $errors->first('account') }}</div>@endif
             @php
                 $linkedUser = $record->user;
                 $invite = $record->portalInvitation;
                 $portalState = ! $linkedUser ? 'No portal account' : ($linkedUser->status === 'locked' ? 'Disabled' : ($linkedUser->email_verified_at ? ucfirst($linkedUser->status) : ($invite ? ucfirst(str_replace('_', ' ', $invite->status)) : 'Account pending')));
             @endphp
-            <section class="mb-4" aria-labelledby="portal-account-heading">
+            <section class="record-portal" aria-labelledby="portal-account-heading">
                 <h2 class="h5" id="portal-account-heading">Portal account</h2>
-                <p class="mb-2"><strong>{{ $portalState }}</strong>
-                    @if ($linkedUser) <span class="text-muted">{{ $linkedUser->email }}{{ $linkedUser->email_verified_at ? ' · email verified' : ' · email not verified' }}</span>
-                    @else <span class="text-muted">Account setup requires eligibility checks and recipient email verification.</span> @endif
-                </p>
+                <span class="record-account-state">{{ $portalState }}</span>
+                @if ($linkedUser)
+                    <p class="record-account-email">{{ $linkedUser->email }}</p>
+                    <p class="record-account-help">{{ $linkedUser->email_verified_at ? 'Email verified.' : 'The recipient must verify their email before accessing the portal.' }}</p>
+                @else
+                    <p class="record-account-help">Set up access separately. The recipient verifies their email and chooses a password.</p>
+                @endif
+                <div class="record-account-actions">
                 @if (! $linkedUser)
                     <a class="btn btn-primary btn-sm" href="{{ route('registrar.students.provision', $record) }}">{{ $record->academic_status === 'alumni' ? 'Set Up Alumni Access' : 'Create Portal Account' }}</a>
                 @elseif ($invite && in_array($invite->status, ['pending', 'sending', 'delivery_failed', 'expired', 'revoked'], true) && $linkedUser->status === 'pending')
@@ -69,7 +74,13 @@
                         <form class="d-inline" id="revoke-invitation-{{ $record->id }}" method="POST" action="{{ route('registrar.students.invitation.revoke', $record) }}">@csrf<input type="hidden" name="confirm" value="1"><button type="button" class="btn btn-outline-danger btn-sm" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Revoke invitation?" data-dtc-confirm-message="The unused portal link for {subject} will stop working." data-dtc-confirm-subject="{{ $fullName ?: ($record->user->name ?? 'this record') }}" data-dtc-confirm-ok="Revoke" data-dtc-confirm-form="#revoke-invitation-{{ $record->id }}">Revoke Invitation</button></form>
                     @endif
                 @endif
+                </div>
             </section>
+            <section class="record-information" aria-labelledby="record-information-heading">
+                <div class="record-person">
+                    <h2 id="record-information-heading">{{ $fullName ?: ($record->user->name ?? 'Not recorded') }}</h2>
+                    <p>Academic details</p>
+                </div>
             <dl class="ar-record-grid">
                 @foreach ($details as $label => $value)
                     <div class="ar-record-field">
@@ -78,6 +89,7 @@
                     </div>
                 @endforeach
             </dl>
+            </section>
 
             @if ($enrollments->isNotEmpty())
                 <section class="ar-history-section">
@@ -122,7 +134,7 @@
                 </section>
             @endif
 
-            <a class="btn btn-light mt-3" href="{{ route('registrar.students.index', ['type' => $record->academic_status === 'alumni' ? 'alumni' : 'students']) }}">Back to records</a>
+            <a class="btn btn-outline-secondary record-back" href="{{ route('registrar.students.index', ['type' => $record->academic_status === 'alumni' ? 'alumni' : 'students']) }}">Back to records</a>
         </div>
     </section>
 

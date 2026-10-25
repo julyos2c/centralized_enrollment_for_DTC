@@ -45,6 +45,17 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting()
     {
+        // Pair limits with IP so an attacker cannot lock out an email globally.
+        RateLimiter::for('password-recovery', function (Request $request) {
+            $email = $request->input('email', '');
+            $email = is_string($email) ? strtolower(trim($email)) : '';
+            $identity = hash_hmac('sha256', $email . '|' . $request->ip(), (string) config('app.key'));
+            return [
+                Limit::perMinute(20)->by('recovery-ip:' . $request->ip()),
+                Limit::perMinute(5)->by('recovery-identity:' . $identity),
+            ];
+        });
+        RateLimiter::for('password-setup-page', fn (Request $request) => Limit::perMinute(30)->by('setup-ip:' . $request->ip()));
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });

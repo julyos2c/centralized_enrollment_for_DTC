@@ -282,10 +282,10 @@ class SettingsController extends Controller
     public function updateSecurity(Request $request)
     {
         $request->validate([
-            'min_password_length'   => ['required', 'integer', 'min:6', 'max:32'],
-            'require_special_chars' => ['nullable'],
-            'session_timeout'       => ['required', 'integer', 'min:5'],
-            'max_login_attempts'    => ['required', 'integer', 'min:3'],
+            'min_password_length'   => ['required', 'integer', 'min:8', 'max:32'],
+            'require_special_chars' => ['nullable', 'boolean'],
+            'session_timeout'       => ['required', 'integer', 'min:5', 'max:1440'],
+            'max_login_attempts'    => ['required', 'integer', 'min:3', 'max:20'],
         ]);
 
         Setting::updateOrCreate(['key' => 'min_password_length'],   ['value' => $request->min_password_length]);

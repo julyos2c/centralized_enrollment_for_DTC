@@ -364,42 +364,57 @@ function showResults(results) {
     document.getElementById("search-results").style.display = "block";
     document.getElementById("search-empty").style.display = "none";
 
-    const list = document.getElementById("results-list");
-    list.innerHTML = results
-        .map((r) => {
-            const escapeAvatar = (value) =>
-                String(value).replace(
-                    /[&<>"']/g,
-                    (character) =>
-                        ({
-                            "&": "&amp;",
-                            "<": "&lt;",
-                            ">": "&gt;",
-                            '"': "&quot;",
-                            "'": "&#39;",
-                        })[character],
-                );
-            const iconHtml = r.avatar
-                ? `<div class="search-result-avatar dtc-user-avatar"><span aria-hidden="true">${escapeAvatar(r.avatar)}</span>${r.avatar_url ? `<img src="${escapeAvatar(r.avatar_url)}" alt="Profile photo" onerror="this.hidden = true;">` : ""}</div>`
-                : `<div class="search-result-icon ${r.type}"><i data-lucide="${r.icon}"></i></div>`;
-
-            return `
-            <a href="${r.url}"
-               class="search-result-item"
-               onclick="addRecent(document.getElementById('global-search').value); closeSearch();">
-                ${iconHtml}
-                <div class="search-result-body">
-                    <div class="search-result-title">${r.title}</div>
-                    <div class="search-result-desc">${r.desc}</div>
-                </div>
-                <span class="search-result-badge ${r.type}">${r.type}</span>
-            </a>`;
-        })
-        .join("");
-
-    // Activate Lucide icons injected via innerHTML (createIcons misses them otherwise)
-    if (window.lucide)
-        lucide.createIcons({ nodes: list.querySelectorAll("[data-lucide]") });
+    const list = document.getElementById('results-list');
+    list.replaceChildren();
+    const safeUrl = (value, image = false) => {
+        if (!value || value === '#') return image ? '' : '#';
+        try {
+            const url = new URL(String(value || ''), window.location.origin);
+            return url.origin === window.location.origin && ['http:', 'https:'].includes(url.protocol)
+                ? url.href : (image ? '' : '#');
+        } catch { return image ? '' : '#'; }
+    };
+    const make = (tag, className, text) => {
+        const element = document.createElement(tag);
+        element.className = className;
+        if (text !== undefined) element.textContent = String(text ?? '');
+        return element;
+    };
+    results.forEach(r => {
+        const type = ['page', 'user', 'enrollment', 'appointment'].includes(r.type) ? r.type : 'page';
+        const link = make('a', 'search-result-item');
+        link.href = safeUrl(r.url);
+        link.addEventListener('click', () => {
+            addRecent(document.getElementById('global-search').value);
+            closeSearch();
+        });
+        if (r.avatar) {
+            const avatar = make('div', 'search-result-avatar dtc-user-avatar');
+            const fallback = make('span', '', r.avatar);
+            fallback.setAttribute('aria-hidden', 'true');
+            avatar.appendChild(fallback);
+            const src = safeUrl(r.avatar_url, true);
+            if (src) {
+                const img = make('img', '');
+                img.src = src;
+                img.alt = 'Profile photo';
+                img.addEventListener('error', () => { img.hidden = true; });
+                avatar.appendChild(img);
+            }
+            link.appendChild(avatar);
+        } else {
+            const icon = make('div', 'search-result-icon ' + type);
+            const glyph = make('i', '');
+            glyph.setAttribute('data-lucide', /^[a-z-]+$/.test(r.icon || '') ? r.icon : 'search');
+            icon.appendChild(glyph);
+            link.appendChild(icon);
+        }
+        const body = make('div', 'search-result-body');
+        body.append(make('div', 'search-result-title', r.title), make('div', 'search-result-desc', r.desc));
+        link.append(body, make('span', 'search-result-badge ' + type, type));
+        list.appendChild(link);
+    });
+    if (window.lucide) lucide.createIcons({ nodes: list.querySelectorAll('[data-lucide]') });
 }
 
 function showEmpty(query) {

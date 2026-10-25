@@ -58,10 +58,10 @@
 
                             <div class="form-group">
                                 <label>Minimum Password Length</label>
-                                <input type="number" name="min_password_length" class="form-control" min="6" max="32"
+                                <input type="number" name="min_password_length" class="form-control" min="8" max="32"
                                        value="{{ old('min_password_length', $settings->min_password_length ?? 8) }}">
                                 <small class="form-text" style="color:var(--dtc-text-muted);">
-                                    Applies to new accounts and password resets. Between 6 and 32 characters.
+                                    Applies to new accounts and password resets. Between 8 and 32 characters.
                                 </small>
                             </div>
 
@@ -98,8 +98,8 @@
 
                             <div class="form-group">
                                 <label>Session Timeout (minutes)</label>
-                                <input type="number" name="session_timeout" class="form-control" min="5"
-                                       value="{{ old('session_timeout', $settings->session_timeout ?? 30) }}">
+                                <input type="number" name="session_timeout" class="form-control" min="5" max="1440"
+                                       value="{{ old('session_timeout', $settings->session_timeout ?? 60) }}">
                                 <small class="form-text" style="color:var(--dtc-text-muted);">
                                     Users are signed out automatically after this many minutes of inactivity.
                                 </small>
@@ -107,10 +107,10 @@
 
                             <div class="form-group mb-0">
                                 <label>Max Login Attempts</label>
-                                <input type="number" name="max_login_attempts" class="form-control" min="3"
+                                <input type="number" name="max_login_attempts" class="form-control" min="3" max="20"
                                        value="{{ old('max_login_attempts', $settings->max_login_attempts ?? 5) }}">
                                 <small class="form-text" style="color:var(--dtc-text-muted);">
-                                    Accounts are temporarily locked after this many failed sign-in attempts.
+                                    Sign-in attempts for the same email and IP are temporarily limited after this many attempts.
                                 </small>
                             </div>
                         </div>

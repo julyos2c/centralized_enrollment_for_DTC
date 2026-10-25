@@ -72,9 +72,12 @@ test('a failed form submission preserves its draft and is not automatically retr
 });
 
 test('server-confirmed success clears only the matching submitted draft', () => {
-    const source = fs.readFileSync(path.join(__dirname, '../../resources/views/public/application/success.blade.php'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../../resources/views/public/application/success.blade.php'), 'utf8').replace(/\r\n/g, '\n');
     const start = source.indexOf('try {\n    const pendingDraft');
-    const code = source.slice(start, source.indexOf('</script>', start));
+    assert.notEqual(start, -1, 'Draft cleanup script must exist');
+    const end = source.indexOf('</script>', start);
+    assert.notEqual(end, -1, 'Draft cleanup script must close');
+    const code = source.slice(start, end);
     for (const current of ['submitted draft', 'new draft in another tab']) {
         const local = new Map([['dtc_application_draft', current]]);
         const session = new Map([['dtc_pending_application_draft', 'submitted draft']]);

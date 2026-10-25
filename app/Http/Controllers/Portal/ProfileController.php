@@ -43,6 +43,10 @@ class ProfileController extends Controller
 
         $user->update($fillable);
 
+        if ($user->wasChanged('email')) {
+            return redirect()->route('verification.notice');
+        }
+
         $redirectRoute = $request->boolean('return_to_dashboard')
             && $request->hasFile('avatar')
                 ? match (true) {
@@ -64,7 +68,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'current_password'      => ['required'],
-            'password'              => ['required', 'string', 'min:8', 'confirmed'],
+            'password'              => \App\Support\SecuritySettings::passwordRules(),
             'password_confirmation' => ['required'],
         ]);
 

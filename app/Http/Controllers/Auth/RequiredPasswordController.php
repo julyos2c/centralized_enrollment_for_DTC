@@ -17,7 +17,7 @@ class RequiredPasswordController extends Controller
     {
         $request->validate([
             'current_password' => ['required', 'current_password:web'],
-            'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
+            'password' => array_merge(\App\Support\SecuritySettings::passwordRules(), ['different:current_password']),
         ]);
         $user = \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
             $user = \App\Models\User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();

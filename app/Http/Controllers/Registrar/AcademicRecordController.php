@@ -87,7 +87,8 @@ class AcademicRecordController extends Controller
 
     private function validated(Request $request, ?StudentProfile $record = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
+            'record_type' => ['nullable', Rule::in(['students', 'alumni'])],
             'student_number' => ['required', 'string', 'max:50', Rule::unique('student_profiles', 'student_number')->ignore($record?->id)],
             'first_name' => ['required', 'string', 'max:100'], 'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'], 'suffix' => ['nullable', 'string', 'max:30'],
@@ -96,6 +97,19 @@ class AcademicRecordController extends Controller
             'graduation_year' => ['nullable', 'integer', 'between:1900,'.(date('Y') + 1)], 'graduation_date' => ['nullable', 'date'],
             'academic_status' => ['required', Rule::in(['active', 'inactive', 'alumni'])],
         ]);
+        if (isset($data['record_type']) && (($data['record_type'] === 'alumni') !== ($data['academic_status'] === 'alumni'))) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'academic_status' => 'The academic status must match the selected Student or Alumni record type.',
+            ]);
+        }
+        if (!empty($data['graduation_year']) && !empty($data['graduation_date'])
+            && (int) \Illuminate\Support\Carbon::parse($data['graduation_date'])->year !== (int) $data['graduation_year']) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'graduation_date' => 'The graduation date must fall within the graduation year.',
+            ]);
+        }
+        unset($data['record_type']);
+        return $data;
     }
 
     private function audit(Request $request, string $action, StudentProfile $record): void

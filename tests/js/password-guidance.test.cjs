@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function setup({ admin = false, confirmation = true, minimum = 8, distinct = false, iconToggles = false } = {}) {
+function setup({ admin = false, confirmation = true, minimum = 8, distinct = false, iconToggles = false, policy = null } = {}) {
     class Element {
         constructor(tag = 'DIV') { this.tagName = tag.toUpperCase(); this.children = []; this.events = {}; this.dataset = {}; this.attributes = {}; this.value = ''; this.type = 'password'; this.style = {}; }
         append(...children) { this.children.push(...children); }
@@ -37,7 +37,7 @@ function setup({ admin = false, confirmation = true, minimum = 8, distinct = fal
         crypto: { getRandomValues: bytes => bytes.fill(10) }, dtcConfirm: { open: options => { prompt = options; } } };
     vm.runInNewContext(fs.readFileSync('public/js/password-guidance.js', 'utf8'), {
         window, navigator: { clipboard: { writeText: async value => copies.push(value) } }, Uint8Array,
-        document: { querySelectorAll: () => [form], createElement: tag => new Element(tag), getElementById: () => null }
+        document: { querySelectorAll: () => [form], createElement: tag => new Element(tag), getElementById: id => id === 'dtc-password-policy' && policy ? { dataset: policy } : null }
     });
     return { password, confirm, current, submit, form, additions, copies, pageEvents, event, prompt: () => prompt };
 }
@@ -55,6 +55,17 @@ test('guidance matches real minimums, delays mismatch text until blur, and prese
     assert.equal(app.confirm.error, '');
     const short = setup({ admin: true, minimum: 6 });
     assert.match(short.additions[0].children[0].textContent, /6 characters/);
+});
+
+test('server policy updates guidance and generated passwords include required symbols', () => {
+    const app = setup({ admin: true, policy: { minimum: '20', symbols: '1' } });
+    assert.equal(app.password.minLength, 20);
+    assert.match(app.additions[0].children[0].textContent, /20 characters/);
+    assert.match(app.additions[0].children[1].textContent, /at least one symbol/);
+    app.additions[0].children[3].children[0].events.click();
+    assert.equal(app.password.value.length, 20);
+    assert.match(app.password.value, /!/);
+    assert.equal(app.confirm.value, app.password.value);
 });
 
 test('temporary password fields use accessible eye icons and toggle visibility independently', () => {
