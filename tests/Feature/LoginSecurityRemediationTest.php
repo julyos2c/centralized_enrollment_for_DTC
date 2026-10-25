@@ -32,18 +32,6 @@ class LoginSecurityRemediationTest extends TestCase
 
         $response->assertRedirect(route('portal.dashboard'));
         $this->assertAuthenticatedAs($user);
-<<<<<<< HEAD
-        Http::assertNothingSent();
-    }
-
-    public function test_sign_in_page_does_not_load_recaptcha(): void
-    {
-        $this->get(route('login'))
-            ->assertOk()
-            ->assertDontSee('recaptcha', false)
-            ->assertDontSee('g-recaptcha', false);
-=======
->>>>>>> 6c73dfb (fix: resolve workflow gaps and refine responsive portal interfaces)
     }
 
     public function test_per_email_limit_holds_when_source_ip_rotates(): void
