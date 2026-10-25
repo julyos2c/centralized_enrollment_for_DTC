@@ -171,10 +171,11 @@
     background: #f8fafc;
 }
 
-.search-suggestion-item i {
-    color: #0f4cdb;
+.search-suggestion-item :is(i, svg) {
+    color: #0F4CDB;
     font-size: 13px;
     width: 16px;
+    height: 16px;
     flex-shrink: 0;
 }
 
@@ -501,6 +502,10 @@ body.dtc-dark .search-suggestion-item:hover {
 
 body.dtc-dark .search-suggestion-item span {
     color: var(--dtc-text);
+}
+
+body.dtc-dark .search-suggestion-item :is(i, svg) {
+    color: #93c5fd;
 }
 
 /* ── Recent chip ─────────────────────────────────────────── */

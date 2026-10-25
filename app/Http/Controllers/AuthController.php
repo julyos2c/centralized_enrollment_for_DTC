@@ -28,8 +28,7 @@ class AuthController extends Controller
         // requests, so an account still gets locked down regardless of source IP.
         $emailLimiterKey = 'login:email:' . hash('sha256', $email);
         $ipLimit = (int) config('services.login_rate_limit.per_ip_attempts', 300);
-        $identityLimit = (int) config('services.login_rate_limit.per_identity_attempts', 5);
-        $emailLimit = (int) config('services.login_rate_limit.per_email_attempts', 20);
+        $identityLimit = \App\Support\SecuritySettings::loginAttempts();
         $decaySeconds = (int) config('services.login_rate_limit.decay_seconds', 300);
         $emailDecaySeconds = (int) config('services.login_rate_limit.per_email_decay_seconds', 900);
 

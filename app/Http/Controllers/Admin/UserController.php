@@ -63,7 +63,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => \App\Support\SecuritySettings::passwordRules(false),
             // Only staff roles may be manually created
             'role'     => ['required', Rule::in(self::STAFF_ROLES)],
         ]);
@@ -155,7 +155,7 @@ class UserController extends Controller
     public function resetPassword(Request $request, User $user)
     {
         $request->validate([
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => \App\Support\SecuritySettings::passwordRules(),
         ]);
 
         $user->forceFill([

@@ -28,7 +28,7 @@ class EnforceAccountSession
             Auth::setUser($user);
             if ($request->hasSession()) {
                 $lastActivity = $request->session()->get('last_user_activity_at');
-                $idleLimit = max(1, (int) config('session.lifetime', 120)) * 60;
+                $idleLimit = \App\Support\SecuritySettings::sessionMinutes() * 60;
                 if (is_numeric($lastActivity) && now()->timestamp - (int) $lastActivity >= $idleLimit) {
                     Auth::logout();
                     $request->session()->invalidate();
@@ -51,6 +51,12 @@ class EnforceAccountSession
                 }
                 return redirect()->route('account.password.edit');
             }
+        }
+        if ($request->user()?->email_verification_required && ! $request->user()->hasVerifiedEmail()
+            && ! $request->routeIs('verification.*', 'profile.*', 'portal.profile.*', 'account.password.*', 'logout', 'logout.confirm')) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Verify your new email before continuing.', 'redirect_url' => route('verification.notice')], 403)
+                : redirect()->route('verification.notice');
         }
         $response = $next($request);
         if ($request->user()) $response->headers->set('Cache-Control', 'no-store, private');

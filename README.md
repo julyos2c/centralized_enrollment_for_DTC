@@ -199,3 +199,13 @@ The Laravel scheduler generates upcoming slots daily at 00:10 in `Asia/Manila`. 
 ```
 
 On Windows local development, run `php artisan schedule:work` in a dedicated terminal. The generator is safe to rerun and leaves existing/manual slots and appointment history intact. Review pending appointments after recording a closure; affected students are notified, and their bookings/payment records are not automatically cancelled or refunded.
+
+## Security settings and changed-email verification
+
+Apply migrations before serving the updated application (`php artisan migrate --force` in a backed-up production deployment). The additive `email_verification_required` column preserves existing account activation workflows. Changing an existing user's email clears verification and requires a signed link sent to the new address before normal account access resumes. Profile corrections, verification, required password changes, and logout remain available. Verification links require the recipient's authenticated session; sign in to the matching account before opening the link.
+
+Admin security settings are enforced on the server through `App\Support\SecuritySettings`. Password minimums are 8–32 characters, symbols are optional, inactivity is 5–1440 minutes, and login attempts are 3–20 per normalized email/IP pair per configured login window. Older password-length settings below 8 are treated as 8. The effective inactivity limit is the shorter of the saved setting and `SESSION_LIFETIME`. Notification polling cannot renew inactivity. Saved settings are read from the database on subsequent requests, including existing sessions; they are not copied into Laravel's configuration cache.
+
+Login keeps its independent IP-wide budget. Password recovery has a shared budget of 20 requests/IP/minute and 5 requests/email/IP/minute; Laravel's existing per-account mail cooldown remains. Applicant setup pages allow 30 requests/IP/minute. Recovery responses remain generic, and no account-wide lockout is introduced by the new limits.
+
+For multiple application servers, configure a shared persistent cache (`CACHE_DRIVER=redis`, for example) and shared session storage (`SESSION_DRIVER=redis` or `database`) with the same application key and cookie settings. File cache/session storage only coordinates requests on one server. Never use the `array` cache driver in production: its counters do not persist between requests. These deployment properties still require staging verification. No new environment variables or dependencies are required.

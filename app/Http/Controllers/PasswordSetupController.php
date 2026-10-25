@@ -50,7 +50,7 @@ class PasswordSetupController extends Controller
         $validated = $request->validate([
             'token'    => ['required', 'string'],
             'email'    => ['required', 'email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => \App\Support\SecuritySettings::passwordRules(),
         ]);
 
         $status = Password::broker('users')->reset(

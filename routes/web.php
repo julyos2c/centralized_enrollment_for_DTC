@@ -43,6 +43,9 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
     Route::get('/logout', [AuthController::class, 'confirmLogout'])->name('logout.confirm');
     Route::middleware('auth')->group(function () {
+        Route::get('/email/verify', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'notice'])->name('verification.notice');
+        Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+        Route::post('/email/verification-notification', [\App\Http\Controllers\Auth\EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
         Route::get('/account/password', [\App\Http\Controllers\Auth\RequiredPasswordController::class, 'edit'])->name('account.password.edit');
         Route::post('/account/password', [\App\Http\Controllers\Auth\RequiredPasswordController::class, 'update'])->name('account.password.update');
     });
@@ -50,11 +53,11 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
 
         // ── Forgot password (request form + send email) ──────────
         Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-        Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+        Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:password-recovery');
 
         // ── Reset password (form + handle reset) ─────────────────
         Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-        Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+        Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update')->middleware('throttle:password-recovery');
 
     });
 
@@ -69,8 +72,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     // controller runs at all. Since an applicant may click this link from a
     // browser that still has an unrelated Registrar/Admin session active,
     // these routes must work independently of any auth session state.
-    Route::get('/set-password/{token}', [PasswordSetupController::class, 'showForm'])->name('password.setup.show');
-    Route::post('/set-password', [PasswordSetupController::class, 'store'])->name('password.setup.store');
+    Route::get('/set-password/{token}', [PasswordSetupController::class, 'showForm'])->name('password.setup.show')->middleware('throttle:password-setup-page');
+    Route::post('/set-password', [PasswordSetupController::class, 'store'])->name('password.setup.store')->middleware('throttle:password-recovery');
     Route::get('/request-activation', [PasswordSetupController::class, 'requestForm'])->name('password.activation.request');
 
     // Resend a fresh activation link when the original has expired.
@@ -82,7 +85,7 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     // sendResetLink()) and independent from config('auth.passwords.users.expire')
     // (how long a minted token stays valid). 5 requests per minute per IP is
     // a reasonable anti-abuse ceiling for a "resend my link" form.
-    Route::post('/resend-activation', [PasswordSetupController::class, 'resend'])->name('password.activation.resend')->middleware('throttle:5,1');
+    Route::post('/resend-activation', [PasswordSetupController::class, 'resend'])->name('password.activation.resend')->middleware(['throttle:5,1', 'throttle:password-recovery']);
 
     Route::get('/portal-activation/{token}', [PortalActivationController::class, 'show'])->where('token', '[A-Fa-f0-9]{64}')->middleware('throttle:20,1')->name('portal.activation.show');
     Route::post('/portal-activation', [PortalActivationController::class, 'store'])->middleware('throttle:10,1')->name('portal.activation.store');
@@ -129,7 +132,7 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/transactions', [TransactionHistoryController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionHistoryController::class, 'show'])->where('transaction', '[EDA]-[0-9]+')->name('transactions.show');
-    Route::resource('users', UserController::class)->except(['show']);
+    Route::resource('users', UserController::class)->except(['show', 'create']);
     Route::put('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
     Route::get('/settings/payment/qr-preview', [EnrollmentController::class, 'showGcashQr'])->name('settings.payment.qr.preview');
 

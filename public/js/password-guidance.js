@@ -12,7 +12,9 @@
         const password = form.querySelector('input[name="password"]');
         const confirmation = form.querySelector('input[name="password_confirmation"]');
         if (!password || (!confirmation && !form.hasAttribute('data-password-admin'))) return;
-        const minimum = password.minLength > 0 ? password.minLength : 8;
+        const policy = document.getElementById('dtc-password-policy');
+        const minimum = policy ? Number(policy.dataset.minimum) : (password.minLength > 0 ? password.minLength : 8);
+        const requiresSymbols = policy && policy.dataset.symbols === '1';
         const admin = form.hasAttribute('data-password-admin');
         const current = form.querySelector('input[name="current_password"]');
         password.minLength = minimum;
@@ -22,7 +24,7 @@
         const helper = node('div', 'pw-guidance');
         helper.id = 'password-guidance-' + index;
         const requirement = node('p', 'pw-requirement', 'At least ' + minimum + ' characters');
-        const advice = node('p', 'pw-advice', 'Use a long, unique password. Spaces and pasting are welcome.');
+        const advice = node('p', 'pw-advice', (requiresSymbols ? 'Include at least one symbol. ' : '') + 'Use a long, unique password. Spaces and pasting are welcome.');
         const match = node('p', 'pw-match');
         match.setAttribute('aria-live', 'polite');
         helper.append(requirement, advice, match);
@@ -90,6 +92,7 @@
                 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
                 const bytes = window.crypto.getRandomValues(new Uint8Array(Math.max(16, minimum)));
                 password.value = Array.from(bytes, value => alphabet[value & 63]).join('');
+                if (requiresSymbols) password.value = password.value.slice(0, -1) + '!';
                 if (confirmation) confirmation.value = password.value;
                 touched = true;
                 update();

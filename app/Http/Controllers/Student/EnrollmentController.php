@@ -159,10 +159,16 @@ class EnrollmentController extends Controller
                 return null;
             }
 
+            if ((int) $validated['semester'] !== (int) $term['semester']) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'semester' => 'The academic term has changed. Refresh the enrollment form and select subjects again.',
+                ]);
+            }
+
             if (! $isIrregular) {
                 $termSubjectCount = \App\Models\CourseSubject::where('program_id', $validated['program_id'])
                     ->where('year_level', $validated['year_level'])
-                    ->where('semester', $validated['semester'])
+                    ->where('semester', $term['semester'])
                     ->whereIn('id', $validated['subject_ids'])
                     ->count();
                 if ($termSubjectCount !== count($validated['subject_ids'])) {

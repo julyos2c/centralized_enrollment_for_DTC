@@ -26,7 +26,7 @@ class PortalActivationController extends Controller
     {
         $data = $request->validate([
             'token' => ['required', 'string', 'size:64'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => \App\Support\SecuritySettings::passwordRules(),
         ]);
 
         if (! $provisioning->activate($data['token'], $data['password'])) {
