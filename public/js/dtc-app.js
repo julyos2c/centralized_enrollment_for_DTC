@@ -364,57 +364,76 @@ function showResults(results) {
     document.getElementById("search-results").style.display = "block";
     document.getElementById("search-empty").style.display = "none";
 
-    const list = document.getElementById('results-list');
+    const list = document.getElementById("results-list");
     list.replaceChildren();
     const safeUrl = (value, image = false) => {
-        if (!value || value === '#') return image ? '' : '#';
+        if (!value || value === "#") return image ? "" : "#";
         try {
-            const url = new URL(String(value || ''), window.location.origin);
-            return url.origin === window.location.origin && ['http:', 'https:'].includes(url.protocol)
-                ? url.href : (image ? '' : '#');
-        } catch { return image ? '' : '#'; }
+            const url = new URL(String(value || ""), window.location.origin);
+            return url.origin === window.location.origin &&
+                ["http:", "https:"].includes(url.protocol)
+                ? url.href
+                : image
+                  ? ""
+                  : "#";
+        } catch {
+            return image ? "" : "#";
+        }
     };
     const make = (tag, className, text) => {
         const element = document.createElement(tag);
         element.className = className;
-        if (text !== undefined) element.textContent = String(text ?? '');
+        if (text !== undefined) element.textContent = String(text ?? "");
         return element;
     };
-    results.forEach(r => {
-        const type = ['page', 'user', 'enrollment', 'appointment'].includes(r.type) ? r.type : 'page';
-        const link = make('a', 'search-result-item');
+    results.forEach((r) => {
+        const type = ["page", "user", "enrollment", "appointment"].includes(
+            r.type,
+        )
+            ? r.type
+            : "page";
+        const link = make("a", "search-result-item");
         link.href = safeUrl(r.url);
-        link.addEventListener('click', () => {
-            addRecent(document.getElementById('global-search').value);
+        link.addEventListener("click", () => {
+            addRecent(document.getElementById("global-search").value);
             closeSearch();
         });
         if (r.avatar) {
-            const avatar = make('div', 'search-result-avatar dtc-user-avatar');
-            const fallback = make('span', '', r.avatar);
-            fallback.setAttribute('aria-hidden', 'true');
+            const avatar = make("div", "search-result-avatar dtc-user-avatar");
+            const fallback = make("span", "", r.avatar);
+            fallback.setAttribute("aria-hidden", "true");
             avatar.appendChild(fallback);
             const src = safeUrl(r.avatar_url, true);
             if (src) {
-                const img = make('img', '');
+                const img = make("img", "");
                 img.src = src;
-                img.alt = 'Profile photo';
-                img.addEventListener('error', () => { img.hidden = true; });
+                img.alt = "Profile photo";
+                img.addEventListener("error", () => {
+                    img.hidden = true;
+                });
                 avatar.appendChild(img);
             }
             link.appendChild(avatar);
         } else {
-            const icon = make('div', 'search-result-icon ' + type);
-            const glyph = make('i', '');
-            glyph.setAttribute('data-lucide', /^[a-z-]+$/.test(r.icon || '') ? r.icon : 'search');
+            const icon = make("div", "search-result-icon " + type);
+            const glyph = make("i", "");
+            glyph.setAttribute(
+                "data-lucide",
+                /^[a-z-]+$/.test(r.icon || "") ? r.icon : "search",
+            );
             icon.appendChild(glyph);
             link.appendChild(icon);
         }
-        const body = make('div', 'search-result-body');
-        body.append(make('div', 'search-result-title', r.title), make('div', 'search-result-desc', r.desc));
-        link.append(body, make('span', 'search-result-badge ' + type, type));
+        const body = make("div", "search-result-body");
+        body.append(
+            make("div", "search-result-title", r.title),
+            make("div", "search-result-desc", r.desc),
+        );
+        link.append(body, make("span", "search-result-badge " + type, type));
         list.appendChild(link);
     });
-    if (window.lucide) lucide.createIcons({ nodes: list.querySelectorAll('[data-lucide]') });
+    if (window.lucide)
+        lucide.createIcons({ nodes: list.querySelectorAll("[data-lucide]") });
 }
 
 function showEmpty(query) {

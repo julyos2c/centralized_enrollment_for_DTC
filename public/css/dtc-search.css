@@ -172,7 +172,7 @@
 }
 
 .search-suggestion-item :is(i, svg) {
-    color: #0F4CDB;
+    color: #0f4cdb;
     font-size: 13px;
     width: 16px;
     height: 16px;

@@ -2365,7 +2365,9 @@ body.dtc-dark .dtc-faq-note {
     font-weight: 600;
     line-height: 1.5;
     box-shadow: none;
-    transition: border-color .15s ease, background .15s ease;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
 }
 .hero-cta-group .btn-secondary-cta:hover {
     background: var(--dtc-surface-soft, #f8fafc);
@@ -2378,5 +2380,7 @@ body.dtc-dark .dtc-faq-note {
     outline-offset: 4px;
 }
 @media (prefers-reduced-motion: reduce) {
-    .hero-cta-group .btn-secondary-cta { transition: none; }
+    .hero-cta-group .btn-secondary-cta {
+        transition: none;
+    }
 }

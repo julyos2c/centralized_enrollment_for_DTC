@@ -39,16 +39,17 @@
             const wrap = btn.closest(".dtc-modal-input-wrap");
             const input = wrap && wrap.querySelector(".dtc-modal-input");
             if (!input) return;
-            const isPassword = input.type === 'password';
-            input.type = isPassword ? 'text' : 'password';
-            const icon = document.createElement('i');
-            icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-            icon.setAttribute('aria-hidden', 'true');
+            const isPassword = input.type === "password";
+            input.type = isPassword ? "text" : "password";
+            const icon = document.createElement("i");
+            icon.setAttribute("data-lucide", isPassword ? "eye-off" : "eye");
+            icon.setAttribute("aria-hidden", "true");
             btn.replaceChildren(icon);
             if (window.lucide) lucide.createIcons();
-            btn.setAttribute('aria-pressed', String(isPassword));
-            btn.setAttribute('aria-label',
-                isPassword ? 'Hide password' : 'Show password'
+            btn.setAttribute("aria-pressed", String(isPassword));
+            btn.setAttribute(
+                "aria-label",
+                isPassword ? "Hide password" : "Show password",
             );
         });
 

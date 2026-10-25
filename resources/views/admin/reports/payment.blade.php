@@ -63,7 +63,7 @@
 </table>
 
 <div class="footer">
-    DTC Nexus — Admissions &amp; Enrollment System — Confidential Financial Report — {{ now()->format('Y') }}
+    DTC Enrollment Management System — Confidential Financial Report — {{ now()->format('Y') }}
 </div>
 
 </body>

@@ -13,7 +13,7 @@
     {{-- Link preview (Open Graph / Twitter) --}}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="DTC Nexus">
-    <meta property="og:title" content="DTC Nexus — Admissions &amp; Enrollment System">
+    <meta property="og:title" content="DTC Nexus — Admissions & Enrollment System">
     <meta property="og:description" content="Apply and enroll online at Danao Technological College.">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="{{ asset('images/og-image.jpg') }}">
@@ -75,7 +75,7 @@
     ========================================================== --}}
     <footer class="site-footer">
         © {{ date('Y') }} Danao Technological College —
-        DTC Nexus: Admissions &amp; Enrollment System. All rights reserved.
+        Enrollment Management System. All rights reserved.
     </footer>
 
 

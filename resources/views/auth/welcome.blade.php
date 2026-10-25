@@ -4,7 +4,7 @@
     @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTC Nexus — Admissions &amp; Enrollment System</title>
+    <title>DTC Nexus — Danao Technological College</title>
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -147,7 +147,7 @@
         <section class="hero">
             <div class="container">
                 <div class="hero-left">
-                    <div class="hero-eyebrow">DTC Nexus &middot; Connecting Students to Their Future.</div>
+                    <div class="hero-eyebrow">DTC Nexus</div>
                     <h1>Your DTC Services.<br><span>One Convenient Portal.</span></h1>
                     <p class="hero-desc">
                         Manage your enrollment, certificate requests, appointments, and
@@ -391,7 +391,7 @@
         </section>
 
         <footer class="site-footer reveal">
-            © {{ date('Y') }} Danao Technological College — DTC Nexus: Admissions &amp; Enrollment System. All rights reserved.
+            © {{ date('Y') }} Danao Technological College — Enrollment Management System. All rights reserved.
         </footer>
 
         <button

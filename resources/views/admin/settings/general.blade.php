@@ -53,7 +53,7 @@
                             <div class="form-group">
                                 <label>System Name</label>
                                 <input type="text" name="system_name" class="form-control"
-                                       value="{{ old('system_name', $settings->system_name ?? 'DTC Nexus — Admissions & Enrollment System') }}">
+                                       value="{{ old('system_name', $settings->system_name ?? 'DTC Enrollment Management System (EMS)') }}">
                             </div>
 
                             <div class="form-group">
