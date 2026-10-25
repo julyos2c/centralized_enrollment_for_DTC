@@ -187,8 +187,8 @@ class RegistrarApplicationProgramFilterTest extends TestCase
             ->assertSee('BS Information Systems')
             ->assertSee('Central Visayas')
             ->assertSee('Poblacion')
-            ->assertSee('Applicant Acknowledgment')
-            ->assertSee('confirmed the information, Terms, and Privacy Policy')
+            ->assertDontSee('Applicant Acknowledgment')
+            ->assertDontSee('confirmed the information, Terms, and Privacy Policy')
             ->assertSee('2nd year, 1st semester');
     }
 

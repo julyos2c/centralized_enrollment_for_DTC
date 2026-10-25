@@ -3,6 +3,10 @@
 
 @section('title', 'Certificate of Registration')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('css/cor-details.css') }}">
+@endpush
+
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center flex-wrap u-gap-10">
         <div>
@@ -34,17 +38,17 @@
 
 @section('content')
 
-<div class="card" style="border:1px solid var(--dtc-border);">
+<div class="card cor-document" style="border:1px solid var(--dtc-border);">
     <div class="card-body">
 
         {{-- Letterhead --}}
-        <div class="text-center mb-4" style="border-bottom:1px solid var(--dtc-border); padding-bottom:14px;">
+        <div class="text-center mb-4 cor-letterhead" style="border-bottom:1px solid var(--dtc-border); padding-bottom:14px;">
             <h4 class="mb-0 font-weight-bold u-text">Danao Technological College</h4>
             <p class="mb-0 u-text-secondary-sm">Poblacion, Danao, Bohol, Philippines</p>
             <p class="mb-0 u-text-secondary-sm font-weight-bold mt-2">Office of the College Registrar</p>
         </div>
 
-        <div class="text-center mb-4">
+        <div class="text-center mb-4 cor-program">
             <h5 class="mb-0 font-weight-bold u-text text-uppercase">{{ $enrollment->program->name }}</h5>
             <p class="mb-0 u-text-secondary-sm">
                 {{ $enrollment->semester == 1 ? 'First' : ($enrollment->semester == 2 ? 'Second' : 'Summer') }} Semester
@@ -52,13 +56,13 @@
             </p>
         </div>
 
-        <div class="d-flex justify-content-between flex-wrap u-gap-10 mb-3">
+        <div class="d-flex justify-content-between flex-wrap u-gap-10 mb-3 cor-student">
             <p class="mb-0 u-text"><strong>Name:</strong> {{ $enrollment->user->name }}</p>
             <p class="mb-0 u-text"><strong>Program:</strong> {{ $enrollment->program->code }} {{ ['','I','II','III','IV'][$enrollment->year_level] ?? '' }}</p>
         </div>
 
-        <div class="table-responsive">
-            <table class="table mb-0" style="border:1px solid var(--dtc-border);">
+        <div class="table-responsive cor-subjects">
+            <table class="table mb-0 cor-table" style="border:1px solid var(--dtc-border);" aria-label="Registered subjects">
                 <thead>
                     <tr style="background:var(--dtc-surface-soft);">
                         <th class="u-text">Time / Day</th>
@@ -73,20 +77,20 @@
                     @forelse ($subjects as $subject)
                         @php $sched = $subject->schedules->first(); @endphp
                         <tr>
-                            <td class="u-text-sm-secondary-primary">
+                            <td class="u-text-sm-secondary-primary cor-schedule" data-cor-label="Time / day">
                                 @if($sched)
                                     {{ \Illuminate\Support\Carbon::parse($sched->time_start)->format('g:i A') }}-{{ \Illuminate\Support\Carbon::parse($sched->time_end)->format('g:i A') }} {{ $sched->day_pattern }}
                                 @else
                                     TBA
                                 @endif
                             </td>
-                            <td class="u-text-sm-secondary-primary">{{ $sched->room ?? 'TBA' }}</td>
-                            <td class="u-text-sm-secondary-primary">
+                            <td class="u-text-sm-secondary-primary cor-room" data-cor-label="Room">{{ $sched->room ?? 'TBA' }}</td>
+                            <td class="u-text-sm-secondary-primary cor-code">
                                 <span class="dtc-status-badge is-neutral">{{ $subject->subject_code }}</span>
                             </td>
-                            <td class="u-text-sm-secondary-primary">{{ $subject->subject_name }}</td>
-                            <td class="u-text-sm-secondary-primary">{{ rtrim(rtrim(number_format($subject->units, 1), '0'), '.') }}</td>
-                            <td class="u-text-sm-secondary-primary">{{ $sched->instructor_name ?? 'TBA' }}</td>
+                            <td class="u-text-sm-secondary-primary cor-subject-name">{{ $subject->subject_name }}</td>
+                            <td class="u-text-sm-secondary-primary cor-units" data-cor-label="Units">{{ rtrim(rtrim(number_format($subject->units, 1), '0'), '.') }}</td>
+                            <td class="u-text-sm-secondary-primary cor-instructor" data-cor-label="Instructor">{{ $sched->instructor_name ?? 'TBA' }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -104,8 +108,8 @@
             </table>
         </div>
 
-        <div class="text-center mt-5">
-            <p class="mb-0 font-weight-bold u-text text-uppercase" style="border-bottom:1px solid var(--dtc-border); display:inline-block; padding-top:4px; min-width:280px;">
+        <div class="text-center mt-5 cor-signature">
+            <p class="mb-0 font-weight-bold u-text text-uppercase cor-signature-name" style="border-bottom:1px solid var(--dtc-border); display:inline-block; padding-top:4px; min-width:280px;">
                 {{ \App\Models\Setting::get('registrar_name', 'College Registrar') }}
             </p>
             <p class="mb-0 u-text-secondary-sm">College Registrar</p>

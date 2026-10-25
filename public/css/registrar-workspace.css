@@ -1,4 +1,40 @@
 /* Registrar workspaces only. Dashboard templates deliberately do not opt in. */
+.dtc-review-reject-panel.rg-rejection-panel,
+body.dtc-dark .dtc-review-reject-panel.rg-rejection-panel { padding:18px; border:1px solid var(--dtc-border); border-left:3px solid var(--dtc-danger); background:var(--dtc-surface); border-radius:10px; }
+.rg-rejection-panel .dtc-form-label { font-size:13px; font-weight:600; margin-bottom:9px; }
+.rg-rejection-panel textarea.dtc-form-control,
+body.dtc-dark .rg-rejection-panel textarea.dtc-form-control { width:100%; min-height:120px; resize:vertical; background:var(--dtc-surface-soft); color:var(--dtc-text); border:1px solid var(--dtc-border); border-radius:8px; padding:12px; font-size:13px; line-height:1.6; }
+.rg-rejection-panel textarea.dtc-form-control:focus { border-color:var(--dtc-primary); outline:2px solid var(--dtc-primary-soft); outline-offset:1px; }
+.rg-rejection-panel .dtc-form-help { margin:8px 0 0; font-size:11px; line-height:1.6; color:var(--dtc-text-secondary); }
+.rg-enrollment-decisions .rg-rejection-buttons { display:grid; grid-template-columns:minmax(90px,1fr) minmax(160px,1.5fr); gap:12px; width:100%; }
+.rg-enrollment-decisions .rg-rejection-buttons .dtc-btn { width:100%; margin:0; min-height:48px; white-space:normal; }
+.rg-enrollment-decisions .rg-rejection-buttons .dtc-btn-secondary { background:transparent; border:1px solid var(--dtc-border); color:var(--dtc-text-secondary); }
+.rg-enrollment-decisions .rg-rejection-buttons .dtc-btn-danger { background:#b91c1c; border-color:#b91c1c; color:#fff; }
+.rg-enrollment-decisions .rg-rejection-buttons .dtc-btn-danger:hover { background:#991b1b; border-color:#991b1b; }
+@media(max-width:575.98px) {
+    .rg-enrollment-decisions .rg-rejection-buttons { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:10px; }
+    .rg-enrollment-decisions .rg-rejection-buttons .dtc-btn { padding:10px; font-size:12px; }
+}
+@media(max-width:359.98px) { .rg-enrollment-decisions .rg-rejection-buttons { grid-template-columns:1fr; } }
+.dtc-review-footer.rg-enrollment-decisions { padding:16px 20px; }
+.rg-enrollment-decisions .dtc-review-footer-right { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-width:280px; }
+.rg-enrollment-decisions .dtc-review-footer-right form { width:100%; margin:0; }
+.rg-enrollment-decisions .dtc-btn { min-height:46px; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:600; line-height:1.4; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.rg-enrollment-decisions .dtc-review-footer-right .dtc-btn { width:100%; }
+.rg-enrollment-decisions .dtc-btn svg { width:17px; height:17px; }
+.rg-enrollment-decisions .dtc-btn-success { background:#15803d; border-color:#15803d; color:#fff; box-shadow:none; }
+.rg-enrollment-decisions .dtc-btn-success:hover { background:#166534; border-color:#166534; }
+.rg-enrollment-decisions .dtc-btn-outline-danger { background:rgba(239,68,68,.07); border:1px solid var(--dtc-border); color:var(--dtc-danger); }
+.rg-enrollment-decisions .dtc-btn-outline-danger:hover { border-color:var(--dtc-danger); background:rgba(239,68,68,.12); }
+.rg-enrollment-decisions .dtc-review-footer-default > .dtc-btn-secondary { background:transparent; border:1px solid var(--dtc-border); color:var(--dtc-text-secondary); box-shadow:none; }
+.rg-enrollment-decisions .dtc-review-footer-default > .dtc-btn-secondary:hover { background:var(--dtc-surface-soft); color:var(--dtc-text); }
+.rg-enrollment-decisions .dtc-btn:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+@media(max-width:575.98px) {
+    .dtc-review-footer.rg-enrollment-decisions { padding:16px; }
+    .rg-enrollment-decisions .dtc-review-footer-default { gap:6px; }
+    .rg-enrollment-decisions .dtc-review-footer-right { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); min-width:0; width:100%; gap:10px; }
+    .rg-enrollment-decisions .dtc-review-footer-default > .dtc-btn-secondary { min-height:40px; }
+}
 .content-wrapper:has(.registrar-workspace) .content-header > .container-fluid > .d-flex,
 .content-wrapper:has(.registrar-workspace) .content-header .ar-page-heading { flex-wrap:wrap; align-items:flex-start !important; gap:14px; }
 .content-wrapper:has(.registrar-workspace) .content-header h4,

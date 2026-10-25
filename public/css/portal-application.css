@@ -1,0 +1,33 @@
+.portal-application-page .card { border: 1px solid var(--dtc-border); border-radius: 14px; box-shadow: none; overflow: hidden; }
+.portal-application-page .card-header { padding: 16px 18px; border-bottom: 1px solid var(--dtc-border); font-size: 14px; }
+.portal-application-page .card-body:not(.p-0) { padding: 18px; }
+.portal-application-page .card-body > .row > div { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.portal-application-page .card-body > .row .small { margin-bottom: 4px; font-size: 11px; color: var(--dtc-text-secondary) !important; }
+.application-next-step { margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--dtc-border); }
+.portal-application-page .application-status-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0 0 16px; }
+.portal-application-page .application-status-facts > div { width: auto; max-width: none; padding: 0; margin: 0 !important; }
+.application-next-step h2 { margin: 0 0 6px; font-size: 11px; font-weight: 600; color: var(--dtc-text-secondary); }
+.application-next-step p { margin: 0; font-size: 12px; color: var(--dtc-text); line-height: 1.7; }
+.application-next-step a { margin-top: 14px; min-height: 42px; padding: 10px 16px; border-radius: 8px; font-size: 12px; box-shadow: none; }
+.application-next-step a:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: 3px; }
+.portal-application-page .application-timeline { margin: 0; padding: 0; list-style: none; }
+.portal-application-page .timeline-step { position: relative; display: flex; gap: 12px; padding-bottom: 22px; }
+.portal-application-page .timeline-step:last-child { padding-bottom: 0; }
+.portal-application-page .timeline-step:not(:last-child)::before { content: ''; position: absolute; top: 25px; bottom: 0; left: 12px; width: 1px; background: var(--dtc-border); }
+.portal-application-page .timeline-marker { position: relative; display: grid; place-items: center; flex: 0 0 25px; width: 25px; height: 25px; border-radius: 50%; border: 1px solid var(--dtc-border); background: var(--dtc-surface-soft); color: var(--dtc-text-secondary); }
+.portal-application-page .timeline-marker svg { width: 13px; height: 13px; }
+.portal-application-page .timeline-marker > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.portal-application-page .timeline-step-completed .timeline-marker { color: var(--dtc-on-primary-soft); background: var(--dtc-primary-soft); border-color: transparent; }
+.portal-application-page :is(.timeline-step-current, .timeline-step-action_required) .timeline-marker { border-color: var(--dtc-primary); color: var(--dtc-on-primary-soft); }
+.portal-application-page .timeline-step-rejected .timeline-marker { color: var(--dtc-danger); }
+.portal-application-page .timeline-content { flex: 1; min-width: 0; padding-top: 2px; }
+.portal-application-page .timeline-label { font-size: 12px; font-weight: 600; color: var(--dtc-text); line-height: 1.6; }
+.portal-application-page .timeline-description { margin: 4px 0 0; font-size: 11px; color: var(--dtc-text-secondary); line-height: 1.7; overflow-wrap: anywhere; }
+.portal-application-page .timeline-timestamp { display: block; margin-top: 5px; font-size: 10px; color: var(--dtc-text-secondary); }
+@media (max-width: 575.98px) {
+    .portal-application-page .application-status-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .portal-application-page .application-status-facts > div:last-child { grid-column: 1 / -1; }
+    .portal-application-page .card-header { padding: 14px 16px; }
+    .portal-application-page .card-body:not(.p-0) { padding: 16px; }
+    .application-next-step a { display: flex; align-items: center; justify-content: center; width: 100%; }
+}

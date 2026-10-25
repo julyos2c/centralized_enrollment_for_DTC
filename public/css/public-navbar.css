@@ -15,6 +15,9 @@
    #1E293B, #E5EAF1 vs #E2E8F0) — now unified via
    dtc-tokens.css. */
 :root {
+  /* Shared page-shell width: navbar content and public page content
+     (e.g. the admission wizard) must use this so their edges align. */
+  --dtc-public-shell-width: min(1280px, calc(100% - 160px));
   --dtc-blue: var(--dtc-primary, #0f4cdb);
   --dtc-blue-dark: var(--dtc-primary-hover, #0b43c1);
   --dtc-muted: var(--dtc-text-secondary, #64748b);
@@ -43,7 +46,7 @@
    ============================================================ */
 
 .public-navbar-container {
-  width: min(1280px, calc(100% - 160px));
+  width: var(--dtc-public-shell-width);
   min-height: 88px;
   margin: 0 auto;
   display: flex;
@@ -351,8 +354,12 @@ body.dtc-dark .public-mobile-nav a.active {
 }
 
 @media (max-width: 576px) {
+  :root {
+    --dtc-public-shell-width: calc(100% - 40px);
+  }
+
   .public-navbar-container {
-    width: calc(100% - 40px);
+    width: var(--dtc-public-shell-width);
   }
 
   .public-logo {

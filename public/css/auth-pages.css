@@ -14,13 +14,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 24px 16px;
-    background:
-        linear-gradient(
-            160deg,
-            rgba(39, 99, 238, 0.97) 0%,
-            rgba(6, 42, 126, 0.92) 55%
-        ),
-        url('/images/dtc-building.webp') center center / cover no-repeat fixed;
+    background: #f4f6f9;
 }
 
 /* ── Card ────────────────────────────────────────────────── */
@@ -30,7 +24,8 @@ body {
     background: #ffffff;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(10, 22, 50, 0.14);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
 }
 
 /* ── Header — same as sign-in modal ─────────────────────── */
@@ -121,18 +116,23 @@ body {
 }
 
 .auth-card-title {
-    font-size: 18px;
+    font-size: 21px;
     font-weight: 700;
     color: #1E293B;
-    margin: 0 0 4px;
+    margin: 0 0 8px;
+    line-height: 1.35;
+    letter-spacing: -.3px;
 }
 
 .auth-card-subtitle {
     font-size: 13px;
     color: #64748B;
     margin: 0 0 22px;
-    line-height: 1.5;
+    line-height: 1.65;
 }
+
+.auth-account-email { margin: -8px 0 24px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 9px; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+body.dtc-dark .auth-account-email { background: #152034; border-color: #334155; color: #e2e8f0; }
 
 /* ── Alert boxes ─────────────────────────────────────────── */
 .auth-alert {
@@ -159,6 +159,12 @@ body {
     border-left: 4px solid #22C55E;
     color: #166534;
 }
+
+.auth-activation-page .auth-alert--success { padding: 11px 13px; border: 1px solid #dce9df; border-radius: 8px; background: #f4f8f5; color: #245b35; font-size: 12px; line-height: 1.6; }
+.auth-activation-page .auth-btn { min-height: 46px; font-weight: 600; box-shadow: none; }
+.auth-activation-page .auth-btn:hover { transform: none; box-shadow: none; }
+.auth-message-help { margin: 6px 0 0; font-size: 12px; line-height: 1.6; font-weight: 400; }
+body.dtc-dark.auth-activation-page .auth-alert--success { background: #152a21; border-color: #294737; color: #bbdfc7; }
 
 .auth-alert i { margin-top: 1px; flex-shrink: 0; }
 
@@ -385,7 +391,8 @@ body {
     );
 }
 
-body.dtc-dark .auth-card { background: #111827; }
+body.dtc-dark { background: #0f172a; }
+body.dtc-dark .auth-card { background: #111827; border-color: #334155; box-shadow: 0 8px 28px rgba(0, 0, 0, .16); }
 body.dtc-dark .auth-card-body { background: #111827; }
 body.dtc-dark .auth-card-title { color: #f8fafc; }
 body.dtc-dark .auth-card-subtitle,

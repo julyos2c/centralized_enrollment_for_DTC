@@ -25,6 +25,24 @@ class StudentWelcomeTest extends TestCase
         Mail::fake();
     }
 
+    public function test_welcome_redirect_flag_targets_only_applicant_pages_and_stale_applicant_dashboards(): void
+    {
+        $user = $this->makeUserWithRole('new_applicant');
+        $enrollment = Enrollment::factory()->create(['user_id' => $user->id, 'status' => 'approved', 'is_paid' => false]);
+        Application::create(['reference_no' => 'WELCOME-'.Str::random(10), 'user_id' => $user->id,
+            'program_id' => $enrollment->program_id, 'first_name' => 'Test', 'last_name' => 'Applicant',
+            'email' => $user->email, 'gender' => 'female', 'birthdate' => '2005-01-01',
+            'academic_status' => 'new_student', 'status' => 'approved']);
+        $this->actingAs($user)->get(route('portal.dashboard'))->assertOk()->assertSee('data-redirect-after-ack="1"', false);
+        $this->get(route('portal.application.show'))->assertOk()->assertSee('data-redirect-after-ack="1"', false);
+        $this->get(route('portal.enrollment.payment-info', $enrollment))->assertOk()
+            ->assertSee('data-redirect-after-ack="0"', false)->assertDontSee('studentWelcomeLater', false)
+            ->assertSee('id="studentWelcomeOpen">Continue</button>', false);
+        $user->syncRoles(['student']);
+        $this->actingAs($user->fresh())->get(route('portal.dashboard'))->assertOk()->assertSee('data-redirect-after-ack="0"', false);
+        $this->get(route('portal.profile.show'))->assertOk()->assertSee('data-redirect-after-ack="0"', false);
+    }
+
     public function test_both_real_payment_promotions_create_one_event_and_permanent_notification(): void
     {
         $cashier = $this->makeUserWithRole('cashier');

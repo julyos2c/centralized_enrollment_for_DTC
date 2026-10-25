@@ -142,11 +142,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const panel = document.getElementById('step-' + n);
         if (!panel) return true;
         let ok = true;
+        let firstInvalid = null;
         panel.querySelectorAll('[required]').forEach(function (el) {
-            if (el.type === 'hidden') return;
+            if (el.type === 'hidden' || el.disabled) return;
             const field = el.closest('.wiz-field');
             if (!el.value.trim()) {
                 el.classList.add('wiz-invalid');
+                el.setAttribute('aria-invalid', 'true');
+                if (!firstInvalid) firstInvalid = el;
                 if (field) {
                     let err = field.querySelector('.wiz-err-msg');
                     if (!err) {
@@ -156,28 +159,46 @@ document.addEventListener('DOMContentLoaded', function () {
                         field.appendChild(err);
                         if (window.lucide) lucide.createIcons({ nodes: [err] });
                     }
-                    field.classList.remove('wiz-shake');
-                    void field.offsetWidth;
-                    field.classList.add('wiz-shake');
-                    field.addEventListener('animationend', function () {
-                        field.classList.remove('wiz-shake');
-                    }, { once: true });
+                    err.id = (el.id || el.name) + '-error';
+                    const descriptions = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+                    if (!descriptions.includes(err.id)) descriptions.push(err.id);
+                    el.setAttribute('aria-describedby', descriptions.join(' '));
                 }
                 ok = false;
             } else {
-                el.classList.remove('wiz-invalid');
-                if (field) { const d = field.querySelector('.wiz-err-dynamic'); if (d) d.remove(); }
+                clearFieldError(el);
             }
         });
+        if (firstInvalid) setTimeout(function () { firstInvalid.focus(); }, 0);
         return ok;
     }
 
+    function clearFieldError(el) {
+        el.classList.remove('wiz-invalid');
+        el.removeAttribute('aria-invalid');
+        const field = el.closest('.wiz-field');
+        const error = field && field.querySelector('.wiz-err-msg');
+        if (error) {
+            const descriptions = (el.getAttribute('aria-describedby') || '').split(/\s+/)
+                .filter(function (id) { return id && id !== error.id; });
+            if (descriptions.length) el.setAttribute('aria-describedby', descriptions.join(' '));
+            else el.removeAttribute('aria-describedby');
+            error.remove();
+        }
+    }
+
     document.querySelectorAll('.wiz-input').forEach(function (el) {
+        const field = el.closest('.wiz-field');
+        const error = field && field.querySelector('.wiz-err-msg');
+        if (error) {
+            error.id = (el.id || el.name) + '-error';
+            el.setAttribute('aria-invalid', 'true');
+            const descriptions = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+            if (!descriptions.includes(error.id)) descriptions.push(error.id);
+            el.setAttribute('aria-describedby', descriptions.join(' '));
+        }
         function clear() {
-            el.classList.remove('wiz-invalid');
-            const field = el.closest('.wiz-field');
-            const d = field && field.querySelector('.wiz-err-dynamic');
-            if (d) d.remove();
+            clearFieldError(el);
         }
         el.addEventListener('input',  clear);
         el.addEventListener('change', clear);
@@ -442,6 +463,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function updateEducation(type) {
+        updateEducationLevels(type);
         const profile = educationProfiles[type];
         if (!profile) return;
         document.getElementById('educationHeading').textContent = profile.title;
@@ -462,6 +484,34 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('last_year_level').placeholder = type === 'returnee'
             ? 'e.g. 2nd year, 1st semester' : 'e.g. 2nd year';
         document.getElementById('last_year_level').setAttribute('aria-describedby', 'lastYearLevelHint');
+    }
+
+    function updateEducationLevels(type) {
+        const select = document.getElementById('education_level');
+        if (!select) return;
+        const allowed = (window.dtcApplicationEducationLevels || {})[type] || [];
+        const previous = select.value;
+        select.replaceChildren();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = type ? 'Select education level' : 'Choose applicant type first';
+        select.appendChild(placeholder);
+        allowed.forEach(function (level) {
+            const option = document.createElement('option');
+            option.value = level;
+            option.textContent = level === 'Other' ? 'Other / equivalent qualification' : level;
+            select.appendChild(option);
+        });
+        select.disabled = allowed.length === 0;
+        select.value = allowed.includes(previous) ? previous : '';
+        const hint = document.getElementById('educationLevelHint');
+        if (hint) hint.textContent = previous && !allowed.includes(previous)
+            ? 'Applicant type changed. Choose an education level again.'
+            : type === 'new_student' ? 'Use Other for an equivalent or older qualification.'
+                : allowed.length ? 'Choose the level of your current or previous college studies.' : 'Choose your applicant type in Admission first.';
+        if (previous !== select.value) {
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function updateApplicantType() {
@@ -526,6 +576,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!Object.keys(draft).length) return;
         document.querySelectorAll(PERSIST_SELECTOR).forEach(function (el) {
             if (LOC_NAMES.indexOf(el.name) !== -1) return;   /* handled by cascade */
+            // Build the allowed options before assigning a saved select value.
+            if (el.name === 'education_level') updateEducationLevels(applicantType.value);
             // Preserve server-returned optional values, including an intentional blank.
             if (personalDetailsContent && personalDetailsContent.contains(el)
                 && personalDetailsContent.dataset.hasOldInput === 'true') return;
@@ -544,6 +596,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     restoreDraft();
 
+
+
     const guardianDetails = document.getElementById('guardianDetails');
     if (guardianDetails && Array.from(guardianDetails.querySelectorAll('input')).some(function (field) { return field.value.trim() !== ''; })) {
         guardianDetails.open = true;
@@ -559,6 +613,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (countryInput) countryInput.addEventListener('input', updateInternationalAddress);
     updateInternationalAddress();
     const TITLE_CASE_FIELD_SET = new Set(window.dtcApplicationTitleCaseFields || []);
+    ['honorific', 'suffix'].forEach(function (name) {
+        const input = document.getElementById(name);
+        if (!input) return;
+        function formatAffix() {
+            input.value = window.dtcNormalizeName.affix(input.value, name);
+            saveField(input);
+        }
+        input.addEventListener('blur', formatAffix);
+        input.addEventListener('change', formatAffix);
+        formatAffix();
+    });
     TITLE_CASE_FIELD_SET.forEach(function (name) {
         const input = document.querySelector('[name="' + name + '"]');
         if (!input) return;
@@ -608,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const value = el.value.trim();
             if (!value) return '—';
+            if (name === 'honorific' || name === 'suffix') return window.dtcNormalizeName.affix(value, name);
             return TITLE_CASE_FIELD_SET.has(name) ? normalizeName(value) : value;
         }
 
@@ -728,7 +794,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const dob = val('birthdate');
                     if (!dob || dob === '—') return '—';
                     const today = new Date();
-                    const birth = new Date(dob);
+                    const birthParts = dob.split('-').map(Number);
+                    const birth = new Date(birthParts[0], birthParts[1] - 1, birthParts[2]);
                     let age = today.getFullYear() - birth.getFullYear();
                     const m = today.getMonth() - birth.getMonth();
                     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;

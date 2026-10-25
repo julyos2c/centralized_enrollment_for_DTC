@@ -13,7 +13,7 @@
             <x-dtc.user-avatar :user="$enrollment->user" class="dtc-review-avatar" />
             <div class="dtc-review-identity-copy">
                 <h5 class="dtc-review-name">{{ $enrollment->user->name }}</h5>
-                <p class="dtc-review-email"><i data-lucide="mail"></i> {{ $enrollment->user->email }}</p>
+                <p class="dtc-review-email">{{ $enrollment->user->email }}</p>
             </div>
         </div>
         <div class="dtc-review-header-right">
@@ -36,9 +36,6 @@
         @endif
 
         <div class="dtc-review-section">
-            <div class="dtc-review-section-title">
-                <span><i data-lucide="graduation-cap"></i> Payment Summary</span>
-            </div>
             <div class="dtc-review-info-grid">
                 <div class="dtc-review-info">
                     <span class="dtc-review-info-label">Program</span>
@@ -49,11 +46,11 @@
                     <span class="dtc-review-info-value">Year {{ $enrollment->year_level }} — Sem {{ $enrollment->semester }}</span>
                 </div>
                 <div class="dtc-review-info">
-                    <span class="dtc-review-info-label">Subjects Enrolled</span>
+                    <span class="dtc-review-info-label">Subjects</span>
                     <span class="dtc-review-info-value">{{ count($enrollment->subject_ids) }} subjects</span>
                 </div>
                 <div class="dtc-review-info">
-                    <span class="dtc-review-info-label">Payment Type</span>
+                    <span class="dtc-review-info-label">Payment method</span>
                     <span class="dtc-review-info-value">
                         @if ($latestPayment && $latestPayment->isGcash() && $latestPayment->isPending())
                             GCash
@@ -77,8 +74,7 @@
 
         @if (! $enrollment->is_paid)
             <div class="dtc-payment-info-notice">
-                <i data-lucide="info" class="dtc-notice-icon" aria-hidden="true"></i>
-                <span>Confirming payment will officially enroll the student.</span>
+                <span>Confirming payment finalizes enrollment.</span>
             </div>
         @endif
 
@@ -86,7 +82,7 @@
             {{-- ── GCash Review Branch ─────────────────────────────── --}}
             <div class="dtc-review-section">
                 <div class="dtc-review-section-title">
-                    <span><i data-lucide="qr-code"></i> GCash Payment Review</span>
+                    <span>GCash details</span>
                 </div>
                 <div class="dtc-review-info-grid">
                     <div class="dtc-review-info">
@@ -100,7 +96,7 @@
                 </div>
                 <a href="{{ route('cashier.payments.proof', $latestPayment) }}" target="_blank"
                    class="dtc-btn dtc-btn-secondary" style="margin-top:12px;">
-                    <i data-lucide="image"></i> View Proof of Payment
+                    View proof
                 </a>
             </div>
 
@@ -127,7 +123,7 @@
             <div class="dtc-review-section">
                 <button type="button" class="dtc-btn dtc-btn-secondary dtc-receipt-btn"
                         data-url="{{ route('cashier.payments.receipt', $enrollment) }}">
-                    <i data-lucide="receipt"></i> View Receipt
+                    View receipt
                 </button>
             </div>
         @endif
@@ -144,7 +140,7 @@
                 <div class="dtc-review-footer-right">
                     <button type="button" class="dtc-btn dtc-btn-outline-danger dtc-review-reject-trigger"
                             data-target="rejectPanel-{{ $enrollment->id }}">
-                        <i data-lucide="x"></i> Reject
+                        Reject
                     </button>
                     <form id="verify-gcash-{{ $latestPayment->id }}"
                           method="POST"
@@ -159,7 +155,7 @@
                                 data-dtc-confirm-ok="Verify"
                                 data-dtc-confirm-tone="success"
                                 data-dtc-confirm-form="#verify-gcash-{{ $latestPayment->id }}">
-                            <i data-lucide="check"></i> Verify Payment
+                            Verify payment
                         </button>
                     </form>
                 </div>
@@ -174,7 +170,7 @@
                             data-dtc-confirm-ok="Confirm"
                             data-dtc-confirm-tone="success"
                             data-dtc-confirm-form="#walkinForm-{{ $enrollment->id }}">
-                        <i data-lucide="check"></i> Confirm Payment Received
+                        Confirm payment
                     </button>
                 </div>
             @endif
@@ -183,7 +179,7 @@
         <div class="dtc-review-footer-reject u-hidden" >
             <button type="button" class="dtc-btn dtc-btn-secondary dtc-review-reject-cancel">Cancel</button>
             <button type="button" class="dtc-btn dtc-btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Reject payment?" data-dtc-confirm-message="The submitted GCash payment from {subject} will be rejected with the reason entered above." data-dtc-confirm-subject="{{ $enrollment->user->name }}" data-dtc-confirm-ok="Reject" data-dtc-confirm-form="#rejectForm-{{ $enrollment->id }}">
-                <i data-lucide="check"></i> Confirm Rejection
+                Confirm rejection
             </button>
         </div>
 

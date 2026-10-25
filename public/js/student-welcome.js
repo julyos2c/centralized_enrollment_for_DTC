@@ -6,7 +6,6 @@
     document.body.appendChild(root);
     const dialog = root.querySelector('[role="dialog"]');
     const open = document.getElementById('studentWelcomeOpen');
-    const later = document.getElementById('studentWelcomeLater');
     const key = 'dtc-student-welcome:' + root.dataset.user;
     const token = window.crypto.randomUUID ? window.crypto.randomUUID() :
         '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, function (c) {
@@ -55,19 +54,17 @@
         confetti.className = 'student-welcome-confetti';
         confetti.setAttribute('aria-hidden', 'true');
         const count = window.matchMedia('(max-width: 599px)').matches ? 16 : 28;
-        const colors = ['#0f4cdb', '#f5b700', '#14b8a6', '#e5484d'];
         for (let i = 0; i < count; i++) {
             const piece = document.createElement('span');
             piece.style.left = (Math.random() * 100) + '%';
             piece.style.width = (8 + Math.random() * 2) + 'px';
             piece.style.height = (i % 4 === 0 ? 9 : 14 + Math.random() * 4) + 'px';
-            piece.style.backgroundColor = colors[i % colors.length];
             piece.style.borderRadius = i % 4 === 0 ? '50%' : '0';
             piece.style.animationDelay = (-Math.random() * .7) + 's';
             confetti.appendChild(piece);
         }
         document.body.appendChild(confetti);
-        confettiTimer = window.setTimeout(removeConfetti, 3500);
+        confettiTimer = window.setTimeout(removeConfetti, 6000);
     }
     function close() {
         root.hidden = true;
@@ -111,12 +108,11 @@
         } catch (error) { /* A later existing poll can try again; never navigate on failure. */ }
         finally { checking = false; }
     }
-    async function acknowledge(navigate) {
+    async function acknowledge() {
         if (busy || current === null) return;
         busy = true;
         const id = current;
-        later.disabled = true;
-        open.setAttribute('aria-disabled', 'true');
+        open.disabled = true;
         const oldError = root.querySelector('[role="alert"]');
         if (oldError) oldError.remove();
         try {
@@ -126,7 +122,7 @@
             sync(message);
             if (channel) channel.postMessage(message);
             try { localStorage.setItem(key, JSON.stringify(message)); } catch (error) { /* Server state still prevents replay. */ }
-            if (navigate) window.location.assign(open.href);
+            if (root.dataset.redirectAfterAck === '1') window.location.assign(root.dataset.dashboardUrl);
         } catch (error) {
             const notice = document.createElement('p');
             notice.setAttribute('role', 'alert');
@@ -134,20 +130,19 @@
             dialog.appendChild(notice);
         } finally {
             busy = false;
-            later.disabled = false;
-            open.removeAttribute('aria-disabled');
+            open.disabled = false;
         }
     }
-    open.addEventListener('click', function (event) { event.preventDefault(); acknowledge(true); });
-    later.addEventListener('click', function () { acknowledge(false); });
+    open.addEventListener('click', function () { acknowledge(); });
+    root.addEventListener('click', function (event) {
+        if (event.target === root) acknowledge();
+    });
     document.addEventListener('keydown', function (event) {
         if (root.hidden) return;
-        if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); acknowledge(false); }
+        if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); acknowledge(); }
         if (event.key === 'Tab') {
             event.preventDefault();
-            if (busy) dialog.focus();
-            else if (event.shiftKey) (document.activeElement === open ? later : open).focus();
-            else (document.activeElement === later ? open : later).focus();
+            (busy ? dialog : open).focus();
         }
     }, true);
     document.addEventListener('focusin', function (event) {

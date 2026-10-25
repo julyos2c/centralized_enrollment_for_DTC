@@ -4,6 +4,27 @@ namespace App\Support;
 
 class NameNormalizer
 {
+    public static function normalizeAffix(?string $value, string $field): ?string
+    {
+        if ($value === null) return null;
+        $value = preg_replace('/\s+/u', ' ', trim($value)) ?? trim($value);
+        if ($field === 'suffix') {
+            if (preg_match('/^(jr|sr)\.?$/i', $value, $match)) return ucfirst(strtolower($match[1])).'.';
+            if (preg_match('/^(ii|iii|iv|v|vi|vii|viii|ix|x)$/i', $value)) return strtoupper($value);
+        }
+        if ($field === 'honorific') {
+            $titles = ['mr' => 'Mr', 'mrs' => 'Mrs', 'ms' => 'Ms', 'mx' => 'Mx', 'dr' => 'Dr',
+                'prof' => 'Prof', 'engr' => 'Engr', 'atty' => 'Atty', 'rev' => 'Rev', 'fr' => 'Fr',
+                'sr' => 'Sr', 'br' => 'Br', 'hon' => 'Hon', 'capt' => 'Capt', 'gen' => 'Gen',
+                'lt' => 'Lt', 'col' => 'Col', 'maj' => 'Maj', 'sgt' => 'Sgt'];
+            $value = preg_replace_callback('/^([a-z]+)\.?(?=\s|$)/i', function ($match) use ($titles) {
+                $title = $titles[strtolower($match[1])] ?? null;
+                return $title ? $title.'.' : $match[0];
+            }, $value) ?? $value;
+        }
+        return $value;
+    }
+
     /** Normalize spacing and title-case letter groups without removing punctuation. */
     public static function normalize(?string $name): ?string
     {

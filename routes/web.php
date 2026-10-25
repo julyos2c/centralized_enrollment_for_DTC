@@ -106,6 +106,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::get('/notifications/poll', [NotificationController::class, 'poll'])->middleware('throttle:120,1')->name('notifications.poll');
     Route::post('/notifications/student-welcome', [NotificationController::class, 'studentWelcome'])->middleware('throttle:120,1')->name('notifications.student-welcome');
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::post('/notifications/{notification}/state', [NotificationController::class, 'updateState'])->name('notifications.state');
     Route::get('/search', [SearchController::class, 'search'])->name('search');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::delete('/notifications/read',        [NotificationController::class, 'destroyRead'])->name('notifications.destroyRead');
@@ -229,6 +231,7 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
 
     Route::get('/applications', [RegistrarApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}/documents/{document}', [RegistrarApplicationController::class, 'downloadDocument'])->name('applications.documents.show');
+    Route::get('/applications/{application}/documents/{document}/view', [RegistrarApplicationController::class, 'viewDocument'])->name('applications.documents.view');
     Route::get('/applications/{application}', [RegistrarApplicationController::class, 'show'])->name('applications.show');
     Route::post('/applications/{application}/start-review', [RegistrarApplicationController::class, 'startReview'])->name('applications.start-review');
     Route::post('/applications/{application}/approve', [RegistrarApplicationController::class, 'approve'])->name('applications.approve');
@@ -272,6 +275,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::post('/enrollment', [EnrollmentController::class, 'store'])->name('enrollment.store');
     Route::get('/enrollment', [EnrollmentController::class, 'index'])->name('enrollment.index');
     Route::get('/enrollment/{enrollment}/payment-info', [EnrollmentController::class, 'paymentInfo'])->name('enrollment.payment-info');
+    Route::get('/payments/documents/{documentRequest}', [\App\Http\Controllers\PortalPaymentController::class, 'document'])->name('payments.document');
+    Route::get('/payments/appointments/{appointment}', [\App\Http\Controllers\PortalPaymentController::class, 'appointment'])->name('payments.appointment');
     Route::get('/programs/{program}/subjects', [EnrollmentController::class, 'getSubjects'])->name('enrollment.subjects');
     
     Route::post('/enrollment/{enrollment}/payment/gcash', [EnrollmentController::class, 'submitGcash'])->name('enrollment.payment.gcash');

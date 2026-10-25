@@ -9,15 +9,30 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $notifications = UserNotification::where('user_id', Auth::id())
-            ->latest()
-            ->get();
-
-        $unreadCount = $notifications->filter(fn($n) => !$n->isRead())->count();
-
-        return view('notifications.index', compact('notifications', 'unreadCount'));
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:200'],
+            'state' => ['nullable', 'in:all,unread,read'],
+            'category' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(UserNotification::CATEGORIES))],
+        ]);
+        $state = $filters['state'] ?? 'all';
+        $base = UserNotification::where('user_id', Auth::id());
+        $totalCount = (clone $base)->count();
+        $unreadCount = (clone $base)->whereNull('read_at')->count();
+        $readCount = $totalCount - $unreadCount;
+        if ($state === 'unread') $base->whereNull('read_at');
+        if ($state === 'read') $base->whereNotNull('read_at');
+        if (!empty($filters['category'])) $base->inCategory($filters['category']);
+        $search = trim($filters['search'] ?? '');
+        if ($search !== '') {
+            $base->where(fn ($query) => $query->where('title', 'like', '%'.$search.'%')->orWhere('message', 'like', '%'.$search.'%'));
+        }
+        $notifications = $base->latest()->orderByDesc('id')->paginate(\App\Support\TablePagination::perPage(10))->withQueryString();
+        if ($notifications->currentPage() > $notifications->lastPage()) {
+            return redirect($request->fullUrlWithQuery(['page' => $notifications->lastPage()]));
+        }
+        return view('notifications.index', compact('notifications', 'unreadCount', 'readCount', 'totalCount', 'state'));
     }
 
     /** Return only this Cashier's notification deltas for navbar polling. */
@@ -27,9 +42,9 @@ class NotificationController extends Controller
         return $this->poll($request);
     }
 
+    /** Notification polling, always scoped to the authenticated recipient. */
     public function poll(Request $request)
     {
-
         $data = $request->validate([
             'after_id' => ['nullable', 'integer', 'min:0'],
             'welcome_token' => ['nullable', 'uuid'],
@@ -39,7 +54,7 @@ class NotificationController extends Controller
             ->orderBy('id');
         $batch = $query->limit(51)->get();
         $hasMore = $batch->count() > 50;
-        $notifications = $batch->take(50)->map(function (UserNotification $notification) {
+        $serialize = function (UserNotification $notification) {
             return [
                 'id' => $notification->id,
                 'title' => $notification->title,
@@ -48,13 +63,25 @@ class NotificationController extends Controller
                 'is_read' => $notification->isRead(),
                 'relative_time' => $notification->created_at->diffForHumans(),
                 'read_url' => route('notifications.read', $notification),
+                'open_url' => route('notifications.open', $notification),
+                'state_url' => route('notifications.state', $notification),
+                'category_icon' => UserNotification::CATEGORIES[$notification->category]['icon'],
             ];
-        })->values();
+        };
+        $notifications = $batch->take(50)->map($serialize)->values();
+        $recentNotifications = UserNotification::where('user_id', $request->user()->id)
+            ->latest()->orderByDesc('id')->limit(5)->get()->map($serialize)->values();
 
+        $totalCount = UserNotification::where('user_id', $request->user()->id)->count();
+        $unreadCount = $request->user()->unreadNotificationsCount();
         return response()->json([
             'notifications' => $notifications,
+            'recent_notifications' => $recentNotifications,
+            'work_counts' => app(\App\Services\SidebarWorkCounts::class)->forUser($request->user()),
             'student_welcome' => \App\Services\StudentWelcome::pending($request->user(), $data['welcome_token'] ?? null),
-            'unread_count' => $request->user()->unreadNotificationsCount(),
+            'unread_count' => $unreadCount,
+            'total_count' => $totalCount,
+            'read_count' => $totalCount - $unreadCount,
             'has_more' => $hasMore,
         ])->header('Cache-Control', 'no-store, private');
     }
@@ -76,6 +103,26 @@ class NotificationController extends Controller
         return redirect($this->safeDestination($notification->link));
     }
 
+    /** Opening a notification does not implicitly change its read state. */
+    public function open(UserNotification $notification)
+    {
+        abort_if($notification->user_id !== Auth::id(), 403);
+        $destination = $this->safeDestination($notification->link);
+        $response = redirect($destination);
+        if ($destination === route('notifications.index')) {
+            $response->with('info', 'This update has no available destination. Its details remain in your notifications.');
+        }
+        return $response;
+    }
+
+    public function updateState(Request $request, UserNotification $notification)
+    {
+        abort_if($notification->user_id !== Auth::id(), 403);
+        $data = $request->validate(['read' => ['required', 'boolean']]);
+        $notification->update(['read_at' => $data['read'] ? ($notification->read_at ?? now()) : null]);
+        return response()->json(['success' => true, 'read' => $notification->isRead(), 'unread_count' => $request->user()->unreadNotificationsCount()]);
+    }
+
     /** Mark all unread notifications as read (AJAX or redirect). */
     public function markAllRead(Request $request)
     {
@@ -84,7 +131,7 @@ class NotificationController extends Controller
             ->update(['read_at' => now()]);
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'unread_count' => $request->user()->unreadNotificationsCount()]);
         }
 
         return back();
@@ -98,7 +145,7 @@ class NotificationController extends Controller
         $notification->delete();
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'unread_count' => $request->user()->unreadNotificationsCount()]);
         }
 
         return back();
@@ -112,7 +159,7 @@ class NotificationController extends Controller
             ->delete();
 
         if ($request->expectsJson()) {
-            return response()->json(['success' => true]);
+            return response()->json(['success' => true, 'unread_count' => $request->user()->unreadNotificationsCount()]);
         }
 
         return back();
@@ -151,6 +198,25 @@ class NotificationController extends Controller
             . (isset($parts['query']) ? '?' . $parts['query'] : '')
             . (isset($parts['fragment']) ? '#' . $parts['fragment'] : '');
 
+        if (preg_match('#^/portal/enrollment/(\d+)/payment-info/?$#', $path, $paymentMatch)) {
+            if (!Auth::user()->hasAnyRole(['student', 'alumni', 'new_applicant'])) return route('notifications.index');
+            $owned = Enrollment::whereKey($paymentMatch[1])->where('user_id', Auth::id())->exists();
+            return $owned
+                ? route('portal.enrollment.payment-info', (int) $paymentMatch[1])
+                : route('notifications.index');
+        }
+
+        // Historical notifications stored the standalone enrollment receipt URL.
+        // Open the current receipt modal on the payment list instead.
+        if (preg_match('#^/cashier/payments/(\d+)/receipt/?$#', $path, $receiptMatch)) {
+            if (!Auth::user()->hasAnyRole(['cashier', 'admin'])) return route('notifications.index');
+            $available = \App\Models\Payment::where('enrollment_id', $receiptMatch[1])
+                ->where('status', 'verified')->whereHas('enrollment')->exists();
+            return $available
+                ? route('cashier.payments.index', ['receipt' => (int) $receiptMatch[1]])
+                : route('cashier.payments.index');
+        }
+
         if (
             Auth::user()?->hasAnyRole(['registrar', 'admin'])
             && preg_match('#^/registrar/enrollments/(\d+)$#', $path, $matches)
@@ -162,6 +228,33 @@ class NotificationController extends Controller
                 : route('registrar.enrollments.index');
         }
 
+        try {
+            // Resolve only GET routes; never follow obsolete or write-only links.
+            $target = app('router')->getRoutes()->match(Request::create(url($destination), 'GET'));
+            if ($target->getName() === 'notifications.read' || $target->getName() === 'notifications.open') {
+                return route('notifications.index');
+            }
+            foreach ($target->gatherMiddleware() as $middleware) {
+                if (is_string($middleware) && str_starts_with($middleware, 'role:')) {
+                    $roles = explode('|', substr($middleware, 5));
+                    if (!Auth::user()->hasAnyRole($roles)) return route('notifications.index');
+                }
+            }
+            app('router')->substituteBindings($target);
+            app('router')->substituteImplicitBindings($target);
+            // Portal record ownership must also match; destination controllers retain
+            // their own authorization checks as the final authority.
+            if (str_starts_with($path, '/portal/')) {
+                foreach ($target->parameters() as $record) {
+                    if ($record instanceof \Illuminate\Database\Eloquent\Model && $record->getAttribute('user_id') !== null
+                        && (int) $record->getAttribute('user_id') !== (int) Auth::id()) {
+                        return route('notifications.index');
+                    }
+                }
+            }
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface | \Illuminate\Database\Eloquent\ModelNotFoundException $exception) {
+            return route('notifications.index');
+        }
         return url($destination);
     }
 }

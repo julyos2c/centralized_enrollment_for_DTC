@@ -144,6 +144,26 @@ class Application extends Model
         })));
     }
 
+    public function getHonorificAttribute($value): ?string
+    {
+        return NameNormalizer::normalizeAffix($value, 'honorific');
+    }
+
+    public function setHonorificAttribute($value): void
+    {
+        $this->attributes['honorific'] = NameNormalizer::normalizeAffix($value, 'honorific');
+    }
+
+    public function getSuffixAttribute($value): ?string
+    {
+        return NameNormalizer::normalizeAffix($value, 'suffix');
+    }
+
+    public function setSuffixAttribute($value): void
+    {
+        $this->attributes['suffix'] = NameNormalizer::normalizeAffix($value, 'suffix');
+    }
+
     protected $casts = [
         'birthdate'   => 'date',
         'reviewed_at' => 'datetime',

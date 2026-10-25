@@ -174,67 +174,12 @@
 
                     @if (! $cancelled)
                         <div class="dr-pay">
-                            <div class="dr-pay-line">
-                                <span class="dtc-status-badge is-{{ $payTone }}">{{ $payLabel }}</span>
-                                @if ($docRequest)
-                                    <span class="dr-pay-method">{{ $docRequest->payment_method === 'gcash_qr' ? 'GCash' : 'Cashier’s Office' }} · ₱{{ number_format($docRequest->fee, 2) }}</span>
-                                @elseif ($pay)
-                                    <span class="dr-pay-method">{{ $pay->isGcash() ? 'GCash' : 'Cashier’s Office' }}@if ($pay->reference_number), ref {{ $pay->reference_number }}@endif</span>
-                                @endif
+                            <div class="dr-pay-line"><span class="dtc-status-badge is-{{ $payTone }}">{{ $payLabel }}</span></div>
+                            <div class="dr-actions">
+                                <a class="dr-btn dr-btn--primary dr-btn--sm" href="{{ $docRequest ? route('portal.payments.document', $docRequest) : route('portal.payments.appointment', $appointment) }}">Payment details</a>
                             </div>
-
-                            @if ($docRequest)
-                                @if ($docRequest->payment_status === 'verified')
-
-                                @elseif ($docRequest->payment_status === 'pending_verification')
-                                    <p class="dr-pay-text">GCash proof submitted. Awaiting Cashier verification.@if($docRequest->proof_of_payment) <a href="{{ route('portal.appointments.document-payment.proof', $docRequest) }}" target="_blank" rel="noopener">View submitted proof</a>@endif</p>
-                                @else
-                                    @if ($docRequest->payment_status === 'rejected')
-                                        <div class="dr-remark" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><span>{{ $docRequest->payment_rejection_reason ?: 'The Cashier could not verify this payment. Submit corrected details or pay at the Cashier.' }}</span></div>
-                                    @else
-                                        <p class="dr-pay-text">Pay ₱{{ number_format($docRequest->fee, 2) }} at the Cashier’s Office.</p>
-                                    @endif
-                                    @if ($gcashQrReady && $docRequest->status !== 'released')
-                                        <details class="dr-gcash-inline">
-                                            <summary>{{ $docRequest->payment_status === 'rejected' ? 'Resubmit GCash proof' : 'Pay by GCash instead' }}</summary>
-                                            <div class="dr-gcash-inline-body">
-                                                <img src="{{ route('portal.appointments.gcash.qr') }}" alt="Official DTC GCash QR code" width="120" height="120" loading="lazy">
-                                                <p>Send exactly <strong>₱{{ number_format($docRequest->fee, 2) }}</strong> to {{ \App\Models\Setting::get('gcash_name', 'DTC') }} ({{ \App\Models\Setting::get('gcash_number', 'see official QR') }}), then submit the reference and receipt.</p>
-                                                <form method="POST" action="{{ route('portal.appointments.document-payment.gcash', $docRequest) }}" enctype="multipart/form-data">
-                                                    @csrf
-                                                    <label class="dr-label">GCash reference number<input class="dr-input" name="reference_number" maxlength="100" required></label>
-                                                    <label class="dr-label">Receipt image or PDF<input class="dr-input" type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf" required></label>
-                                                    <button class="dr-btn dr-btn--primary dr-btn--sm" type="submit">Submit proof for verification</button>
-                                                </form>
-                                            </div>
-                                        </details>
-                                    @endif
-                                @endif
-                            @elseif (! $pay)
-                                <p class="dr-pay-text">Pay at the Cashier or by GCash.</p>
-                                <div class="dr-actions">
-                                    <button type="button" class="dr-btn dr-btn--primary dr-btn--sm" data-toggle="modal" data-target="#gcashModal{{ $appointment->id }}">Pay with GCash</button>
-                                </div>
-                            @elseif ($payRejected)
-                                <div class="dr-remark" role="alert"><i data-lucide="circle-alert" aria-hidden="true"></i><span>{{ $pay->rejection_reason ?: 'The Cashier couldn’t verify this payment. Contact the Cashier for next steps.' }}</span></div>
-                                <div class="dr-actions">
-                                    <button type="button" class="dr-btn dr-btn--primary dr-btn--sm" data-toggle="modal" data-target="#gcashModal{{ $appointment->id }}">Resubmit GCash proof</button>
-                                </div>
-                            @elseif ($pay->status === 'verified')
-                                <p class="dr-pay-text">Payment verified.</p>
-                            @elseif ($pay->isGcash())
-                                <p class="dr-pay-text">
-                                    GCash receipt submitted. Awaiting Cashier verification.
-                                    @if ($pay->proof_of_payment)
-                                        <a href="{{ route('portal.appointments.payment.proof', $pay) }}" target="_blank" rel="noopener">View submitted proof</a>
-                                    @endif
-                                </p>
-                            @else
-                                <p class="dr-pay-text">Pay at the Cashier’s Office.</p>
-                            @endif
                         </div>
                     @endif
-
                     @if ($appointment->status === 'pending')
                         <div class="dr-actions dr-actions--split">
                             <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm" data-toggle="modal" data-target="#editModal{{ $appointment->id }}">
@@ -245,7 +190,7 @@
                                 <button type="button" class="dr-btn dr-btn--danger dr-btn--sm"
                                         data-dtc-confirm
                                         data-dtc-confirm-title="Cancel appointment?"
-                                        data-dtc-confirm-message="Are you sure you want to cancel this appointment? You may need to book a new slot."
+                                        data-dtc-confirm-message="{{ $docRequest && $docRequest->status === 'submitted' ? 'This also cancels your unstarted document request. Any payment record is kept; contact the Cashier before paying again.' : 'Cancel this booking? Any document request already being processed is kept. Contact the Registrar for another pickup time.' }}"
                                         data-dtc-confirm-ok="Cancel"
                                         data-dtc-confirm-cancel="Keep Appointment"
                                         data-dtc-confirm-tone="danger"
@@ -254,6 +199,8 @@
                                 </button>
                             </form>
                         </div>
+                    @elseif ($appointment->status === 'confirmed')
+                        <p class="dr-req-purpose">Contact the Registrar to change or cancel this confirmed booking.</p>
                     @endif
                 </li>
             @endforeach
@@ -275,86 +222,9 @@
             <div style="margin-top:20px;">{{ $appointments->links() }}</div>
         @endif
 
-        {{-- Modals (unchanged behaviour): pay with GCash, edit booking --}}
+        {{-- Edit booking modals --}}
         @foreach ($items as $appointment)
-        {{-- ── GCash Upload Modal (per appointment) ───────────────────── --}}
-        @if($appointment->status !== 'cancelled' && ! $appointment->documentRequest)
-        <div class="modal fade" id="gcashModal{{ $appointment->id }}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form method="POST"
-                          action="{{ route('portal.appointments.payment.gcash', $appointment) }}"
-                          enctype="multipart/form-data">
-                        @csrf
-                        <div class="modal-header">
-                            <h5 class="modal-title" style="font-size:14px; font-weight:700;">
-                                <i data-lucide="smartphone" style="width:16px;height:16px;margin-right:6px;"></i>
-                                Submit GCash Payment
-                            </h5>
-                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            {{-- GCash account info --}}
-                            <div style="background:var(--dtc-surface-soft); border-radius:10px;
-                                        padding:14px 16px; margin-bottom:16px; font-size:12px;
-                                        color:var(--dtc-text-secondary); text-align:center;">
-                                <div style="font-size:11px; color:var(--dtc-text-muted); margin-bottom:4px;">
-                                    Send payment to
-                                </div>
-                                <img src="{{ route('portal.appointments.gcash.qr') }}"
-                                     alt="GCash QR"
-                                     onerror="this.style.display='none'"
-                                     style="width:120px; height:120px; object-fit:contain;
-                                            border:1px solid var(--dtc-border); border-radius:10px;
-                                            padding:4px; display:block; margin:0 auto 10px;">
-                                <div style="font-weight:700; font-size:15px; color:var(--dtc-text);">
-                                    {{ \App\Models\Setting::get('gcash_name', '—') }}
-                                </div>
-                                <div style="font-size:13px; font-family:monospace; color:var(--dtc-primary);">
-                                    {{ \App\Models\Setting::get('gcash_number', '—') }}
-                                </div>
-                            </div>
 
-                            <div class="form-group mb-3">
-                                <label style="font-size:12px; font-weight:600; color:var(--dtc-text);">
-                                    GCash Reference Number <span style="color:var(--dtc-danger);">*</span>
-                                </label>
-                                <input type="text" name="reference_number"
-                                       class="form-control" required
-                                       placeholder="e.g. 1234567890"
-                                       style="border-radius:8px; font-size:13px;">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label style="font-size:12px; font-weight:600; color:var(--dtc-text);">
-                                    Proof of Payment
-                                    <span style="color:var(--dtc-text-muted); font-weight:400;">(screenshot or PDF, max 5 MB)</span>
-                                    <span style="color:var(--dtc-danger);">*</span>
-                                </label>
-                                <div class="dtc-file-upload" onclick="this.querySelector('input').click()">
-                                    <input type="file" name="proof_of_payment"
-                                           class="dtc-file-input" required
-                                           accept=".jpg,.jpeg,.png,.pdf"
-                                           onchange="dtcFileChange(this)">
-                                    <i data-lucide="upload-cloud" class="dtc-file-icon"></i>
-                                    <div class="dtc-file-label">
-                                        <span class="dtc-file-btn">Choose file</span>
-                                        <span class="dtc-file-name">No file chosen</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i data-lucide="upload" style="width:13px;height:13px;margin-right:4px;"></i>
-                                Submit Payment
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        @endif
 
         {{-- ── Edit Appointment Modal ─────────────────────────────────── --}}
         @if($appointment->status === 'pending')

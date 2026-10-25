@@ -1,0 +1,34 @@
+/* The official desktop/print table stays intact; mobile presents one subject per card. */
+@media screen and (max-width: 767.98px) {
+    .cor-document > .card-body { padding: 16px; }
+    .cor-document .cor-letterhead { margin-bottom: 18px !important; padding-bottom: 12px !important; }
+    .cor-letterhead h4 { font-size: 17px; line-height: 1.4; }
+    .cor-letterhead p { font-size: 11px; line-height: 1.6; }
+    .cor-program { margin-bottom: 18px !important; }
+    .cor-program h5 { font-size: 14px; line-height: 1.5; }
+    .cor-program p { margin-top: 4px !important; font-size: 11px; }
+    .cor-student { padding-bottom: 14px; border-bottom: 1px solid var(--dtc-border); }
+    .cor-student p { font-size: 12px; overflow-wrap: anywhere; }
+    .cor-subjects { overflow: visible; }
+    .cor-document .cor-table { display: block; width: 100%; min-width: 0 !important; border: 0 !important; }
+    .cor-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .cor-table tbody { display: grid; gap: 12px; }
+    .cor-document .cor-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; padding: 14px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface); }
+    .cor-document .cor-table tbody td { display: block; min-width: 0; height: auto; padding: 0; border: 0; font-size: 12px; line-height: 1.6; white-space: normal; overflow-wrap: anywhere; }
+    .cor-table td[data-cor-label]::before { content: attr(data-cor-label); display: block; margin-bottom: 2px; color: var(--dtc-text-secondary); font-size: 10px; font-weight: 400; }
+    .cor-table .cor-code { order: 0; align-self: center; }
+    .cor-table .cor-code .dtc-status-badge { font-size: 10px; white-space: normal; }
+    .cor-table .cor-units { order: 1; text-align: right; font-weight: 600; }
+    .cor-document .cor-table .cor-subject-name { order: 2; grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--dtc-text); }
+    .cor-table .cor-schedule { order: 3; grid-column: 1 / -1; padding-top: 10px !important; border-top: 1px solid var(--dtc-border) !important; }
+    .cor-table .cor-room { order: 4; }
+    .cor-table .cor-instructor { order: 5; text-align: right; max-width: 160px; }
+    .cor-table td[colspan] { grid-column: 1 / -1; }
+    .cor-table tfoot { display: block; margin-top: 14px; }
+    .cor-table tfoot tr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0 0; border-top: 1px solid var(--dtc-border); }
+    .cor-document .cor-table tfoot td { padding: 0; border: 0; font-size: 12px; background: transparent; }
+    .cor-table tfoot td:last-child { display: none; }
+    .cor-document .cor-signature { margin-top: 28px !important; }
+    .cor-document .cor-signature-name { min-width: 0 !important; max-width: 100%; width: 240px; font-size: 12px; overflow-wrap: anywhere; }
+    .cor-signature > p:last-child { font-size: 11px; }
+}

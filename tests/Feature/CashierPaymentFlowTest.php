@@ -211,11 +211,25 @@ class CashierPaymentFlowTest extends TestCase
         ]);
 
         $response = $this->actingAs($cashier)
-            ->get(route('cashier.payments.receipt', $enrollment));
+            ->get(route('cashier.payments.receipt', $enrollment), ['X-Requested-With' => 'XMLHttpRequest']);
 
         $response->assertOk();
         $response->assertSee('DTC-VERIFIED1');
         $response->assertDontSee($rejected->receipt_no);
+    }
+
+    /** @test */
+    public function standalone_receipt_links_redirect_to_the_current_receipt_modal()
+    {
+        $cashier = $this->makeUserWithRole('cashier');
+        $enrollment = Enrollment::factory()->paid()->create();
+        Payment::factory()->create(['enrollment_id' => $enrollment->id, 'processed_by' => $cashier->id]);
+        $this->actingAs($cashier)->get(route('cashier.payments.receipt', $enrollment))
+            ->assertRedirect(route('cashier.payments.index', ['receipt' => $enrollment->id]));
+        $this->get(route('cashier.payments.index', ['receipt' => $enrollment->id]))
+            ->assertOk()->assertSee('data-auto-receipt data-url=', false)->assertSee('id="receiptModal"', false);
+        $this->get(route('cashier.payments.receipt', $enrollment), ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk()->assertViewIs('cashier.payments._receipt-content');
     }
 
     /** @test */

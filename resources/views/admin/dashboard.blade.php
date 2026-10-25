@@ -19,41 +19,46 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/dashboard-cards.css') }}">
+@endpush
 @section('content')
 
 {{-- KPI ROW --}}
-<div class="row mb-2">
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="dashboard-kpis"><div class="dtc-kpi-grid admin-kpis">
+<div class="kpi-revenue">
+        <x-dtc.stat-card
+            icon="circle-dollar-sign" color="primary" :featured="true"
+            label="Total Revenue" value="₱{{ number_format($totalRevenue, 2) }}"
+            :metrics="['Transactions' => number_format($totalPaid), 'Avg. per transaction' => '₱'.number_format($totalPaid > 0 ? $totalRevenue / $totalPaid : 0, 2)]" />
+    </div>
+<div class="kpi-students">
         <x-dtc.stat-card
             icon="graduation-cap" color="primary"
             label="Students" value="{{ number_format($totalStudents) }}"
-            href="{{ route('admin.users.index') }}" link-text="Registered learners" />
+            href="{{ route('admin.users.index') }}" link-text="View students" />
     </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
-        <x-dtc.stat-card
-            icon="award" color="info"
-            label="Alumni" value="{{ number_format($totalAlumni) }}"
-            note="Total Registered" />
-    </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="kpi-enrollments">
         <x-dtc.stat-card
             icon="file-text" color="warning"
             label="Pending Enrollments" value="{{ number_format($pendingEnrollments) }}"
-            note="Needs Approval" />
+            note="Awaiting approval" />
     </div>
-    <div class="col-lg-3 col-md-6 col-12 mb-3">
+<div class="kpi-visits">
         <x-dtc.stat-card
             icon="calendar-check" color="success"
             label="Appointments Today" value="{{ number_format($appointmentsToday) }}"
             note="Scheduled visits" />
     </div>
-    <div class="col-12 mb-3">
+<div class="kpi-alumni">
         <x-dtc.stat-card
-            icon="coins" color="neutral"
-            label="Total Revenue" value="₱{{ number_format($totalRevenue, 2) }}"
-            note="Total Collection from {{ $totalPaid }} transaction{{ $totalPaid !== 1 ? 's' : '' }}" />
+            icon="award" color="info"
+            label="Alumni" value="{{ number_format($totalAlumni) }}"
+            note="Registered alumni" />
     </div>
-</div>
+</div></div>
+
+@include('partials.staff-dashboard-welcome', ['staffRoleLabel' => 'Administrator', 'staffWelcomeMessage' => 'Manage accounts and system settings.'])
 
 {{-- CHARTS ROW --}}
 <div class="row">

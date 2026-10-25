@@ -31,9 +31,9 @@ class ForgotPasswordController extends Controller
         // the email exists — this prevents user enumeration.
         Password::sendResetLink($request->only('email'));
 
-        return back()->with(
+        return back()->withInput($request->only('email'))->with(
             'status',
-            'If that email is registered, a password reset link has been sent.'
+            'If your email is registered, a reset link will arrive shortly.'
         );
     }
 }

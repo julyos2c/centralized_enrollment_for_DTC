@@ -14,6 +14,7 @@
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
+<link rel="stylesheet" href="{{ asset('css/student-cor.css') }}">
 @endpush
 @section('content')
 
@@ -79,20 +80,19 @@
             @include('portal.partials.dashboard-avatar')
             <div class="dtc-welcome-copy">
                 <h4 class="dtc-welcome-title">
-                    Hello, {{ auth()->user()->name }}
+                    <span class="dtc-welcome-greeting">Hello,</span>{{ auth()->user()->name }}
                 </h4>
                 @if($studentProfile && $studentProfile->enrolled_ay)
                 <p class="dtc-welcome-meta">
-                    🎓
-                    @if($studentProfile->program){{ $studentProfile->program->name }} · @endif
-                    Enrolled AY {{ $studentProfile->enrolled_ay }}
+                    @if($studentProfile->program)<span>{{ $studentProfile->program->name }}</span>@endif
+                    <span>Enrolled AY {{ $studentProfile->enrolled_ay }}</span>
                 </p>
                 @endif
                 <p class="dtc-welcome-text">
                     @if(!$latestEnrollment)
                         Submit your application to begin enrollment.
                     @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
-                        Your payment is confirmed and your enrollment is complete.
+                        Enrollment complete. Your payment is confirmed.
                     @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->payment && $latestEnrollment->payment->status === 'pending')
                         Your payment proof is awaiting Cashier verification.
                     @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->payment && $latestEnrollment->payment->status === 'rejected')
@@ -230,154 +230,27 @@
         @endif
 
         {{-- Enrolled Subjects — COR-style table --}}
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="font-weight-bold">Enrolled Subjects</span>
-                <div class="d-flex align-items-center" style="gap:10px;">
-                    @if($subjects->isNotEmpty())
-                        <span style="font-size:12px; color:var(--dtc-primary); font-weight:600;">
-                            {{ $subjects->count() }} Subject{{ $subjects->count() > 1 ? 's' : '' }}
-                        </span>
-                    @endif
-                    @if($latestEnrollment && $latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
-                        <a href="{{ route('portal.cor.show') }}"
-                           class="btn btn-outline-primary btn-sm"
-                           style="font-size:11px; padding:3px 10px;">
-                            <i data-lucide="scroll-text" style="width:12px;height:12px;margin-right:4px;"></i>
-                            View Full COR
-                        </a>
-                    @endif
-                </div>
-            </div>
-            <div class="card-body p-0">
-                @if($subjects->isNotEmpty())
-                <div class="table-responsive">
-
-<table class="dashboard-summary-table table table-sm mb-0" style="font-size:12.5px;">
-                        <thead>
-                            <tr style="background:var(--dtc-surface-soft);">
-                                <th style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dtc-text-secondary); border-bottom:1px solid var(--dtc-border);">Course Code</th>
-                                <th style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dtc-text-secondary); border-bottom:1px solid var(--dtc-border);">Description</th>
-                                <th style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dtc-text-secondary); border-bottom:1px solid var(--dtc-border); text-align:center;">Units</th>
-                                <th style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--dtc-text-secondary); border-bottom:1px solid var(--dtc-border); text-align:center;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($subjects as $subject)
-                            <tr style="border-bottom:1px solid var(--dtc-border-soft);">
-                                <td data-summary-label="Course Code" style="padding:10px 16px; vertical-align:middle;">
-                                    <span class="dtc-status-badge is-neutral" style="font-weight:700; font-size:11px;">
-                                        {{ $subject->subject_code }}
-                                    </span>
-                                </td>
-                                <td data-summary-label="Description" style="padding:10px 16px; vertical-align:middle; color:var(--dtc-text); font-weight:500;">
-                                    {{ $subject->subject_name }}
-                                </td>
-                                <td data-summary-label="Units" style="padding:10px 16px; vertical-align:middle; text-align:center; color:var(--dtc-text); font-weight:600;">
-                                    {{ rtrim(rtrim(number_format($subject->units ?? 3, 1), '0'), '.') }}
-                                </td>
-                                <td data-summary-label="Status" style="padding:10px 16px; vertical-align:middle; text-align:center;">
-                                    @if($latestEnrollment && $latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
-                                        <span class="dtc-status-badge is-success" style="font-size:10.5px;">
-                                            <i data-lucide="check" style="width:10px;height:10px;"></i> Enrolled
-                                        </span>
-                                    @elseif($latestEnrollment && $latestEnrollment->status === 'pending')
-                                        <span class="dtc-status-badge is-warning" style="font-size:10.5px;">
-                                            <i data-lucide="clock" style="width:10px;height:10px;"></i> Pending
-                                        </span>
-                                    @elseif($latestEnrollment && $latestEnrollment->status === 'approved' && !$latestEnrollment->is_paid && $latestEnrollment->payment && $latestEnrollment->payment->status === 'pending')
-                                        <span class="dtc-status-badge is-warning" style="font-size:10.5px;">Payment Verification</span>
-                                    @elseif($latestEnrollment && $latestEnrollment->status === 'approved' && !$latestEnrollment->is_paid && $latestEnrollment->payment && $latestEnrollment->payment->status === 'rejected')
-                                        <span class="dtc-status-badge is-danger" style="font-size:10.5px;">Payment Rejected</span>
-                                    @elseif($latestEnrollment && $latestEnrollment->status === 'approved' && !$latestEnrollment->is_paid)
-                                        <span class="dtc-status-badge is-warning" style="font-size:10.5px;">Awaiting Payment</span>
-                                    @elseif($latestEnrollment && $latestEnrollment->status === 'rejected')
-                                        <span class="dtc-status-badge is-danger" style="font-size:10.5px;">Rejected</span>
-                                    @else
-                                        <span class="dtc-status-badge is-neutral" style="font-size:10.5px;">—</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                        @php $totalUnits = $subjects->sum(fn($s) => $s->units ?? 3); @endphp
-                        <tfoot>
-                            <tr style="background:var(--dtc-surface-soft);">
-                                <td colspan="2" style="padding:10px 16px; font-weight:700; font-size:12px; color:var(--dtc-text); text-align:right;">
-                                    Total Units
-                                </td>
-                                <td data-summary-label="Description" style="padding:10px 16px; font-weight:800; font-size:13px; color:var(--dtc-primary); text-align:center;">
-                                    {{ rtrim(rtrim(number_format($totalUnits, 1), '0'), '.') }}
-                                </td>
-                                <td data-summary-label="Units"></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                @else
-                <div class="text-center py-4 u-muted">
-                    <i data-lucide="book-open" class="mb-2" style="width:2em;height:2em"></i>
-                    <p class="u-text-sm">No subjects enrolled yet.</p>
-                    @if(!$latestEnrollment)
-                        <a href="{{ route('portal.enrollment.create') }}"
-                           class="btn btn-primary btn-sm">Enroll Now</a>
-                    @endif
-                </div>
-                @endif
-            </div>
-        </div>
+        @include('portal.student._dashboard-subjects')
 
         {{-- Next Steps --}}
         @if($nextSteps)
-        <div class="card mb-3">
-            <div class="card-header font-weight-bold">Next Steps</div>
-            <div class="card-body p-0">
-                @foreach ($nextSteps as $step)
-                @if($step['isPayment'] ?? false)
-                    <button type="button"
-                       class="dtc-payment-btn dtc-next-step-row {{ $step['active'] ? 'is-active' : '' }}"
-                       data-url="{{ $step['url'] }}" style="width:100%; border:0; text-align:left;">
-                        <div style="width:44px; height:44px; border-radius:12px; flex-shrink:0;
-                                    background:{{ $step['active'] ? 'var(--dtc-primary)' : 'var(--dtc-surface-soft)' }};
-                                    display:flex; align-items:center; justify-content:center;">
-                            <i data-lucide="{{ $step['icon'] }}" style="font-size:18px;
-                                      color:{{ $step['active'] ? '#fff' : 'var(--dtc-text-muted)' }};"></i>
+        <div class="student-next-actions mb-3">
+            @foreach ($nextSteps as $step)
+                <section class="dtc-next-action {{ $step['active'] ? 'has-action' : 'is-secondary' }}" aria-labelledby="student-next-title-{{ $loop->index }}">
+                    <div class="dtc-next-action-main">
+                        <div class="dtc-next-action-status" aria-hidden="true"><i data-lucide="{{ $step['icon'] }}"></i></div>
+                        <div class="dtc-next-action-copy">
+                            <div class="dtc-next-action-eyebrow">{{ $step['active'] ? 'Next step' : 'Also available' }}</div>
+                            <h2 id="student-next-title-{{ $loop->index }}">{{ $step['label'] }}</h2>
+                            <p>{{ $step['desc'] }}</p>
                         </div>
-                        <div  class="u-flex-1">
-                            <div style="font-size:13px; font-weight:600;
-                                        color:{{ $step['active'] ? 'var(--dtc-on-primary-soft)' : 'var(--dtc-text)' }};">
-                                {{ $step['label'] }}
-                            </div>
-                            <div  class="u-text-xxs-secondary">
-                                {{ $step['desc'] }}
-                            </div>
-                        </div>
-                        <i data-lucide="chevron-right" style="color:{{ $step['active'] ? 'var(--dtc-on-primary-soft)' : 'var(--dtc-text-muted)' }};
-                                  font-size:12px;"></i>
-                    </button>
-                @else
-                    <a href="{{ $step['url'] }}" class="dtc-next-step-row {{ $step['active'] ? 'is-active' : '' }}">
-                        <div style="width:44px; height:44px; border-radius:12px; flex-shrink:0;
-                                    background:{{ $step['active'] ? 'var(--dtc-primary)' : 'var(--dtc-surface-soft)' }};
-                                    display:flex; align-items:center; justify-content:center;">
-                            <i data-lucide="{{ $step['icon'] }}" style="font-size:18px;
-                                      color:{{ $step['active'] ? '#fff' : 'var(--dtc-text-muted)' }};"></i>
-                        </div>
-                        <div  class="u-flex-1">
-                            <div style="font-size:13px; font-weight:600;
-                                        color:{{ $step['active'] ? 'var(--dtc-on-primary-soft)' : 'var(--dtc-text)' }};">
-                                {{ $step['label'] }}
-                            </div>
-                            <div  class="u-text-xxs-secondary">
-                                {{ $step['desc'] }}
-                            </div>
-                        </div>
-                        <i data-lucide="chevron-right" style="color:{{ $step['active'] ? 'var(--dtc-on-primary-soft)' : 'var(--dtc-text-muted)' }};
-                                  font-size:12px;"></i>
+                    </div>
+                    <a href="{{ $step['url'] }}" class="dtc-next-action-button">
+                        <span>{{ $step['actionLabel'] ?? (($step['isPayment'] ?? false) ? 'View payment details' : 'Continue') }}</span>
+                        <i data-lucide="arrow-right" aria-hidden="true"></i>
                     </a>
-                @endif
-                @endforeach
-            </div>
+                </section>
+            @endforeach
         </div>
         @endif
 
@@ -406,11 +279,11 @@
                         Please complete your enrollment process by paying the ₱{{ number_format($fee, 2) }} fee at the Cashier's Office.
                     @endif
                 </p>
-                <button type="button" class="btn btn-warning btn-sm btn-block dtc-payment-btn u-text-xxs"
-                        data-url="{{ route('portal.enrollment.payment-info', $latestEnrollment) }}"
+                <a class="btn btn-warning btn-sm btn-block  u-text-xxs"
+                        href="{{ route('portal.enrollment.payment-info', $latestEnrollment) }}"
                         >
                     Proceed to Payment →
-                </button>
+                </a>
             </div>
         </div>
         @endif
@@ -515,7 +388,7 @@
 
 </div>
 
-@include('student.enrollment._payment-modal')
+
 
 @include('portal.partials.dashboard-avatar-modals')
 

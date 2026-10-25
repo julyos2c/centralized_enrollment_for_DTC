@@ -24,45 +24,33 @@
     @endphp
 
     <div class="app-review-header">
+        <a href="{{ route('registrar.applications.index') }}" class="app-review-back">
+            <i data-lucide="arrow-left" aria-hidden="true"></i> Back to applications
+        </a>
         <div class="app-review-header-main">
-            <h4 class="mb-1 font-weight-bold u-text">Pre-Enrollment Application</h4>
-            <p class="app-review-ref u-text-secondary-sm">
-                Reference No. <strong>{{ $application->reference_no }}</strong>
-            </p>
-            <div class="app-review-meta">
+            <div class="app-review-title-row">
+                <h1>Application Review</h1>
                 <span class="badge {{ $statusBadges[$application->status] ?? 'badge-secondary' }}">
                     {{ ucwords(str_replace('_', ' ', $application->status)) }}
                 </span>
-                <span class="app-review-chip">{{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}</span>
-                <span class="app-review-chip">{{ $application->program->name ?? '—' }}</span>
+            </div>
+            <p class="app-review-ref">Reference <strong>{{ $application->reference_no }}</strong></p>
+            <div class="app-review-context">
+                <p class="app-review-program">{{ $application->program->name ?? 'Program not provided' }}</p>
+                <p class="app-review-type">{{ $applicantTypeLabels[$application->academic_status] ?? ucwords(str_replace('_', ' ', $application->academic_status)) }}</p>
             </div>
         </div>
-
-        <a href="{{ route('registrar.applications.index') }}" class="btn btn-secondary btn-sm app-review-back">
-            ← Back to List
-        </a>
     </div>
-@endsection
-
-@section('css')
-<style>
-    .app-review-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; }
-    .app-review-header-main { min-width: 0; flex: 1 1 320px; }
-    .app-review-ref { margin: 0 0 10px; }
-    .app-review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .app-review-meta .badge { padding: 5px 10px; font-size: 12px; font-weight: 600; border-radius: 999px; }
-    .app-review-chip { display: inline-block; max-width: 100%; padding: 4px 10px; color: inherit; border: 1px solid rgba(100, 116, 139, .35); border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 1.4; opacity: .9; }
-    .app-review-back { flex: 0 0 auto; }
-    @media (max-width: 575.98px) { .app-review-back { order: -1; } .app-review-header-main { flex-basis: 100%; } }
-</style>
 @endsection
 
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset('css/application-review.css') }}">
+<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
 @endpush
 @section('content')
-<div class="registrar-workspace">
+<div class="registrar-workspace application-review-page">
 
 
 
@@ -73,76 +61,7 @@
         {{-- ===================================================== --}}
         {{-- SECTION 1 — APPLICANT INFORMATION                      --}}
         {{-- ===================================================== --}}
-        <div class="card">
-            <div class="card-header">
-                <span class="font-weight-bold">Applicant Information</span>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Honorific</div>
-                        <div>{{ $application->honorific ?: '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Last Name</div>
-                        <div>{{ $application->last_name }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">First Name</div>
-                        <div>{{ $application->first_name }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Middle Name</div>
-                        <div>{{ $application->middle_name ?: '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Suffix</div>
-                        <div>{{ $application->suffix ?: '—' }}</div>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Gender</div>
-                        <div>{{ $application->gender ? ucfirst($application->gender) : '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Birthdate</div>
-                        <div>{{ $application->birthdate ? $application->birthdate->format('M d, Y') : '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Age</div>
-                        <div>{{ $application->age ?? '—' }}</div>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Place of Birth</div>
-                        <div>{{ $application->birth_place ?: '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Religion</div>
-                        <div>{{ $application->religion ?: '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Nationality</div>
-                        <div>{{ $application->nationality ?: '—' }}</div>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">LRN</div>
-                        <div>{{ $application->lrn ?: '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Marital Status</div>
-                        <div>{{ $application->marital_status ? ucfirst($application->marital_status) : '—' }}</div>
-                    </div>
-                    @if($application->marital_status === 'married')
-                    <div class="col-md-4 mb-2">
-                        <div class="text-muted small">Spouse Name</div>
-                        <div>{{ $application->spouse_name ?: '—' }}</div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
+        @include('registrar.applications._applicant-information')
 
         {{-- ===================================================== --}}
         {{-- SECTION 2 — CONTACT INFORMATION                        --}}
@@ -192,18 +111,6 @@
                         <div>{{ $application->country ?: '—' }}</div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header"><span class="font-weight-bold">Applicant Acknowledgment</span></div>
-            <div class="card-body">
-                @if($application->acknowledged_at)
-                    Applicant confirmed the information, Terms, and Privacy Policy on
-                    {{ $application->acknowledged_at->format('M d, Y h:i A') }}.
-                @else
-                    No acknowledgment timestamp is recorded for this application.
-                @endif
             </div>
         </div>
 
@@ -360,29 +267,37 @@
                 @endphp
 
                 @forelse ($application->documents as $document)
-                    <div class="d-flex justify-content-between align-items-center px-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                        <div>
-                            <div class="font-weight-bold u-text-sm" >
+                    <div class="application-document">
+                        <div class="application-document-info">
+                            <h3 class="application-document-title">
                                 {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }}
-                            </div>
-                            <div class="text-muted u-text-xxs" >
+                            </h3>
+                            <p class="application-document-filename">
                                 {{ $document->original_name }}
-                                &nbsp;·&nbsp;
-                                Uploaded {{ $document->created_at->format('M d, Y h:i A') }}
+                            </p>
+                            <p class="application-document-meta">
+                                <span>Uploaded {{ $document->created_at->format('M d, Y · h:i A') }}</span>
                                 @if($document->size_bytes)
-                                    &nbsp;·&nbsp;
                                     @php
                                         $sizeKb = $document->size_bytes / 1024;
                                     @endphp
-                                    {{ $sizeKb >= 1024 ? number_format($sizeKb / 1024, 2) . ' MB' : number_format($sizeKb, 1) . ' KB' }}
+                                    <span>{{ $sizeKb >= 1024 ? number_format($sizeKb / 1024, 2) . ' MB' : number_format($sizeKb, 1) . ' KB' }}</span>
                                 @endif
-                            </div>
+                            </p>
                         </div>
 
-                        <a href="{{ route('registrar.applications.documents.show', [$application, $document]) }}"
-                           class="btn btn-sm btn-outline-primary">
-                            View / Download
+                        <div class="application-document-actions">
+                        <a href="{{ route('registrar.applications.documents.view', [$application, $document]) }}"
+                           class="application-document-download" target="_blank" rel="noopener noreferrer"
+                           aria-label="View {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }} (opens in a new tab)">
+                            <i data-lucide="eye" aria-hidden="true"></i> View
                         </a>
+                        <a href="{{ route('registrar.applications.documents.show', [$application, $document]) }}"
+                           class="application-document-download"
+                           aria-label="Download {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }}">
+                            <i data-lucide="download" aria-hidden="true"></i> Download file
+                        </a>
+                        </div>
                     </div>
                 @empty
                     <div class="text-center text-muted py-4 u-text-sm" >
@@ -403,13 +318,10 @@
 
                 @if(in_array($application->academic_status, ['new_student', 'transferee']))
 
-                    <div class="alert alert-warning mb-3">
-                        These physical requirements apply regardless of whether the
-                        applicant uploaded a digital copy above.
-                    </div>
+                    <p class="physical-requirements-note">Physical copies are still required, even when digital copies are uploaded.</p>
 
                     @if($application->academic_status === 'new_student')
-                        <ul class="mb-0 pl-4">
+                        <ul class="physical-requirements-list">
                             <li>Form 138 or equivalent</li>
                             <li>Certificate of Good Moral Character</li>
                             <li>PSA Birth Certificate</li>
@@ -421,7 +333,7 @@
                             <li>2 pcs Long Brown Envelope</li>
                         </ul>
                     @elseif($application->academic_status === 'transferee')
-                        <ul class="mb-0 pl-4">
+                        <ul class="physical-requirements-list">
                             <li>Certificate of Transfer Credentials</li>
                             <li>Transcript of Records</li>
                             <li>Certificate of Good Moral Character</li>
@@ -437,7 +349,7 @@
 
                 @elseif($application->academic_status === 'cross_enrollee')
 
-                    <div class="alert alert-info mb-0">
+                    <div class="physical-requirements-note">
                         Requirements for Cross-Enrollees are subject to confirmation
                         by the Registrar's Office.
                     </div>
@@ -556,7 +468,7 @@
                       action="{{ route('registrar.applications.start-review', $application) }}">
                     @csrf
                     <button type="button"
-                            class="btn btn-primary btn-block"
+                            class="application-decision application-decision--start"
                             data-dtc-confirm
                             data-dtc-confirm-title="Start review?"
                             data-dtc-confirm-message="The application for {subject} will be marked as under review and a notification will be sent."
@@ -574,15 +486,15 @@
             <div class="card-header">
                 <span class="font-weight-bold">Registrar Actions</span>
             </div>
-            <div class="card-body">
+            <div class="card-body application-review-actions">
 
                 <form id="approve-application-{{ $application->id }}"
                       method="POST"
                       action="{{ route('registrar.applications.approve', $application) }}"
-                      class="mb-2">
+                      class="application-review-approve-form">
                     @csrf
                     <button type="button"
-                            class="btn btn-success btn-block"
+                            class="application-decision application-decision--approve"
                             data-dtc-confirm
                             data-dtc-confirm-title="Approve application?"
                             data-dtc-confirm-message="The application for {subject} will be approved and an account will be created."
@@ -594,12 +506,12 @@
                     </button>
                 </form>
 
-                <button type="button" class="btn btn-warning btn-block mb-2"
+                <button type="button" class="application-decision application-decision--revise"
                         data-toggle="modal" data-target="#revisionModal">
                     Request Revision
                 </button>
 
-                <button type="button" class="btn btn-danger btn-block"
+                <button type="button" class="application-decision application-decision--reject"
                         data-toggle="modal" data-target="#rejectModal">
                     Reject
                 </button>

@@ -82,17 +82,16 @@
             @include('portal.partials.dashboard-avatar')
             <div class="dtc-welcome-copy">
                 <h4 class="dtc-welcome-title">
-                    Hello, {{ auth()->user()->name }}
+                    <span class="dtc-welcome-greeting">Welcome back,</span>{{ auth()->user()->name }}
                 </h4>
                 @if($studentProfile && ($studentProfile->graduation_year || $studentProfile->program))
                 <p class="dtc-welcome-meta">
-                    🎓
-                    @if($studentProfile->program){{ $studentProfile->program->name }}@endif
-                    @if($studentProfile->graduation_year) · Batch {{ $studentProfile->graduation_year }}@endif
+                    @if($studentProfile->program)<span>{{ $studentProfile->program->name }}</span>@endif
+                    @if($studentProfile->graduation_year)<span>Batch {{ $studentProfile->graduation_year }}</span>@endif
                 </p>
                 @endif
                 <p class="dtc-welcome-text">
-                    Welcome back! Request transcripts, diplomas, and other documents anytime.
+                    Request transcripts, diplomas, and other documents.
                 </p>
             </div>
         </div>

@@ -12,7 +12,11 @@
     </div>
 @endsection
 
+@push('css')
+<link rel="stylesheet" href="{{ asset('css/enrollment-status.css') }}">
+@endpush
 @section('content')
+<div class="enrollment-status-page">
 
 @if ($errors->any())
     <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
@@ -33,7 +37,7 @@
     </div>
 @else
     @foreach ($enrollments as $enrollment)
-    <div class="card mb-3 dtc-enrollment-status-card"
+    <div class="card mb-3 dtc-enrollment-status-card {{ $enrollment->status === 'rejected' && !$enrollment->is_paid ? 'enrollment-is-rejected' : '' }}"
          style="border-left:4px solid
             {{ $enrollment->is_paid ? 'var(--dtc-success)' :
                ($enrollment->status === 'approved' ? 'var(--dtc-accent)' :
@@ -59,11 +63,8 @@
                     <div style="font-size:15px; font-weight:700; color:var(--dtc-text);">
                         {{ $enrollment->program->name }}
                     </div>
-                    <div style="font-size:13px; color:var(--dtc-text-secondary); margin-top:2px;">
-                        Year {{ $enrollment->year_level }} — Semester {{ $enrollment->semester }} •
-                        {{ count($enrollment->subject_ids) }} subjects •
-                        Submitted {{ $enrollment->created_at->format('M d, Y') }}
-                    </div>
+                    <div class="enrollment-academic-meta"><span>Year {{ $enrollment->year_level }} &middot; Semester {{ $enrollment->semester }}</span><span>{{ count($enrollment->subject_ids ?? []) }} subjects</span></div>
+                    <p class="enrollment-submitted">Submitted {{ $enrollment->created_at->format('M d, Y') }}</p>
                 </div>
 
                 {{-- Status Badge --}}
@@ -90,7 +91,7 @@
                         </span>
                     @else
                         <span class="dtc-status-badge is-danger" style="font-size:12px; font-weight:700; padding:6px 14px;">
-                            <i data-lucide="x-circle" class="mr-1"></i> Rejected
+                            Rejected
                         </span>
                     @endif
                 </div>
@@ -98,47 +99,41 @@
                 {{-- Action --}}
                 @if($enrollment->status === 'approved' && !$enrollment->is_paid && (!$payment || $payment->status === 'rejected'))
                     <div class="col-auto dtc-enrollment-status-action">
-                        <button type="button" class="btn btn-warning btn-sm dtc-payment-btn"
-                                data-url="{{ route('portal.enrollment.payment-info', $enrollment) }}">
+                        <a class="btn btn-primary "
+                                href="{{ route('portal.enrollment.payment-info', $enrollment) }}">
                             {{ $payment && $payment->status === 'rejected' ? 'Review and Resubmit Proof' : 'Payment Details' }} →
-                        </button>
+                        </a>
                     </div>
                 @endif
             </div>
-
-            {{-- Rejection Remarks --}}
-            @if($enrollment->status === 'rejected' && $enrollment->remarks)
-            <div class="alert alert-danger" style="margin-top:14px; padding:12px 16px; font-size:13px;">
-                <i data-lucide="alert-circle" class="mr-2"></i>
-                <strong>Reason:</strong> {{ $enrollment->remarks }}
-            </div>
-            @endif
 
             @if($enrollment->status === 'pending')
                 <div class="alert alert-info dtc-enrollment-next-step" role="status">
                     <strong>Registrar review in progress.</strong> We’ll notify you when the status changes.
                 </div>
             @elseif($enrollment->status === 'rejected')
-                <div class="alert alert-warning dtc-enrollment-next-step" role="status">
-                    <strong>Next step:</strong> Review the Registrar’s reason above, then contact the Registrar or submit a corrected enrollment.
-                    <a href="{{ route('portal.enrollment.create') }}" class="alert-link ml-1">Start a corrected enrollment</a>.
+                <section class="enrollment-rejection-note" aria-label="Registrar feedback">
+                    <h2>Registrar’s feedback</h2>
+                    <p>{{ $enrollment->remarks ?: 'Contact the Registrar for guidance before submitting again.' }}</p>
+                </section>
+                <div class="enrollment-rejection-actions">
+                    <p>Review the feedback before submitting again. If you’re unsure, ask the Registrar.</p>
+                    <a href="{{ route('portal.enrollment.create') }}" class="btn btn-primary">Correct enrollment</a>
                 </div>
             @elseif($enrollment->status === 'approved' && !$enrollment->is_paid && $payment && $payment->status === 'pending')
-                <div class="alert alert-info dtc-enrollment-next-step" role="status">
-                    <strong>Payment verification in progress.</strong> Please wait before submitting another proof.
+                <div class="enrollment-verification-note" role="status">
+                    <p>The Cashier is checking your payment. No action needed.</p>
                     @if($payment->proof_of_payment)
-                        <a href="{{ route('portal.enrollment.payment.proof', $payment) }}" target="_blank" rel="noopener" class="alert-link ml-1">View submitted proof</a>.
+                        <a href="{{ route('portal.enrollment.payment.proof', $payment) }}" target="_blank" rel="noopener" class="enrollment-proof-link"><i data-lucide="file-image" aria-hidden="true"></i>View submitted proof<i data-lucide="arrow-up-right" aria-hidden="true"></i><span class="sr-only"> (opens in a new tab)</span></a>
                     @endif
                 </div>
             @elseif($enrollment->status === 'approved' && !$enrollment->is_paid && $payment && $payment->status === 'rejected')
                 <div class="alert alert-warning dtc-enrollment-next-step" role="alert">
                     <strong>Payment proof needs correction:</strong> {{ $payment->rejection_reason ?: 'The Cashier could not verify the proof. Review your details and contact the Cashier if you need help.' }}
-                    <div class="mt-1"><strong>Next step:</strong> Open Payment Details and submit corrected proof.</div>
+
                 </div>
             @elseif($enrollment->status === 'approved' && !$enrollment->is_paid)
-                <div class="alert alert-warning dtc-enrollment-next-step" role="status">
-                    <strong>Next step:</strong> Pay the approved enrollment fee at the Cashier or open Payment Details to submit GCash proof.
-                </div>
+                <p class="enrollment-payment-hint">Pay at the Cashier or submit GCash proof online.</p>
             @endif
 
             {{-- Payment Success --}}
@@ -172,6 +167,7 @@
     @endif
 @endif
 
-@include('student.enrollment._payment-modal')
 
+
+</div>
 @endsection

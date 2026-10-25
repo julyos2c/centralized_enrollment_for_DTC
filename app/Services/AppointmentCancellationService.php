@@ -106,6 +106,7 @@ class AppointmentCancellationService
         $cancelledAppointment = $result['appointment'];
         $documentRequest = $result['document_request'];
         $requestDisposition = $result['request_disposition'];
+        $result['user_message'] = $this->applicantMessage($documentRequest, $requestDisposition, $remarks);
         $destination = $cancelledAppointment->user->hasRole('alumni')
             ? route('portal.documents.index')
             : route('portal.appointments.index');
@@ -159,6 +160,10 @@ class AppointmentCancellationService
         if ($disposition === 'cancelled') {
             if ($documentRequest->is_paid || $documentRequest->payment_status === 'verified') {
                 return 'Your appointment and unstarted document request were cancelled. The verified payment and receipt were preserved; contact the Cashier and Registrar to resolve the paid request before submitting another.' . $reason;
+            }
+
+            if ($documentRequest->payment_status === 'pending_verification') {
+                return 'Your appointment and unstarted document request were cancelled. Your payment proof was preserved. Contact the Cashier before making another payment.' . $reason;
             }
 
             return 'Your appointment and unstarted document request were cancelled. You can submit a new request when ready.' . $reason;

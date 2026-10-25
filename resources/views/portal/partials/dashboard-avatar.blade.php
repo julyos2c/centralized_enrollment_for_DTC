@@ -1,5 +1,5 @@
 <div class="dtc-welcome-avatar-wrap">
-    <a href="{{ route('portal.profile.show') }}"
+    <a href="{{ route(($avatarRoutePrefix ?? 'portal.profile') . '.show') }}"
        class="dtc-welcome-avatar-link"
        aria-label="Open profile settings"
        title="Profile settings">
@@ -15,7 +15,7 @@
 </div>
 
 <form method="POST"
-      action="{{ route('portal.profile.update') }}"
+      action="{{ route(($avatarRoutePrefix ?? 'portal.profile') . '.update') }}"
       enctype="multipart/form-data"
       id="dashboardAvatarForm"
       class="d-none"

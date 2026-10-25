@@ -30,6 +30,7 @@ class EventServiceProvider extends ServiceProvider
         Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
             if (request()->hasSession()) {
                 request()->session()->put('auth_session_token', $event->user->auth_session_token);
+                request()->session()->put('last_user_activity_at', now()->timestamp);
             }
         });
     }

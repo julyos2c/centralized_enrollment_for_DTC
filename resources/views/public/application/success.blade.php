@@ -4,6 +4,7 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/application-success.css') }}">
+<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
 @stop
 
 @section('content')
@@ -130,7 +131,7 @@
                 </div>
                 <ul class="application-requirements-list">
                     @foreach($physicalRequirements as $requirement)
-                        <li><i data-lucide="check" aria-hidden="true"></i>{{ $requirement }}</li>
+                        <li><i data-lucide="circle" aria-hidden="true"></i>{{ $requirement }}</li>
                     @endforeach
                 </ul>
             </section>

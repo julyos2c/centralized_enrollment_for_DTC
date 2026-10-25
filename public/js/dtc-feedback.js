@@ -241,8 +241,14 @@
         ok.disabled = false;
         cancel.textContent = options.cancelLabel || 'Cancel';
         var icon = confirmModal.querySelector('#dtcConfirmIcon');
-        icon.setAttribute('data-lucide', options.icon || iconNames[tone]);
-        if (window.lucide) window.lucide.createIcons({ nodes: [icon] });
+        if (icon) {
+            var replacement = document.createElement('i');
+            replacement.id = 'dtcConfirmIcon';
+            replacement.setAttribute('data-lucide', options.icon || iconNames[tone]);
+            replacement.setAttribute('aria-hidden', 'true');
+            icon.replaceWith(replacement);
+            if (window.lucide) window.lucide.createIcons();
+        }
 
         confirmModal.style.display = 'block';
         confirmModal.setAttribute('aria-hidden', 'false');

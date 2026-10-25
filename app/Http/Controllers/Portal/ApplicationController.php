@@ -28,12 +28,40 @@ class ApplicationController extends Controller
         }
 
         $enrollment = $application->getEnrollmentForProgress();
+        $timeline = $application->getProgressTimeline($enrollment);
+        $nextStep = $application->getStatusNextStep($enrollment);
+        $nextActionUrl = null;
+        $nextActionLabel = null;
+        if ($application->status === 'approved') {
+            if (!$enrollment) {
+                $nextStep = 'Select your subjects and submit your official enrollment.';
+                $nextActionUrl = route('portal.enrollment.create');
+                $nextActionLabel = 'Start enrollment';
+            } else {
+                $nextActionUrl = route('portal.enrollment.index');
+                $nextActionLabel = 'View enrollment';
+                $nextStep = str_replace(['Sign in to review', 'Sign in to the student portal to access', 'Sign in to the portal or contact'], ['Review', 'View', 'Contact'], $nextStep);
+            }
+        }
+        foreach ($timeline as &$step) {
+            if ($step['key'] === 'review' && $step['status'] === 'completed') {
+                $step['description'] = 'The Registrar reviewed your application.';
+            }
+            if ($step['key'] === 'enrollment' && $application->status === 'approved') {
+                $step['description'] = !$enrollment
+                    ? 'Enrollment is ready to begin.'
+                    : str_replace('Sign in to review', 'Review', $step['description']);
+            }
+        }
+        unset($step);
 
         return view('portal.application.show', [
             'application' => $application,
             'enrollment' => $enrollment,
-            'progressTimeline' => $application->getProgressTimeline($enrollment),
-            'nextStep' => $application->getStatusNextStep($enrollment),
+            'progressTimeline' => $timeline,
+            'nextStep' => $nextStep,
+            'nextActionUrl' => $nextActionUrl,
+            'nextActionLabel' => $nextActionLabel,
         ]);
     }
 }

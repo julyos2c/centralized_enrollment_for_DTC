@@ -32,6 +32,45 @@ class IrregularEnrollmentTest extends TestCase
         return compact('y1s1a', 'y1s1b', 'y2s1a', 'y2s1b');
     }
 
+    public function test_standard_selection_rejects_subjects_from_another_year_or_semester_even_when_mode_is_omitted(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        $program = Program::factory()->create();
+        foreach ([[2, 1], [1, 2]] as [$year, $semester]) {
+            $subject = CourseSubject::factory()->for($program)->yearSem($year, $semester)->create();
+            foreach ([[], ['is_irregular' => '0']] as $mode) {
+                $this->actingAs($student)->post(route('portal.enrollment.store'), $mode + [
+                    'program_id' => $program->id, 'year_level' => 1, 'semester' => 1, 'subject_ids' => [$subject->id],
+                ])->assertSessionHasErrors('subject_ids');
+            }
+        }
+        $this->assertDatabaseMissing('enrollments', ['user_id' => $student->id]);
+    }
+
+    public function test_selection_cards_explain_subject_scope_without_equating_transferees_to_irregular_loads(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        $this->actingAs($student)->get(route('portal.enrollment.create'))->assertOk()
+            ->assertSee('Regular subjects')->assertSee('Irregular subjects')
+            ->assertSee('Ask the Registrar which subjects to take.')
+            ->assertDontSee('Irregular / Shiftee / Transferee');
+    }
+
+    public function test_transferee_can_choose_a_standard_load_without_changing_admission_classification(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        $program = Program::factory()->create();
+        \App\Models\StudentProfile::create(['user_id' => $student->id, 'student_number' => '2026-TRANSFER-1', 'admission_type' => 'transferee', 'program_id' => $program->id]);
+        $subject = CourseSubject::factory()->for($program)->yearSem(1, 1)->create();
+        $this->actingAs($student)->post(route('portal.enrollment.store'), [
+            'program_id' => $program->id, 'year_level' => 1, 'semester' => 1,
+            'is_irregular' => '0', 'subject_ids' => [$subject->id],
+        ])->assertSessionHasNoErrors()->assertRedirect(route('portal.enrollment.index'));
+        $enrollment = \App\Models\Enrollment::where('user_id', $student->id)->firstOrFail();
+        $this->assertFalse($enrollment->is_irregular);
+        $this->assertSame('transferee', $enrollment->resolveClassification());
+    }
+
     /** @test */
     public function regular_enrollment_still_works_with_single_year_semester_subjects()
     {

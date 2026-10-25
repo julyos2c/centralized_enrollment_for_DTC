@@ -39,6 +39,7 @@
             const wrap = btn.closest(".dtc-modal-input-wrap");
             const input = wrap && wrap.querySelector(".dtc-modal-input");
             if (!input) return;
+<<<<<<< HEAD
             const isPassword = input.type === "password";
             input.type = isPassword ? "text" : "password";
             const icon = btn.querySelector("i");
@@ -52,6 +53,18 @@
             btn.setAttribute(
                 "aria-label",
                 isPassword ? "Hide password" : "Show password",
+=======
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            const icon = document.createElement('i');
+            icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+            icon.setAttribute('aria-hidden', 'true');
+            btn.replaceChildren(icon);
+            if (window.lucide) lucide.createIcons();
+            btn.setAttribute('aria-pressed', String(isPassword));
+            btn.setAttribute('aria-label',
+                isPassword ? 'Hide password' : 'Show password'
+>>>>>>> 51a1edc (feat: improve portal workflows, responsive UI, and PWA support)
             );
         });
 

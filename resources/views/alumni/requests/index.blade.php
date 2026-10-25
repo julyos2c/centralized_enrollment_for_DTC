@@ -145,6 +145,8 @@
                                     @else
                                         Slot reserved. Confirmed once your document is ready and paid.
                                     @endif
+                                @elseif ($req->appointment->status === 'confirmed')
+                                    Contact the Registrar to change or cancel this pickup time.
                                 @elseif ($req->appointment->status === 'cancelled')
                                     {{ $collect && $pickupSlots->isNotEmpty() ? 'Choose a new pickup time above.' : 'Contact the Registrar for available pickup times.' }}
                                 @endif
@@ -167,52 +169,8 @@
                     </details>
 
                     <div class="dr-pay">
-                        <div class="dr-pay-line">
-                            <span class="dtc-status-badge is-{{ $payTone[$req->payment_status] ?? 'neutral' }}">{{ $payLabel[$req->payment_status] ?? ucfirst(str_replace('_', ' ', $req->payment_status)) }}</span>
-                            @unless($paid)<span class="dr-pay-method">{{ $req->payment_method === 'gcash_qr' ? 'GCash QR' : 'Cashier’s Office' }}</span>
-                            @endunless
-                        </div>
-
-                        @if ($req->payment_status === 'unpaid')
-                            <p class="dr-pay-text">Pay &#8369;{{ number_format($req->fee, 2) }} at the Cashier’s Office.</p>
-                        @elseif ($req->payment_status === 'pending_verification')
-                            <p class="dr-pay-text">
-                                The Cashier is verifying your payment.
-                                @if ($req->proof_of_payment)
-                                    <a href="{{ route('portal.documents.payment.proof', $req) }}" target="_blank" rel="noopener">View submitted proof</a>
-                                @endif
-                            </p>
-                        @elseif ($paid)
-                            <details class="dr-receipt-details"><summary>Payment details</summary><p class="dr-pay-text">Received &#8369;{{ number_format($req->amount_received, 2) }}@if ($req->receipt_no), receipt {{ $req->receipt_no }}@endif.</p></details>
-                        @elseif ($rejected)
-                            <div class="dr-remark" role="alert">
-                                <i data-lucide="circle-alert" aria-hidden="true"></i>
-                                <span>{{ $req->payment_rejection_reason ?: 'The Cashier couldn’t verify this payment. Contact the Cashier for next steps.' }}</span>
-                            </div>
-                            @if ($req->payment_method === 'gcash_qr')
-                                <details class="dr-resubmit" open>
-                                    <summary>Resubmit your payment proof</summary>
-                                    <form method="POST" action="{{ route('portal.documents.payment.submit', $req) }}" enctype="multipart/form-data" class="dr-resubmit-body">
-                                        @csrf
-                                        <p class="dr-help">Pay exactly &#8369;{{ number_format($req->fee, 2) }}, then add the new reference and receipt.</p>
-                                        <div class="dr-resubmit-qr"><img src="{{ route('portal.documents.gcash.qr') }}" alt="Official DTC GCash QR code" loading="lazy"></div>
-                                        <div class="dr-field">
-                                            <label class="dr-label" for="payment-reference-{{ $req->id }}">GCash reference number</label>
-                                            <input id="payment-reference-{{ $req->id }}" type="text" name="reference_number" class="dr-input" maxlength="100" required autocomplete="off" inputmode="numeric">
-                                        </div>
-                                        <div class="dr-field">
-                                            <span class="dr-label" id="proof-label-{{ $req->id }}">Receipt screenshot</span>
-                                            <label class="dr-file" for="payment-proof-{{ $req->id }}">
-                                                <input id="payment-proof-{{ $req->id }}" type="file" name="proof_of_payment" class="dr-visually-hidden" accept="image/jpeg,image/png,application/pdf" required aria-labelledby="proof-label-{{ $req->id }}">
-                                                <span class="dr-file-btn">Choose file</span>
-                                                <span class="dr-file-name">JPG, PNG or PDF, up to 5 MB</span>
-                                            </label>
-                                        </div>
-                                        <button type="submit" class="dr-btn dr-btn--primary">Resubmit proof</button>
-                                    </form>
-                                </details>
-                            @endif
-                        @endif
+                        <div class="dr-pay-line"><span class="dtc-status-badge is-{{ $payTone[$req->payment_status] ?? 'neutral' }}">{{ $payLabel[$req->payment_status] ?? ucfirst(str_replace('_', ' ', $req->payment_status)) }}</span></div>
+                        <div class="dr-actions"><a href="{{ route('portal.payments.document', $req) }}" class="dr-btn dr-btn--primary dr-btn--sm">Payment details</a></div>
                     </div>
                 </li>
             @endforeach

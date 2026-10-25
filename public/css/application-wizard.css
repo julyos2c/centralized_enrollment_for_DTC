@@ -348,6 +348,33 @@ body.dtc-dark main:has(.app-wizard-page) {
 .wiz-err-msg i { width: 13px; height: 13px; flex-shrink: 0; }
 
 .wiz-hint { font-size: 12px; color: #94a3b8; }
+/* Keep the familiar native calendar and keyboard date entry. */
+#birthdate {
+    min-height: 52px;
+    padding: 9px 12px 9px 15px;
+    border-radius: 12px;
+    font-weight: 500;
+    color-scheme: light;
+    box-shadow: 0 2px 4px rgba(16, 24, 40, .03);
+}
+#birthdate:focus {
+    border-color: #0f4cdb;
+    box-shadow: 0 0 0 4px rgba(15, 76, 219, .12);
+}
+#birthdate::-webkit-calendar-picker-indicator {
+    width: 20px;
+    height: 20px;
+    padding: 8px;
+    margin-left: 8px;
+    border-radius: 9px;
+    background-color: #eef3ff;
+    cursor: pointer;
+    transition: background-color .2s;
+}
+#birthdate::-webkit-calendar-picker-indicator:hover { background-color: #dce7ff; }
+body.dtc-dark #birthdate { color-scheme: dark; }
+body.dtc-dark #birthdate::-webkit-calendar-picker-indicator { background-color: #2b3c5a; }
+body.dtc-dark #birthdate:focus { box-shadow: 0 0 0 4px rgba(110, 147, 247, .16); }
 
 /* Field wrapper shake animation on failed validation */
 @keyframes wizShake {
@@ -2076,7 +2103,7 @@ body.dtc-dark .status-requirements ul { color: #cbd5e1; }
     .app-wizard-page *, .app-wizard-page *::before, .app-wizard-page *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
-/* Admission form refinements: compact floating labels and clear name controls. */
+/* Admission form refinements: clear labels and balanced field spacing. */
 .wiz-address-heading {
     margin: 8px 0 18px;
 }
@@ -2095,73 +2122,11 @@ body.dtc-dark .status-requirements ul { color: #cbd5e1; }
 }
 body.dtc-dark .wiz-address-heading h3 { color: #e2e8f0; }
 body.dtc-dark .wiz-address-heading p { color: #94a3b8; }
-.app-wizard-page .wiz-field:has(> label + .wiz-input),
-.app-wizard-page .wiz-field:has(> label + .name-group) {
-    position: relative;
-    gap: 0;
-    --wiz-floating-surface: #fff;
-}
-.app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
-.app-wizard-page .wiz-field:has(> label + .name-group) > label {
-    position: absolute;
-    z-index: 2;
-    top: 0;
-    left: 11px;
-    margin: 0;
-    padding: 0 4px;
-    background: var(--wiz-floating-surface);
-    color: #64748b;
-    font-size: 11px;
-    line-height: 1.2;
-    pointer-events: none;
-    transform: translateY(17px);
-    transform-origin: left center;
-    transition: transform .18s ease, color .18s ease;
-}
-.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input {
-    padding: 18px 15px 6px;
-}
-.app-wizard-page .wiz-field:has(> label + .wiz-input) > select.wiz-input,
-.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > input.wiz-input {
-    padding-top: 16px;
-}
-.app-wizard-page .wiz-field:has(> label + .name-group) .name-group .wiz-input {
-    padding-top: 16px;
-}
-.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
-.app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
-.app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
-.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
-.app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
-.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
-.app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label {
-    color: #0f4cdb;
-    transform: translateY(-6px) scale(.9);
-}
-.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input::placeholder,
-.app-wizard-page .wiz-field:has(> label + .name-group) .wiz-input::placeholder { color: transparent; }
-.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > .wiz-input::placeholder,
-.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .wiz-input::placeholder { color: #94a3b8; }
-.app-wizard-page .wiz-field:has(> label + .wiz-input:focus-visible) > .wiz-input,
-.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .name-group { outline-offset: 2px; }
-.app-wizard-page .wiz-field > .wiz-hint,
-.app-wizard-page .wiz-field > .wiz-err-msg { margin-top: 7px; }
 .app-wizard-page .wiz-notice > svg,
 .app-wizard-page .wiz-inline-notice > svg,
 .app-wizard-page .wiz-panel-icon > svg,
 .app-wizard-page .wiz-btn > svg,
 .app-wizard-page .app-wizard-back > svg { flex: 0 0 auto; vertical-align: middle; }
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input),
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group) { --wiz-floating-surface: #111c2e; }
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group) > label { color: #94a3b8; }
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
-body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label { color: #93c5fd; }
 @media (max-width: 600px) {
     .app-wizard-page .app-wizard-tracker {
         display: flex;
@@ -2247,50 +2212,13 @@ body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group input:not(:p
     font-weight: 700;
     line-height: 1.4;
 }
-/* Keep the shared floating-label animation within the spacious personal grids. */
-.app-wizard-page #step-2 .wiz-field { min-width: 0; margin: 0; gap: 0; }
+/* Personal controls share the same external-label layout as the other steps. */
+.app-wizard-page #step-2 .wiz-field { min-width: 0; margin: 0; gap: 8px; }
 .app-wizard-page #step-2 .wiz-input { min-width: 0; height: 48px; }
 .app-wizard-page #step-2 select.wiz-input { padding-right: 34px; }
 .wiz-personal-names,
 .wiz-personal-pair { display: grid; gap: 20px; align-items: start; }
 .wiz-personal-names { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1.12fr) minmax(0, .86fr); }
-.wiz-name-composite {
-    display: grid;
-    min-width: 0;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
-    transition: border-color .2s, box-shadow .2s;
-}
-.wiz-name-composite--first { grid-template-columns: 104px minmax(0, 1fr); }
-.wiz-name-composite--last { grid-template-columns: minmax(0, 1fr) 88px; }
-.wiz-name-composite label { white-space: nowrap; }
-.wiz-name-composite:focus-within {
-    border-color: #0f4cdb;
-    box-shadow: 0 0 0 3px rgba(15, 76, 219, .12);
-}
-.app-wizard-page #step-2 .wiz-name-composite > .wiz-field:first-child {
-    border-right: 1px solid #dbe3ee;
-}
-.app-wizard-page #step-2 .wiz-name-composite .wiz-input {
-    height: 47px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
-.app-wizard-page #step-2 .wiz-name-composite .wiz-input:focus { box-shadow: none; }
-.app-wizard-page #step-2 .wiz-name-composite:has(.wiz-invalid) {
-    border-color: #dc2626;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, .08);
-}
-.app-wizard-page #step-2 .wiz-name-composite > .wiz-field:has(.wiz-invalid) {
-    background: rgba(220, 38, 38, .045);
-}
-.app-wizard-page #step-2 .wiz-name-composite .wiz-input.wiz-invalid {
-    background: transparent;
-    box-shadow: none;
-}
 .wiz-personal-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .wiz-personal-disclosure { border: 1px solid #dbe3ee; border-radius: 8px; overflow: hidden; }
 .wiz-personal-toggle {
@@ -2323,24 +2251,8 @@ body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group input:not(:p
 @media (max-width: 599px) {
     .wiz-personal-names, .wiz-personal-pair { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .wiz-name-middle { grid-column: auto; }
-    .wiz-name-composite--first { grid-template-columns: 96px minmax(0, 1fr); }
-    .wiz-name-composite--last { grid-template-columns: minmax(0, 1fr) 82px; }
     .wiz-personal-toggle { padding: 14px 12px; }
     .wiz-personal-content { padding: 16px 12px; }
-}
-body.dtc-dark .wiz-name-composite {
-    border-color: #334155;
-    background: #111c2e;
-}
-body.dtc-dark .wiz-name-composite:focus-within {
-    border-color: #60a5fa;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, .18);
-}
-body.dtc-dark .app-wizard-page #step-2 .wiz-name-composite > .wiz-field:first-child {
-    border-right-color: #334155;
-}
-body.dtc-dark .app-wizard-page #step-2 .wiz-name-composite > .wiz-field:has(.wiz-invalid) {
-    background: rgba(220, 38, 38, .1);
 }
 .status-lookup-page .app-wizard-topbar { margin-bottom: 18px; }
 .status-page-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
@@ -2381,3 +2293,146 @@ body.dtc-dark .status-lookup-page .status-lookup-secure { background: #172554; c
 }
 .status-result-badge.is-cancelled { color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; }
 body.dtc-dark .status-result-badge.is-cancelled { color: #cbd5e1; background: #1e293b; border-color: #475569; }
+
+/* ================================================================
+   NAVBAR ALIGNMENT
+   The wizard used its own max-width (880px) plus side padding on <main>,
+   so its left/right edges never lined up with the navbar content.
+   Use the same shell width as .public-navbar-container (defined in
+   public-navbar.css) and remove the competing horizontal padding.
+   ================================================================ */
+main:has(.app-wizard-page) {
+    padding-left: 0;
+    padding-right: 0;
+}
+.app-wizard-page {
+    width: var(--dtc-public-shell-width, min(1280px, calc(100% - 160px)));
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+@media (max-width: 600px) {
+    main:has(.app-wizard-page) { padding-left: 0; padding-right: 0; }
+}
+
+/* ================================================================
+   PANEL BREATHING ROOM
+   More space between the panel (card) edge and its contents.
+   Header and body share the same horizontal inset so the icon,
+   titles and fields stay left-aligned with each other.
+   ================================================================ */
+.wiz-panel-header { padding: 24px 36px; }
+.wiz-panel-body   { padding: 32px 36px 40px; }
+
+/* Application fields: permanent labels, calm surfaces, and separate feedback. */
+.app-wizard-page .wiz-field { gap: 8px; min-width: 0; }
+.app-wizard-page .wiz-field > label { margin: 0; font-size: 13px; line-height: 1.5; font-weight: 600; }
+.app-wizard-page .wiz-input {
+    min-height: 50px;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+.app-wizard-page .wiz-input:hover:not(:disabled):not(:focus):not(.wiz-invalid) { border-color: #94a3b8; }
+.app-wizard-page .wiz-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, .1); }
+.app-wizard-page .wiz-input::placeholder { color: #94a3b8; font-weight: 400; }
+.app-wizard-page .wiz-input:disabled { opacity: .65; cursor: not-allowed; }
+.app-wizard-page .wiz-input.wiz-invalid,
+.app-wizard-page .wiz-input.is-invalid { border-color: #dc2626; background: #fff; box-shadow: none; }
+.app-wizard-page .wiz-input.wiz-invalid:focus { box-shadow: 0 0 0 4px rgba(220, 38, 38, .1); }
+.app-wizard-page .wiz-err-msg { position: static; margin: 0; padding: 0; color: #b42318; font-size: 12px; line-height: 1.5; align-items: flex-start; }
+.app-wizard-page .wiz-err-msg :is(i, svg) { width: 14px; height: 14px; margin-top: 2px; flex: 0 0 14px; }
+.app-wizard-page .wiz-personal-names { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1.12fr) minmax(0, .86fr); gap: 20px 16px; }
+.app-wizard-page .wiz-name-composite { display: grid; align-items: start; min-width: 0; gap: 0; }
+.app-wizard-page .wiz-name-composite--first { grid-template-columns: 96px minmax(0, 1fr); }
+.app-wizard-page .wiz-name-composite--last { grid-template-columns: minmax(0, 1fr) 82px; }
+.app-wizard-page .wiz-name-composite > .wiz-field:first-child > .wiz-input { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.app-wizard-page .wiz-name-composite > .wiz-field:last-child > .wiz-input { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+body.dtc-dark .app-wizard-page .wiz-input { background: #152034; border-color: #334155; color: #f1f5f9; }
+body.dtc-dark .app-wizard-page .wiz-input:focus { border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(96, 165, 250, .12); }
+body.dtc-dark .app-wizard-page .wiz-input.wiz-invalid,
+body.dtc-dark .app-wizard-page .wiz-input.is-invalid { background: #152034; border-color: #f87171; }
+body.dtc-dark .app-wizard-page .wiz-err-msg { color: #fca5a5; }
+@media (max-width: 599px) {
+    .app-wizard-page .wiz-personal-names { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .app-wizard-page .wiz-input { font-size: 16px; }
+}
+
+@media (max-width: 768px) {
+    .wiz-panel-header { padding: 20px 24px; }
+    .wiz-panel-body   { padding: 24px 24px 28px; }
+}
+@media (max-width: 600px) {
+    .wiz-panel-header { padding: 18px 18px; }
+    .wiz-panel-body   { padding: 20px 18px 24px; }
+}
+
+/* Animated labels retain separate validation feedback below each control. */
+.app-wizard-page .wiz-field:has(> label + .wiz-input),
+.app-wizard-page .wiz-field:has(> label + .name-group) {
+    position: relative;
+    gap: 0;
+    --wiz-floating-surface: #fff;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group) > label {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 11px;
+    margin: 0;
+    padding: 0 4px;
+    background: var(--wiz-floating-surface);
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.2;
+    pointer-events: none;
+    transform: translateY(17px);
+    transform-origin: left center;
+    transition: transform .18s ease, color .18s ease;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input {
+    padding: 18px 15px 6px;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > select.wiz-input,
+.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > input.wiz-input {
+    padding-top: 16px;
+}
+.app-wizard-page .wiz-field:has(> label + .name-group) .name-group .wiz-input {
+    padding-top: 16px;
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
+.app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+.app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+.app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
+.app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label {
+    color: #0f4cdb;
+    transform: translateY(-6px) scale(.9);
+}
+.app-wizard-page .wiz-field:has(> label + .wiz-input) > .wiz-input::placeholder,
+.app-wizard-page .wiz-field:has(> label + .name-group) .wiz-input::placeholder { color: transparent; }
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > .wiz-input::placeholder,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .wiz-input::placeholder { color: #94a3b8; }
+.app-wizard-page .wiz-field:has(> label + .wiz-input:focus-visible) > .wiz-input,
+.app-wizard-page .wiz-field:has(> label + .name-group:focus-within) .name-group { outline-offset: 2px; }
+.app-wizard-page .wiz-field > .wiz-hint,
+.app-wizard-page .wiz-field > .wiz-err-msg { margin-top: 7px; }
+
+body.dtc-dark .app-wizard-page .wiz-field { --wiz-floating-surface: #152034; }
+.app-wizard-page .wiz-field > .wiz-err-msg { position: static; transform: none; }
+@media (min-width: 600px) and (max-width: 899px) {
+    .app-wizard-page .wiz-personal-names { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group) > label { color: #94a3b8; }
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:focus) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + select.wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group:focus-within) > label,
+body.dtc-dark .app-wizard-page .wiz-field:has(> label + .name-group input:not(:placeholder-shown)) > label { color: #93c5fd; }

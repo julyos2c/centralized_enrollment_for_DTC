@@ -122,12 +122,9 @@ class LoginSecurityRemediationTest extends TestCase
 
     public function test_modal_error_fallbacks_do_not_insert_server_messages_into_html(): void
     {
-        $paymentModal = file_get_contents(resource_path('views/student/enrollment/_payment-modal.blade.php'));
         $receiptModal = file_get_contents(resource_path('views/cashier/payments/_receipt-modal.blade.php'));
 
-        $this->assertStringNotContainsString('xhr.responseJSON.message', $paymentModal);
         $this->assertStringNotContainsString('xhr.responseJSON.message', $receiptModal);
-        $this->assertStringContainsString('$modalContent.html(errorMarkup);', $paymentModal);
         $this->assertStringContainsString('$modalContent.html(errorMarkup);', $receiptModal);
     }
 

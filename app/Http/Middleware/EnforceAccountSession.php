@@ -26,6 +26,25 @@ class EnforceAccountSession
                 return redirect()->route('login')->withErrors(['email' => 'Please sign in again. Your account or session has changed.']);
             }
             Auth::setUser($user);
+            if ($request->hasSession()) {
+                $lastActivity = $request->session()->get('last_user_activity_at');
+                $idleLimit = max(1, (int) config('session.lifetime', 120)) * 60;
+                if (is_numeric($lastActivity) && now()->timestamp - (int) $lastActivity >= $idleLimit) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => 'Your session expired due to inactivity. Please sign in again.'], 401);
+                    }
+                    return redirect()->route('login')->withErrors(['email' => 'Your session expired due to inactivity. Please sign in again.']);
+                }
+                // Genuine authenticated HTTP requests renew inactivity. Background
+                // polling never renews this deadline, even if Laravel saves its session.
+                // Legacy sessions initialize the marker once on their first request.
+                if ($lastActivity === null || !$request->routeIs('notifications.poll', 'cashier.notifications.poll')) {
+                    $request->session()->put('last_user_activity_at', now()->timestamp);
+                }
+            }
             if ($user->must_change_password && ! $request->routeIs('account.password.*', 'logout', 'logout.confirm')) {
                 if ($request->expectsJson()) {
                     return response()->json(['message' => 'Change your temporary password before continuing.', 'redirect_url' => route('account.password.edit')], 403);

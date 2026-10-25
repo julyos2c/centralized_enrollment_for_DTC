@@ -19,6 +19,9 @@
 
 @section('content')
 <div class="cashier-payment-page">
+@if($receiptEnrollment)
+    <button type="button" hidden tabindex="-1" aria-hidden="true" class="dtc-receipt-btn" data-auto-receipt data-url="{{ route('cashier.payments.receipt', $receiptEnrollment) }}"></button>
+@endif
 
 {{-- Search + Filters (same toolbar as Applications) --}}
 @php

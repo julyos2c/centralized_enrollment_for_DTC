@@ -93,14 +93,14 @@
             @include('portal.partials.dashboard-avatar')
             <div class="dtc-welcome-copy">
                 <h4 class="dtc-welcome-title">
-                    Hello, {{ auth()->user()->name }}
+                    <span class="dtc-welcome-greeting">Hello,</span>{{ auth()->user()->name }}
                 </h4>
                 @if($application && $application->program)
                 <p class="dtc-welcome-meta">{{ $application->program->name }}</p>
                 @endif
                 <p class="dtc-welcome-text">
                     @if($application && $application->status === 'approved')
-                        Your pre-enrollment application has been approved.
+                        Your application is approved.
                         @if(!$enrollment)
                             Complete your official enrollment to continue.
                         @endif
@@ -234,12 +234,12 @@
 
             @if($nextStep['url'])
                 @if($nextStep['isPayment'] ?? false)
-                    <button type="button"
-                            class="dtc-payment-btn dtc-next-action-button"
-                            data-url="{{ $nextStep['url'] }}">
+                    <a
+                            class=" dtc-next-action-button"
+                            href="{{ $nextStep['url'] }}">
                         <span>{{ $nextStepActionLabel }}</span>
                         <i data-lucide="arrow-right" aria-hidden="true"></i>
-                    </button>
+                    </a>
                 @else
                     <a href="{{ $nextStep['url'] }}" class="dtc-next-action-button">
                         <span>{{ $nextStepActionLabel }}</span>
@@ -315,7 +315,7 @@
 
 </div>
 
-@include('student.enrollment._payment-modal')
+
 @include('portal.partials.dashboard-avatar-modals')
 
 @endsection

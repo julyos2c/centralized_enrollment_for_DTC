@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-function setup({ mobile = false, reduced = false, channelAvailable = true } = {}) {
+function setup({ mobile = false, reduced = false, channelAvailable = true, applicantPage = false } = {}) {
     class Element {
         constructor() { this.events = {}; this.children = []; this.style = {}; this.isConnected = true; }
         addEventListener(name, fn) { this.events[name] = fn; }
@@ -15,11 +15,11 @@ function setup({ mobile = false, reduced = false, channelAvailable = true } = {}
         contains(node) { return this === node || this.children.some(child => child.contains(node)); }
         querySelector(selector) { return selector === '[role="dialog"]' ? dialog : this.children.find(child => child.role === 'alert'); }
     }
-    const root = new Element(), dialog = new Element(), open = new Element(), later = new Element(), previous = new Element();
-    root.dataset = { endpoint: '/notifications/student-welcome', user: '7' }; root.hidden = true;
-    root.appendChild(dialog); dialog.appendChild(open); dialog.appendChild(later); open.href = '/portal/dashboard';
+    const root = new Element(), dialog = new Element(), open = new Element(), previous = new Element();
+    root.dataset = { endpoint: '/notifications/student-welcome', user: '7', dashboardUrl: '/portal/dashboard', redirectAfterAck: applicantPage ? '1' : '0' }; root.hidden = true;
+    root.appendChild(dialog); dialog.appendChild(open);
     const document = { hidden: false, activeElement: previous, body: new Element(), events: {}, modal: false,
-        getElementById: id => ({ studentWelcome: root, studentWelcomeOpen: open, studentWelcomeLater: later })[id],
+        getElementById: id => ({ studentWelcome: root, studentWelcomeOpen: open })[id],
         querySelector: selector => selector.startsWith('meta') ? { content: 'csrf' } : document.modal,
         createElement: () => new Element(), addEventListener(name, fn) { this.events[name] = fn; } };
     const timers = new Map(), requests = [], messages = [], storage = [], channel = {};
@@ -39,13 +39,13 @@ function setup({ mobile = false, reduced = false, channelAvailable = true } = {}
             return { ok: true, headers: { get: () => 'application/json' }, json: async () => ({ accepted }) };
         }
     });
-    return { root, open, later, previous, dialog, document, window, timers, requests, channel, messages, storage,
+    return { root, open, previous, dialog, document, window, timers, requests, channel, messages, storage,
         receive: window.dtcStudentWelcome.receive, destination: () => destination,
         fail: () => { fail = true; }, refuse: () => { accepted = false; } };
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
-test('welcome claims once, preserves the page, traps focus, and Later acknowledges without navigation', async () => {
+test('welcome claims once, traps focus on its single button, and Continue acknowledges without leaving a shared page', async () => {
     const app = setup();
     await app.receive({ id: 4 });
     assert.equal(app.root.hidden, false);
@@ -55,8 +55,10 @@ test('welcome claims once, preserves the page, traps focus, and Later acknowledg
     assert.match(app.window.dtcStudentWelcome.pollQuery(), /welcome_token=/);
     assert.equal(app.requests[0].options.headers['X-CSRF-TOKEN'], 'csrf');
     app.document.events.keydown({ key: 'Tab', preventDefault() {} });
-    assert.equal(app.document.activeElement, app.later);
-    app.later.events.click(); await flush();
+    assert.equal(app.document.activeElement, app.open);
+    app.document.events.keydown({ key: 'Tab', shiftKey: true, preventDefault() {} });
+    assert.equal(app.document.activeElement, app.open);
+    app.open.events.click(); await flush();
     assert.equal(app.requests[1].data.action, 'acknowledge');
     assert.equal(app.root.hidden, true);
     assert.equal(app.document.activeElement, app.previous);
@@ -65,22 +67,42 @@ test('welcome claims once, preserves the page, traps focus, and Later acknowledg
     assert.equal(app.requests.length, 2);
 });
 
-test('primary navigation waits for acknowledgement; failures keep the dialog and work intact', async () => {
-    const app = setup(); await app.receive({ id: 4 });
+test('applicant-only navigation waits for acknowledgement; failures keep the dialog and work intact', async () => {
+    const app = setup({ applicantPage: true }); await app.receive({ id: 4 });
     app.open.events.click({ preventDefault() {} }); await flush();
     assert.equal(app.destination(), '/portal/dashboard');
-    const failed = setup(); await failed.receive({ id: 5 }); failed.fail();
+    const failed = setup({ applicantPage: true }); await failed.receive({ id: 5 }); failed.fail();
     failed.open.events.click({ preventDefault() {} }); await flush();
     assert.equal(failed.root.hidden, false);
     assert.equal(failed.destination(), undefined);
     assert.equal(failed.dialog.children.at(-1).role, 'alert');
+    assert.equal(failed.open.disabled, false);
+});
+
+test('backdrop and Escape count as acknowledgement and only redirect applicant-only pages', async () => {
+    for (const applicantPage of [true, false]) {
+        for (const dismissal of ['backdrop', 'escape']) {
+            const app = setup({ applicantPage }); await app.receive({ id: 7 });
+            if (dismissal === 'backdrop') {
+                app.root.events.click({ target: app.dialog });
+                assert.equal(app.requests.length, 1);
+                app.root.events.click({ target: app.root });
+            } else {
+                app.document.events.keydown({ key: 'Escape', preventDefault() {}, stopImmediatePropagation() {} });
+            }
+            await flush();
+            assert.equal(app.requests.at(-1).data.action, 'acknowledge');
+            assert.equal(app.root.hidden, true);
+            assert.equal(app.destination(), applicantPage ? '/portal/dashboard' : undefined);
+        }
+    }
 });
 
 test('confetti respects piece counts, cleanup, and reduced motion', async () => {
     for (const [mobile, count] of [[false, 28], [true, 16]]) {
         const app = setup({ mobile }); await app.receive({ id: 4 });
         assert.equal(app.document.body.children.find(node => node.className === 'student-welcome-confetti').children.length, count);
-        [...app.timers.values()].find(timer => timer.ms === 3500).fn();
+        [...app.timers.values()].find(timer => timer.ms === 6000).fn();
         assert.equal(app.document.body.children.filter(node => node.className === 'student-welcome-confetti').length, 0);
     }
     const app = setup({ reduced: true }); await app.receive({ id: 4 });

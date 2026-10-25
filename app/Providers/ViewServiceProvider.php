@@ -174,6 +174,17 @@ class ViewServiceProvider extends ServiceProvider
                 ];
             }
 
+            $workCounts = app(\App\Services\SidebarWorkCounts::class)->forUser($user);
+            foreach ($sidebar as &$menuItem) {
+                foreach ($workCounts as $route => $count) {
+                    if (($menuItem['url'] ?? null) === route($route)) {
+                        $menuItem['work_key'] = $route;
+                        $menuItem['work_count'] = $count;
+                        $menuItem['work_description'] = \App\Services\SidebarWorkCounts::LABELS[$route];
+                    }
+                }
+            }
+            unset($menuItem);
             config(['adminlte.menu' => $sidebar]);
         });
     }

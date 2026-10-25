@@ -332,7 +332,7 @@ class ApplicationController extends Controller
             ],
 
             'ack_enrollment' => ['required', 'accepted'],
-            'education_level' => ['nullable', 'string', Rule::in(['Junior High School', 'Senior High School', 'College', 'Other'])],
+            'education_level' => ['nullable', 'string', Rule::in(\App\Support\ApplicationEducation::levelsFor(is_string($request->input('academic_status')) ? $request->input('academic_status') : null))],
             'education_status' => ['nullable', 'string', Rule::in(['Graduated', 'Currently attending', 'Not completed'])],
             'most_recent_school' => ['nullable', 'string', 'max:255'],
             'school_year_completed' => ['nullable', 'string', 'max:30'],
@@ -409,6 +409,7 @@ class ApplicationController extends Controller
         }
 
         $validated = $request->validate($rules, [
+            'education_level.in' => 'Choose an education level that matches your applicant type.',
             'birthdate.before_or_equal' => 'Enter a date of birth that is today or earlier.',
             'region_code.in' => 'Select a valid region from the list.',
             'province_code.in' => 'Select a province that belongs to the chosen region.',

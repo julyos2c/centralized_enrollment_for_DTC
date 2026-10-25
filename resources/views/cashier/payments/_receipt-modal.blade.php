@@ -19,6 +19,14 @@
 (function () {
     var $modal        = $('#receiptModal');
     var $modalContent = $('#receiptModalContent');
+    $(function () {
+        var $linkedReceipt = $('.dtc-receipt-btn[data-auto-receipt]').first();
+        if (!$linkedReceipt.length) return;
+        $linkedReceipt.trigger('click');
+        var currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('receipt');
+        window.history.replaceState(null, '', currentUrl.href);
+    });
 
     var loadingMarkup = '\
         <div class="dtc-review-loading">\

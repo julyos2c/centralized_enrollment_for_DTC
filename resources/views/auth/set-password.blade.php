@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @include('partials.pwa-head')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Set Your Password — DTC Nexus</title>
@@ -8,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth-pages.css') }}">
 </head>
-<body>
+<body class="auth-activation-page">
 
 <div class="auth-card">
 
@@ -34,9 +35,8 @@
     <div class="auth-card-body">
 
         @if (session('success'))
-            <div class="auth-alert auth-alert--success">
-                <i data-lucide="check-circle"></i>
-                {{ session('success') }}
+            <div class="auth-alert auth-alert--success" role="status">
+                <div>{{ session('success') }}<p class="auth-message-help">No email? Check your spam folder or try again later.</p></div>
             </div>
         @endif
 
@@ -50,14 +50,10 @@
         @if ($linkExpired)
 
             {{-- ── Expired link state ───────────────────── --}}
-            <div class="auth-icon-badge auth-icon-badge--warning" style="margin-bottom:14px;">
-                <i data-lucide="clock"></i>
-            </div>
 
-            <h1 class="auth-card-title">Activation Link Expired</h1>
+            <h1 class="auth-card-title">Activation link unavailable</h1>
             <p class="auth-card-subtitle">
-                This activation link is no longer valid or has already been used.
-                Request a new one below and we'll send it to your email.
+                Request a new link to continue.
             </p>
 
             <div class="auth-field">
@@ -75,28 +71,23 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('password.activation.resend') }}">
+            <form method="POST" action="{{ route('password.activation.resend') }}" data-link-request>
                 @csrf
                 <input type="hidden" name="email" value="{{ $email }}">
                 <button type="submit" class="auth-btn">
-                    <i data-lucide="send" aria-hidden="true"></i>
-                    Request New Activation Link
+                    Send new link
                 </button>
             </form>
 
         @else
 
             {{-- ── Valid link — password setup ─────────── --}}
-            <div class="auth-icon-badge">
-                <i data-lucide="lock"></i>
-            </div>
 
-            <h1 class="auth-card-title">Set Your Password</h1>
+            <h1 class="auth-card-title">Set password</h1>
             <p class="auth-card-subtitle">
-                Your application has been approved. Create a password for
-                <strong style="color:#1E293B;">{{ $email }}</strong>
-                to activate your account.
+                Create a password to activate your account.
             </p>
+            <p class="auth-account-email">{{ $email }}</p>
 
             <form method="POST" action="{{ route('password.setup.store') }}">
                 @csrf
@@ -145,8 +136,7 @@
                 </div>
 
                 <button type="submit" class="auth-btn">
-                    <i data-lucide="check" aria-hidden="true"></i>
-                    Set Password &amp; Continue
+                    Set password
                 </button>
             </form>
 
@@ -164,11 +154,15 @@
 <script>
 function togglePw(id, btn) {
     const input = document.getElementById(id);
-    const icon  = btn.querySelector('i');
+    if (!input || !btn) return;
     const hidden = input.type === 'password';
     input.type = hidden ? 'text' : 'password';
-    icon.classList.toggle('fa-eye', !hidden);
-    icon.classList.toggle('fa-eye-slash', hidden);
+    const icon = document.createElement('i');
+    icon.setAttribute('data-lucide', hidden ? 'eye-off' : 'eye');
+    icon.setAttribute('aria-hidden', 'true');
+    btn.replaceChildren(icon);
+    if (window.lucide) lucide.createIcons();
+    btn.setAttribute('aria-pressed', String(hidden));
     btn.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
 }
 </script>
@@ -178,5 +172,7 @@ function togglePw(id, btn) {
             if (window.lucide) lucide.createIcons();
         });
     </script>
+@include('components.dtc.password-guidance')
+<script src="{{ asset('js/auth-link-request.js') }}" defer></script>
 </body>
 </html>

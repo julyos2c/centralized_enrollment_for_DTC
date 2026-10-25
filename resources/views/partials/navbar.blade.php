@@ -7,7 +7,7 @@
     $unread = \App\Models\UserNotification::where('user_id', auth()->id())
         ->whereNull('read_at')->count();
     $recentNotifs = \App\Models\UserNotification::where('user_id', auth()->id())
-        ->latest()->take(5)->get();
+        ->latest()->orderByDesc('id')->take(5)->get();
     $lastNotificationId = (int) ($recentNotifs->max('id') ?? 0);
 @endphp
 <li class="nav-item navbar-search-item">
@@ -102,7 +102,7 @@
         <i data-lucide="bell" class="navbar-icon" aria-hidden="true"></i>
         @if($unread > 0)
             <span id="notif-badge" class="navbar-notification-badge">
-                {{ $unread }}
+                {{ $unread > 99 ? '99+' : $unread }}
             </span>
         @endif
     </a>
@@ -124,33 +124,20 @@
                     @endif
                 </div>
             </div>
-            @if($unread > 0)
-            <a href="{{ route('notifications.index') }}" class="notify-mark-read" id="notif-mark-read">
-                Mark all read
-            </a>
-            @else
-            <a href="{{ route('notifications.index') }}" class="notify-mark-read" id="notif-mark-read" hidden>
-                Mark all read
-            </a>
-            @endif
+            <button type="button" class="notify-mark-read" id="notif-mark-read" data-notice-all data-url="{{ route('notifications.markAllRead') }}" @if(!$unread) hidden @endif>Mark all as read</button>
         </div>
 
         {{-- Notification List --}}
-        <div class="notify-list" id="notify-list" data-last-notification-id="{{ $lastNotificationId }}">
+        <div class="notify-list" id="notify-list" data-last-notification-id="{{ $lastNotificationId }}" data-history-url="{{ route('notifications.index') }}">
             @forelse($recentNotifs as $notif)
-            <a href="{{ route('notifications.read', $notif) }}"
-               class="notif-item {{ $notif->isRead() ? 'is-read' : 'is-unread' }}"
-               data-notification-id="{{ $notif->id }}">
+            <div class="notif-item {{ $notif->isRead() ? 'is-read' : 'is-unread' }}"
+               data-notification-id="{{ $notif->id }}" data-read="{{ $notif->isRead() ? '1' : '0' }}">
 
                 {{-- Icon --}}
-                <div class="notif-icon notif-icon-{{ $notif->type }}">
-                    <i data-lucide="{{ $notif->type === 'success' ? 'check-circle' :
-                                    ($notif->type === 'danger'   ? 'x-circle' :
-                                    ($notif->type === 'warning'  ? 'alert-circle' : 'info')) }}"></i>
-                </div>
+                <div class="notif-icon notif-icon-{{ in_array($notif->type, ['success', 'danger', 'warning'], true) ? $notif->type : 'info' }}"><i data-lucide="{{ \App\Models\UserNotification::CATEGORIES[$notif->category]['icon'] }}" aria-hidden="true"></i></div>
 
                 {{-- Content --}}
-                <div class="notif-body">
+                <a class="notif-body" href="{{ route('notifications.open', $notif) }}">
                     <div class="notif-row">
                         <div class="notif-title {{ $notif->isRead() ? 'is-read' : 'is-unread' }}">
                             {{ $notif->title }}
@@ -160,14 +147,15 @@
                         @endif
                     </div>
                     <div class="notif-message">
-                        {{ Str::limit($notif->message, 60) }}
+                        {{ $notif->message }}
                     </div>
                     <div class="notif-time">
                         <i data-lucide="clock" aria-hidden="true"></i>
                         {{ $notif->created_at->diffForHumans() }}
                     </div>
-                </div>
-            </a>
+                </a>
+                <button type="button" class="notice-dropdown-state" data-notice-state data-url="{{ route('notifications.state', $notif) }}" data-read="{{ $notif->isRead() ? '1' : '0' }}" aria-label="{{ $notif->isRead() ? 'Mark unread' : 'Mark as read' }}: {{ $notif->title }}" title="{{ $notif->isRead() ? 'Mark unread' : 'Mark as read' }}"><i data-lucide="{{ $notif->isRead() ? 'mail' : 'check' }}" aria-hidden="true"></i></button>
+            </div>
             @empty
             <div class="notify-empty">
                 <i data-lucide="bell-off" class="notify-empty-icon" aria-hidden="true"></i>
@@ -182,7 +170,7 @@
         </div>
 
         {{-- Footer --}}
-        <div class="notify-footer" id="notify-footer" @if($recentNotifs->isEmpty()) hidden @endif>
+        <div class="notify-footer" id="notify-footer">
             <a href="{{ route('notifications.index') }}" class="notify-view-all">
                 View all notifications →
             </a>
@@ -190,12 +178,18 @@
     </div>
 </li>
 
+<script src="{{ asset('js/notification-toasts.js') }}" defer></script>
 @include('components.dtc.student-welcome')
 <script src="{{ asset('js/student-welcome.js') }}" defer></script>
-<script src="{{ asset('js/cashier-notification-polling.js') }}" data-endpoint="{{ route(auth()->user()->hasRole('cashier') ? 'cashier.notifications.poll' : 'notifications.poll') }}" defer></script>
+<script src="{{ asset('js/cashier-notification-polling.js') }}" data-request-timeout="10000" data-endpoint="{{ route(auth()->user()->hasRole('cashier') ? 'cashier.notifications.poll' : 'notifications.poll') }}" defer></script>
 
 @endsection
 
 @push('css')
+<link rel="stylesheet" href="{{ asset('css/notifications.css') }}">
 <link rel="stylesheet" href="{{ asset('css/student-welcome.css') }}">
+@endpush
+@push('js')
+<script src="{{ asset('js/notifications.js') }}" defer></script>
+@include('components.dtc.password-guidance')
 @endpush

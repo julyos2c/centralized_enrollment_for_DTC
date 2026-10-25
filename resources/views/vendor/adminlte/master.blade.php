@@ -2,6 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    @include('partials.pwa-head')
 
     {{-- Base Meta Tags --}}
     <meta charset="utf-8">
@@ -101,7 +102,9 @@
     <script>
         (function () {
             try {
-                if (localStorage.getItem('dtc-ems-theme') === 'dark') {
+                var saved;
+                try { saved = localStorage.getItem('dtc-ems-theme'); } catch (e) {}
+                if (saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dtc-dark-preload');
                     document.documentElement.classList.add('dtc-dark');
                 }

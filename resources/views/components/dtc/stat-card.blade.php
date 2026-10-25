@@ -22,12 +22,14 @@
     'href' => null,
     'linkText' => 'View All',
     'badge' => null,
+    'featured' => false,
+    'metrics' => [],
 ])
 
-<div class="dtc-stat-card dtc-stat-{{ $color }}">
+<div class="dtc-stat-card dtc-stat-{{ $color }} {{ $featured ? 'dtc-stat-featured' : '' }}">
     <div class="dtc-stat-card-top">
         <div class="dtc-stat-icon">
-            <i data-lucide="{{ $icon }}"></i>
+            <i data-lucide="{{ $icon }}" aria-hidden="true"></i>
             @if(!is_null($badge) && $badge > 0)
                 <span class="dtc-stat-icon-badge">{{ $badge }}</span>
             @endif
@@ -44,5 +46,12 @@
 
     @if($href)
         <a href="{{ $href }}" class="dtc-stat-link">{{ $linkText }} →</a>
+    @endif
+    @if($metrics)
+        <dl class="dtc-stat-metrics">
+            @foreach($metrics as $metricLabel => $metricValue)
+                <div><dt>{{ $metricLabel }}</dt><dd>{{ $metricValue }}</dd></div>
+            @endforeach
+        </dl>
     @endif
 </div>

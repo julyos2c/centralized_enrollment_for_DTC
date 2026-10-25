@@ -25,7 +25,7 @@ class PaymentController extends Controller
         $query = Enrollment::where('status', 'approved')
             ->with(['user', 'program', 'payment']);
 
-        $request->validate(['search' => ['nullable', 'string', 'max:100']]);
+        $request->validate(['search' => ['nullable', 'string', 'max:100'], 'receipt' => ['nullable', 'integer', 'min:1']]);
         if ($request->filled('search')) {
             $search = trim($request->query('search'));
             $query->where(function ($query) use ($search) {
@@ -46,9 +46,12 @@ class PaymentController extends Controller
             default         => $query,
         };
 
-        $enrollments = $query->latest()->paginate(\App\Support\TablePagination::perPage(20))->withQueryString();
+        $enrollments = $query->latest()->paginate(\App\Support\TablePagination::perPage(20))->appends($request->except('receipt'));
+        $receiptEnrollment = $request->filled('receipt')
+            ? Enrollment::whereKey($request->integer('receipt'))->whereIn('id', Payment::select('enrollment_id')->where('status', 'verified'))->first()
+            : null;
 
-        return view('cashier.payments.index', compact('enrollments', 'filter'));
+        return view('cashier.payments.index', compact('enrollments', 'filter', 'receiptEnrollment'));
     }
 
     // ── show() ────────────────────────────────────────────────────
@@ -144,7 +147,7 @@ class PaymentController extends Controller
             'View payment record'
         );
         foreach (\App\Models\User::role('admin')->get() as $admin) {
-            NotificationService::send($admin, 'Payment Recorded', "Walk-in payment recorded for {$enrollment->user->name}.", 'info', route('cashier.payments.receipt', $enrollment));
+            NotificationService::send($admin, 'Payment Recorded', "Walk-in payment recorded for {$enrollment->user->name}.", 'info', route('cashier.payments.index', ['receipt' => $enrollment->id]));
         }
         foreach (\App\Models\User::role('registrar')->get() as $reg) {
             NotificationService::send($reg, 'Payment Recorded', "Walk-in payment recorded for {$enrollment->user->name}.", 'info', route('registrar.enrollments.show', $enrollment));
@@ -316,7 +319,7 @@ class PaymentController extends Controller
             return view('cashier.payments._receipt-content', compact('enrollment', 'payment'));
         }
 
-        return view('cashier.payments.receipt', compact('enrollment', 'payment'));
+        return redirect()->route('cashier.payments.index', ['receipt' => $enrollment->id]);
     }
 
     // ── createStudentProfileIfMissing ─────────────────────────────

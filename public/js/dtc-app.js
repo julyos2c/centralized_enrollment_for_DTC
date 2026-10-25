@@ -2,7 +2,10 @@
 const DTC_THEME_KEY = 'dtc-ems-theme';
 
 function getDtcTheme() {
-    return localStorage.getItem(DTC_THEME_KEY) || 'light';
+    let saved;
+    try { saved = localStorage.getItem(DTC_THEME_KEY); } catch (error) {}
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function applyDtcTheme(theme) {
@@ -21,8 +24,12 @@ function applyDtcTheme(theme) {
     }
 
     if (icon) {
-        icon.setAttribute('data-lucide', enabled ? 'sun' : 'moon');
-        if (window.lucide) lucide.createIcons({ nodes: [icon] });
+        const replacement = document.createElement('i');
+        replacement.id = 'darkModeIcon';
+        replacement.setAttribute('data-lucide', enabled ? 'sun' : 'moon');
+        replacement.setAttribute('aria-hidden', 'true');
+        icon.replaceWith(replacement);
+        if (window.lucide) lucide.createIcons();
     }
 
     // Let any page-specific code (e.g. Chart.js graphs) know the theme
@@ -32,8 +39,23 @@ function applyDtcTheme(theme) {
 
 function toggleDtcTheme() {
     const nextTheme = getDtcTheme() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(DTC_THEME_KEY, nextTheme);
+    try { localStorage.setItem(DTC_THEME_KEY, nextTheme); } catch (error) {}
     applyDtcTheme(nextTheme);
+}
+
+function initDtcSystemTheme() {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    function followSystem() {
+        let saved;
+        try { saved = localStorage.getItem(DTC_THEME_KEY); } catch (error) {}
+        if (saved !== 'dark' && saved !== 'light') applyDtcTheme(getDtcTheme());
+    }
+    if (systemTheme.addEventListener) systemTheme.addEventListener('change', followSystem);
+    else if (systemTheme.addListener) systemTheme.addListener(followSystem);
+    // Keep open tabs consistent when the saved choice changes or is removed.
+    window.addEventListener('storage', function (event) {
+        if (event.key === DTC_THEME_KEY || event.key === null) applyDtcTheme(getDtcTheme());
+    });
 }
 
 // ── Chart.js theming helper ─────────────────────────────────────────────
@@ -86,6 +108,7 @@ document.addEventListener('dtc:themechange', function () {
 
 // Apply the saved theme as early as possible.
 applyDtcTheme(getDtcTheme());
+initDtcSystemTheme();
 
 document.addEventListener('click', function (event) {
     const toggle = event.target.closest('#darkModeToggle');

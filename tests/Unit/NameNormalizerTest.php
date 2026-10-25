@@ -8,6 +8,24 @@ use PHPUnit\Framework\TestCase;
 
 class NameNormalizerTest extends TestCase
 {
+    public function test_affixes_add_periods_only_for_known_abbreviations(): void
+    {
+        foreach ([['Mr', 'honorific', 'Mr.'], ['mrs.', 'honorific', 'Mrs.'],
+            ['Dr Emerita', 'honorific', 'Dr. Emerita'], ['Professor', 'honorific', 'Professor'],
+            ['Miss', 'honorific', 'Miss'], ['jr', 'suffix', 'Jr.'], ['Sr.', 'suffix', 'Sr.'],
+            ['iii', 'suffix', 'III'], ['', 'suffix', ''], [null, 'honorific', null]] as [$value, $field, $expected]) {
+            $this->assertSame($expected, NameNormalizer::normalizeAffix($value, $field));
+            $this->assertSame($expected, NameNormalizer::normalizeAffix($expected, $field));
+        }
+        $application = new Application(['honorific' => 'Mr', 'suffix' => 'jr']);
+        $this->assertSame('Mr.', $application->getAttributes()['honorific']);
+        $this->assertSame('Jr.', $application->getAttributes()['suffix']);
+        $application->setRawAttributes(['honorific' => 'Dr', 'suffix' => 'III']);
+        $this->assertSame('Dr.', $application->honorific);
+        $this->assertSame('Dr', $application->getAttributes()['honorific']);
+        $this->assertSame('III', $application->suffix);
+    }
+
     /** @dataProvider nameExamples */
     public function test_it_normalizes_case_spacing_and_compound_names(string $input, string $expected): void
     {
