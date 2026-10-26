@@ -29,6 +29,7 @@ class AuthController extends Controller
         $emailLimiterKey = 'login:email:' . hash('sha256', $email);
         $ipLimit = (int) config('services.login_rate_limit.per_ip_attempts', 300);
         $identityLimit = \App\Support\SecuritySettings::loginAttempts();
+        $emailLimit = (int) config('services.login_rate_limit.per_email_attempts', 20);
         $decaySeconds = (int) config('services.login_rate_limit.decay_seconds', 300);
         $emailDecaySeconds = (int) config('services.login_rate_limit.per_email_decay_seconds', 900);
 
@@ -40,7 +41,7 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
-        // Count attempts before CAPTCHA so provider failures cannot disable the limit.
+        // Count every attempt up front; bot protection itself is handled at the Cloudflare edge.
         RateLimiter::hit($ipLimiterKey, $decaySeconds);
         RateLimiter::hit($identityLimiterKey, $decaySeconds);
         RateLimiter::hit($emailLimiterKey, $emailDecaySeconds);
@@ -77,11 +78,13 @@ class AuthController extends Controller
         return redirect()->intended($this->redirectPath($user));
     }
 
-    private function captchaRetryResponse()
+    public function confirmLogout()
     {
-        return back()
-            ->withErrors(['captcha' => 'CAPTCHA verification is temporarily unavailable. Please try again shortly.'])
-            ->onlyInput('email');
+        if (! Auth::check()) {
+            return redirect()->route('landing');
+        }
+
+        return response()->view('auth.confirm-logout')->header('Cache-Control', 'no-store, private');
     }
 
     public function logout(Request $request)

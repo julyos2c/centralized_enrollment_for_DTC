@@ -6,6 +6,7 @@ use App\Http\Middleware\TrustHosts;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\SeedsRoles;
 use Tests\TestCase;
