@@ -30,14 +30,14 @@
     {{-- Bootstrap 5 --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ asset('css/application.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/public-navbar.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/application.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/public-navbar.css') }}">
     {{-- DTC Public Theme --}}
-    <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/signin-modal.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/welcome.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/signin-modal.css') }}">
     {{-- DTC Theme (dark mode support) --}}
-    <link rel="stylesheet" href="{{ asset('css/dtc-theme.css') }}">
-    <script src="{{ asset('js/signin-modal.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-theme.css') }}">
+    <script src="{{ asset_v('js/signin-modal.js') }}" defer></script>
     {{-- Page-specific styles --}}
     @yield('styles')
 
@@ -79,9 +79,9 @@
     </footer>
 
 
-    <script src="{{ asset('js/session-feedback.js') }}" defer></script>
-    <script src="{{ asset('js/dtc-app.js') }}" defer></script>
-    <script src="{{ asset('js/dtc-feedback.js') }}" defer></script>
+    <script src="{{ asset_v('js/session-feedback.js') }}" defer></script>
+    <script src="{{ asset_v('js/dtc-app.js') }}" defer></script>
+    <script src="{{ asset_v('js/dtc-feedback.js') }}" defer></script>
 
     {{-- DTC toast container (flash messages → toasts) --}}
     <x-dtc.toast />

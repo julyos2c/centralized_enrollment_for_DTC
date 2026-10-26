@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><div><h4 class="mb-0 font-weight-bold u-text">Office Schedule & Closures</h4><p class="mb-0 u-text-secondary-sm">Configure the Registrar's operating hours and confirmed office closures.</p></div><a href="{{ route('registrar.appointments.slots') }}" class="btn btn-secondary btn-sm">Manage Slots</a></div>
 @endsection
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace">

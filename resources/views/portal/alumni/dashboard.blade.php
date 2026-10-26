@@ -210,7 +210,7 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/profile.css') }}">
 <style>
     .dtc-recent-head { display: flex !important; align-items: center; justify-content: space-between !important; gap: 14px; padding-left: 20px !important; padding-right: 20px !important; }
     .dtc-recent-all { margin-left: auto; text-align: right; }
@@ -232,5 +232,5 @@
 
 @section('js')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-<script src="{{ asset('js/dashboard-avatar.js') }}"></script>
+<script src="{{ asset_v('js/dashboard-avatar.js') }}"></script>
 @endsection

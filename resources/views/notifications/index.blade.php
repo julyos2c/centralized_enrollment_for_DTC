@@ -77,4 +77,4 @@
     </div>
 </section>
 @endsection
-@push('css')<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">@endpush
+@push('css')<link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">@endpush

@@ -13,8 +13,8 @@
 @endsection
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/cashier-payment-pages.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/cashier-payment-pages.css') }}">
 @endpush
 
 @section('content')

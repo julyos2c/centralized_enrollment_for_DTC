@@ -178,18 +178,18 @@
     </div>
 </li>
 
-<script src="{{ asset('js/notification-toasts.js') }}" defer></script>
+<script src="{{ asset_v('js/notification-toasts.js') }}" defer></script>
 @include('components.dtc.student-welcome')
-<script src="{{ asset('js/student-welcome.js') }}" defer></script>
-<script src="{{ asset('js/cashier-notification-polling.js') }}" data-request-timeout="10000" data-endpoint="{{ route(auth()->user()->hasRole('cashier') ? 'cashier.notifications.poll' : 'notifications.poll') }}" defer></script>
+<script src="{{ asset_v('js/student-welcome.js') }}" defer></script>
+<script src="{{ asset_v('js/cashier-notification-polling.js') }}" data-request-timeout="10000" data-endpoint="{{ route(auth()->user()->hasRole('cashier') ? 'cashier.notifications.poll' : 'notifications.poll') }}" defer></script>
 
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/notifications.css') }}">
-<link rel="stylesheet" href="{{ asset('css/student-welcome.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/notifications.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/student-welcome.css') }}">
 @endpush
 @push('js')
-<script src="{{ asset('js/notifications.js') }}" defer></script>
+<script src="{{ asset_v('js/notifications.js') }}" defer></script>
 @include('components.dtc.password-guidance')
 @endpush

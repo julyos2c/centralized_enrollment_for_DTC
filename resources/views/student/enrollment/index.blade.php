@@ -13,7 +13,7 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/enrollment-status.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/enrollment-status.css') }}">
 @endpush
 @section('content')
 <div class="enrollment-status-page">

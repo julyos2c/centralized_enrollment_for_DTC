@@ -164,5 +164,5 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/admin-records.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/admin-records.css') }}">
 @endpush

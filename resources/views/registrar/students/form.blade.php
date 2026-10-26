@@ -7,8 +7,8 @@
 </div>
 @endsection
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
-<link rel="stylesheet" href="{{ asset('css/academic-record-form.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/academic-record-form.css') }}">
 @endpush
 @section('content')
 @php
@@ -82,4 +82,4 @@
 </form>
 </div>
 @endsection
-@push('js')<script src="{{ asset('js/academic-record-form.js') }}" defer></script>@endpush
+@push('js')<script src="{{ asset_v('js/academic-record-form.js') }}" defer></script>@endpush

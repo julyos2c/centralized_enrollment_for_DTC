@@ -3,7 +3,7 @@
 @section('title', 'Import '.$batch->reference)
 @section('content_header')<div class="d-flex justify-content-between flex-wrap"><div><h4 class="font-weight-bold mb-1">Import {{ $batch->reference }}</h4><p class="text-muted">{{ ucfirst($batch->import_type) }} · {{ $batch->created_at->format('M j, Y g:i A') }}</p></div><a class="btn btn-outline-secondary align-self-start" href="{{ route('registrar.imports.index') }}">Import Center</a></div>@endsection
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace">

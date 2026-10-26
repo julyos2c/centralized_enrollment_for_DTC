@@ -39,7 +39,7 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/portal-application.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/portal-application.css') }}">
 @endpush
 @section('content')
 

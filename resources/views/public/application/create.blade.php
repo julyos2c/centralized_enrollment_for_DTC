@@ -3,8 +3,8 @@
 @section('title', 'Online Admission Application')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/application-wizard.css') }}">
-<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/application-wizard.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/physical-requirements.css') }}">
 @stop
 
 
@@ -851,8 +851,8 @@
 @section('scripts')
 <script>window.dtcApplicationTitleCaseFields = @json($titleCaseFields);</script>
 <script>window.dtcApplicationEducationLevels = @json(\App\Support\ApplicationEducation::LEVELS);</script>
-<script src="{{ asset('js/dtc-name-normalizer.js') }}" defer></script>
-<script src="{{ asset('js/application-wizard.js') }}" defer></script>
+<script src="{{ asset_v('js/dtc-name-normalizer.js') }}" defer></script>
+<script src="{{ asset_v('js/application-wizard.js') }}" defer></script>
 @php
     $firstErrorKey = $errors->keys()[0] ?? '';
     $errorStep = match (true) {

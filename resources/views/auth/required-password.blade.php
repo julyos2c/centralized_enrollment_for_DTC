@@ -1,7 +1,7 @@
 @extends('layouts.public')
 @section('title', 'Change temporary password')
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/required-password.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/required-password.css') }}">
 @endsection
 @section('content')
 <div class="required-password-page">

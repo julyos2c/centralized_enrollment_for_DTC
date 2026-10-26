@@ -10,7 +10,7 @@
 @stop
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/payment-history.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/payment-history.css') }}">
 @endpush
 
 @section('content')

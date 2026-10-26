@@ -2,7 +2,7 @@
 @include('partials.navbar')
 @section('title', 'Enrollment payment')
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/portal-payments.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/portal-payments.css') }}">
 @endpush
 @section('content')
 <main class="portal-payment-page">

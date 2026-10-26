@@ -21,11 +21,11 @@
 @endsection
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
 @endpush
 
 @push('js')
-    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+    <script src="{{ asset_v('js/dtc-filters.js') }}"></script>
 @endpush
 
 @section('content')
@@ -546,7 +546,7 @@
 {{-- Styles live in public/css/admin-users.css (loaded via plugins.adminUsers) --}}
 
 @section('js')
-<script src="{{ asset('js/admin-user-modal.js') }}" defer></script>
+<script src="{{ asset_v('js/admin-user-modal.js') }}" defer></script>
 <script>
 // =============================================================================
 // USERS INDEX - JavaScript

@@ -8,12 +8,12 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/public-navbar.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/signin-modal.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/welcome.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/public-navbar.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/signin-modal.css') }}">
     {{-- DTC Theme (dark mode support) --}}
-    <link rel="stylesheet" href="{{ asset('css/dtc-theme.css') }}">
-    <script src="{{ asset('js/signin-modal.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-theme.css') }}">
+    <script src="{{ asset_v('js/signin-modal.js') }}" defer></script>
 
     {{-- DTC Nexus theme preload: prevents light-mode flash on saved dark theme --}}
     <script>
@@ -682,8 +682,8 @@
 
 @include('partials.signin-modal')
 
-<script src="{{ asset('js/dtc-app.js') }}" defer></script>
-<script src="{{ asset('js/welcome-interactive.js') }}" defer></script>
+<script src="{{ asset_v('js/dtc-app.js') }}" defer></script>
+<script src="{{ asset_v('js/welcome-interactive.js') }}" defer></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

@@ -408,14 +408,14 @@
 @endsection
 
 @section('css')
-    <link rel="stylesheet" href="{{ asset('css/appointments-shared.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/appointments-index.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/document-requests.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/alumni-request-history.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/appointments-shared.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/appointments-index.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/document-requests.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/document-request-flow.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/alumni-request-history.css') }}">
 @endsection
 
 @section('js')
-    <script src="{{ asset('js/appointments-index.js') }}"></script>
-    <script src="{{ asset('js/document-request.js') }}" defer></script>
+    <script src="{{ asset_v('js/appointments-index.js') }}"></script>
+    <script src="{{ asset_v('js/document-request.js') }}" defer></script>
 @endsection

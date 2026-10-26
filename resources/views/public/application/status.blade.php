@@ -3,7 +3,7 @@
 @section('title', 'Check Application Status')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/application-wizard.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/application-wizard.css') }}">
 @stop
 
 @section('content')

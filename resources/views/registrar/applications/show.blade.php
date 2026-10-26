@@ -45,9 +45,9 @@
 
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
-<link rel="stylesheet" href="{{ asset('css/application-review.css') }}">
-<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/application-review.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/physical-requirements.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace application-review-page">

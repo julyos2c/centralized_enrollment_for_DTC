@@ -14,7 +14,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // asset_v(): cache-busting URLs for local CSS/JS (see App\Support\AssetVersion).
+        require_once app_path('Support/helpers.php');
     }
 
     /**

@@ -3,8 +3,8 @@
 @section('title', 'Academic Import Center')
 @section('content_header')<h4 class="font-weight-bold mb-1">Academic Import Center</h4><p class="text-muted">Import student and alumni records from CSV. Private uploads expire after 24 hours.</p>@endsection
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace rg-import-center">

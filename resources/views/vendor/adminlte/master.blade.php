@@ -153,7 +153,7 @@
     @endif
 
     {{-- DTC Feedback system (toast + confirm modal) --}}
-    <script src="{{ asset('js/dtc-feedback.js') }}" defer></script>
+    <script src="{{ asset_v('js/dtc-feedback.js') }}" defer></script>
 
     {{-- Custom Scripts --}}
     @yield('adminlte_js')

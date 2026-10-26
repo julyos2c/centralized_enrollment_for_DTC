@@ -4,8 +4,8 @@
 @section('title', 'Create Portal Account')
 @section('content_header')<h1>{{ $record->academic_status === 'alumni' ? 'Set Up Alumni Access' : 'Create Portal Account' }}</h1>@endsection
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
-<link rel="stylesheet" href="{{ asset('css/portal-invitation.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/portal-invitation.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace portal-invitation-page">

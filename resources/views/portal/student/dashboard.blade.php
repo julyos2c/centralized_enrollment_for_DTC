@@ -13,8 +13,8 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/dashboard-summaries.css') }}">
-<link rel="stylesheet" href="{{ asset('css/student-cor.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/dashboard-summaries.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/student-cor.css') }}">
 @endpush
 @section('content')
 
@@ -396,11 +396,11 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
-<link rel="stylesheet" href="{{ asset('css/student-dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/student-dashboard.css') }}">
 @endsection
 
 @section('js')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
-<script src="{{ asset('js/dashboard-avatar.js') }}"></script>
+<script src="{{ asset_v('js/dashboard-avatar.js') }}"></script>
 @endsection

@@ -17,8 +17,8 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace rg-appointments">

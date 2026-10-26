@@ -18,7 +18,7 @@
 
             @php
                 if (! empty($file['asset'])) {
-                    $file['location'] = asset($file['location']);
+                    $file['location'] = asset_v($file['location']);
                 }
             @endphp
 

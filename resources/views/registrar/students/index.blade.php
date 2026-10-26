@@ -5,15 +5,15 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap"><div><h4 class="mb-1 font-weight-bold">{{ $type === 'alumni' ? 'Alumni Records' : 'Student Records' }}</h4><p class="text-muted mb-0">Academic records are maintained separately from portal accounts.</p></div><div class="rg-record-heading-actions"><a class="btn btn-outline-primary" href="{{ route('registrar.imports.index') }}">Import Center</a> <a class="btn btn-primary" href="{{ route('registrar.students.create', ['type' => $type]) }}">Add Record</a></div></div>
 @endsection
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
 @endpush
 
 @push('js')
-    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+    <script src="{{ asset_v('js/dtc-filters.js') }}"></script>
 @endpush
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace rg-student-records">

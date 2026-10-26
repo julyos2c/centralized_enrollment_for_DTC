@@ -20,7 +20,7 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/dashboard-cards.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/dashboard-cards.css') }}">
 @endpush
 @section('content')
 

@@ -14,8 +14,8 @@
 @endsection
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/registrar-workspace.css') }}">
-<link rel="stylesheet" href="{{ asset('css/academic-record-show.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/academic-record-show.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace academic-record-page">

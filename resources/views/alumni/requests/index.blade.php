@@ -188,13 +188,13 @@
 @endsection
 
 @section('css')
-    <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/pickup-picker.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/alumni-request-history.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/document-request-flow.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/pickup-picker.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/alumni-request-history.css') }}">
 @endsection
 
 @section('js')
-    <script src="{{ asset('js/document-request.js') }}" defer></script>
+    <script src="{{ asset_v('js/document-request.js') }}" defer></script>
     <script>
         // Show the chosen file name on the resubmit form.
         document.querySelectorAll('.dr-resubmit input[type="file"]').forEach(function (input) {

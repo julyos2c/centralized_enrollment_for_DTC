@@ -3,8 +3,8 @@
 @section('title', 'Application Submitted')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/application-success.css') }}">
-<link rel="stylesheet" href="{{ asset('css/physical-requirements.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/application-success.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/physical-requirements.css') }}">
 @stop
 
 @section('content')

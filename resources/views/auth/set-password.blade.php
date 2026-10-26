@@ -172,6 +172,6 @@ function togglePw(id, btn) {
         });
     </script>
 @include('components.dtc.password-guidance')
-<script src="{{ asset('js/auth-link-request.js') }}" defer></script>
+<script src="{{ asset_v('js/auth-link-request.js') }}" defer></script>
 </body>
 </html>

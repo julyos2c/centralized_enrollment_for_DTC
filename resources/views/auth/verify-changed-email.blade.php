@@ -38,6 +38,6 @@
     </section>
     <footer class="auth-card-footer"><p class="auth-card-copyright">&copy; {{ date('Y') }} Danao Technological College</p></footer>
 </main>
-<script src="{{ asset('js/auth-link-request.js') }}" defer></script>
+<script src="{{ asset_v('js/auth-link-request.js') }}" defer></script>
 </body>
 </html>

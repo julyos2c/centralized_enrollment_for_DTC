@@ -4,7 +4,7 @@
 @section('title', 'Certificate of Registration')
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/cor-details.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/cor-details.css') }}">
 @endpush
 
 @section('content_header')

@@ -337,8 +337,8 @@
 @endsection
 
 @section('css')
-    <link rel="stylesheet" href="{{ asset('css/document-request-flow.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/pickup-picker.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/document-request-flow.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/pickup-picker.css') }}">
 @endsection
 
 @section('js')

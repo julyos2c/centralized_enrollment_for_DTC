@@ -19,12 +19,12 @@
 @endsection
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('css/dtc-filters.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/admin-records.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/dtc-filters.css') }}">
+    <link rel="stylesheet" href="{{ asset_v('css/admin-records.css') }}">
 @endpush
 
 @push('js')
-    <script src="{{ asset('js/dtc-filters.js') }}"></script>
+    <script src="{{ asset_v('js/dtc-filters.js') }}"></script>
 @endpush
 
 @section('content')
