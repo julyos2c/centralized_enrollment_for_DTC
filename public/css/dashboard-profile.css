@@ -1,0 +1,47 @@
+/* Shared applicant, student and alumni profile summary. */
+.dtc-portal-dashboard .dtc-dashboard-profile {
+    border:1px solid var(--dtc-border) !important;
+    border-radius:22px !important;
+    background:linear-gradient(145deg,var(--dtc-surface) 55%,color-mix(in srgb,var(--dtc-primary) 5%,var(--dtc-surface))) !important;
+    box-shadow:0 10px 30px rgba(15,23,42,.08);
+    color:var(--dtc-text);
+}
+.dtc-dashboard-profile > .card-body { padding:28px !important; }
+.dtc-profile-heading { display:flex; align-items:center; gap:16px; }
+.dtc-dashboard-profile .dtc-welcome-avatar-wrap { width:56px; height:56px; flex:0 0 56px; }
+.dtc-dashboard-profile .dtc-welcome-avatar-link { border:1px solid color-mix(in srgb,var(--dtc-primary) 30%,var(--dtc-border)); padding:2px; }
+.dtc-dashboard-profile .dtc-welcome-avatar-initials { background:var(--dtc-primary-soft); color:var(--dtc-primary); font-size:20px; }
+.dtc-dashboard-profile .dtc-avatar-camera-badge { width:26px; height:26px; right:-4px; bottom:-4px; background:var(--dtc-surface); border:1px solid var(--dtc-border); color:var(--dtc-primary); }
+.dtc-profile-name { min-width:0; flex:1; }
+.dtc-profile-name > span { display:block; color:var(--dtc-text-secondary); font-size:10px; font-weight:400; letter-spacing:.11em; text-transform:uppercase; line-height:1.5; }
+.dtc-profile-name h2 { margin:4px 0 0; color:var(--dtc-text); font-size:21px; font-weight:600; letter-spacing:-.02em; line-height:1.3; overflow-wrap:anywhere; }
+.dtc-profile-badge { display:inline-flex; align-items:center; gap:7px; flex-shrink:0; max-width:100%; padding:7px 12px; border:1px solid var(--dtc-border); border-radius:999px; background:var(--dtc-surface-soft); color:var(--dtc-text-secondary); font-size:12px; font-weight:500; line-height:1.5; }
+.dtc-profile-badge > span { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:currentColor; }
+.dtc-profile-badge.is-success { color:var(--dtc-success); background:color-mix(in srgb,var(--dtc-success) 8%,var(--dtc-surface)); border-color:color-mix(in srgb,var(--dtc-success) 30%,var(--dtc-border)); }
+.dtc-profile-badge.is-danger { color:var(--dtc-danger); background:color-mix(in srgb,var(--dtc-danger) 8%,var(--dtc-surface)); border-color:color-mix(in srgb,var(--dtc-danger) 30%,var(--dtc-border)); }
+.dtc-profile-badge.is-info { color:var(--dtc-primary); background:var(--dtc-primary-soft); border-color:color-mix(in srgb,var(--dtc-primary) 30%,var(--dtc-border)); }
+.dtc-profile-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:24px 0 0; }
+.dtc-profile-facts > div { min-width:0; padding:14px 16px; border:1px solid var(--dtc-border); border-radius:14px; background:var(--dtc-surface-soft); }
+.dtc-profile-facts dt { margin:0 0 5px; color:var(--dtc-text-secondary); font-size:10px; font-weight:400; letter-spacing:.09em; text-transform:uppercase; line-height:1.5; }
+.dtc-profile-facts dd { margin:0; color:var(--dtc-text); font-size:13px; font-weight:500; line-height:1.6; overflow-wrap:anywhere; }
+.dtc-profile-facts > .dtc-profile-fact-accent { border-color:color-mix(in srgb,var(--dtc-primary) 25%,var(--dtc-border)); }
+.dtc-profile-payment { display:flex; align-items:center; gap:13px; margin-top:24px; padding-top:20px; border-top:1px solid var(--dtc-border); color:var(--dtc-text-secondary); font-size:12px; line-height:1.7; }
+.dtc-profile-payment strong { color:var(--dtc-text); font-weight:500; }
+.dtc-profile-payment > :is(i,svg) { box-sizing:content-box; width:16px; height:16px; flex:0 0 16px; padding:8px; border-radius:50%; background:var(--dtc-primary); color:#fff; }
+.dtc-profile-payment.is-success > :is(i,svg) { background:var(--dtc-success); }
+body.dtc-dark .dtc-profile-payment.is-success > :is(i,svg) { background:var(--dtc-success); }
+.dtc-profile-payment.is-danger > :is(i,svg) { background:var(--dtc-danger); }
+.dtc-dashboard-profile :is(.dtc-welcome-avatar-link,.dtc-avatar-camera-badge,.dtc-profile-settings):focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+@media(max-width:767.98px) {
+    .dtc-dashboard-profile > .card-body { padding:24px 22px !important; }
+     .dtc-profile-heading { display:grid; grid-template-columns:48px minmax(0,1fr); gap:20px 16px; }
+    .dtc-dashboard-profile .dtc-welcome-avatar-wrap { width:48px; height:48px; flex-basis:48px; }
+    .dtc-dashboard-profile .dtc-welcome-avatar-initials { font-size:18px; }
+    .dtc-profile-name h2 { font-size:18px; }
+    .dtc-profile-badge { grid-column:1 / -1; justify-self:start; }
+    .dtc-profile-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 12px; margin-top:18px; }
+    .dtc-profile-facts > div:first-child { grid-column:1 / -1; }
+    .dtc-profile-facts > div { padding:16px; }
+    .dtc-profile-payment { margin-top:18px; padding:18px; }
+}
+@media(prefers-reduced-motion:reduce) { .dtc-dashboard-profile * { transition:none !important; } }

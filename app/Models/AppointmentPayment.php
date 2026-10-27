@@ -10,11 +10,13 @@ class AppointmentPayment extends Model
     use HasFactory;
     protected $fillable = [
         'appointment_id',
+        'is_document_bundle',
         'payment_method',
         'reference_number',
         'proof_of_payment',
         'status',
         'amount',
+        'receipt_no',
         'rejection_reason',
         'verified_by',
         'verified_at',
@@ -23,6 +25,7 @@ class AppointmentPayment extends Model
     protected $casts = [
         'verified_at' => 'datetime',
         'amount'      => 'decimal:2',
+        'is_document_bundle' => 'boolean',
     ];
 
     public function appointment()

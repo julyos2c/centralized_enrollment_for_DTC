@@ -71,13 +71,14 @@ class DocumentRequestController extends Controller
                     ]);
                 }
 
-                if ($next === 'released' && (! $locked->is_paid || $locked->payment_status !== 'verified')) {
+                if ($next === 'released' && !$locked->paymentSatisfied()) {
                     throw ValidationException::withMessages([
                         'status' => 'This document cannot be released until the Cashier has verified its payment.',
                     ]);
                 }
 
                 $previous = $locked->status;
+                app(\App\Services\DocumentRequestPricing::class)->auditNoPayment($locked, $request);
                 $locked->update([
                     'status' => $next,
                     'remarks' => $validated['remarks'] ?? $locked->remarks,
@@ -103,10 +104,11 @@ class DocumentRequestController extends Controller
         $message = $change->status === 'ready'
             ? $this->readyMessage($change)
             : $messages[$change->status];
-        $tone = $change->status === 'ready' && $change->is_paid && $change->payment_status === 'verified' ? 'success' : 'info';
+        $tone = $change->status === 'ready' && $change->paymentSatisfied() ? 'success' : 'info';
         $destination = $change->user->hasRole('alumni')
             ? route('portal.documents.index')
             : route('portal.appointments.index');
+        if (!$change->user->hasAnyRole(['student', 'alumni'])) $destination = route('portal.dashboard');
         $notificationSaved = NotificationService::sendSafely($change->user, 'Document Request Update', $message, $tone, $destination);
         $emailQueued = NotificationService::emailDocumentRequestSafely($change->user, $change, $message);
 
@@ -140,7 +142,10 @@ class DocumentRequestController extends Controller
     private function readyMessage(DocumentRequest $documentRequest): string
     {
         $document = $documentRequest->document_label;
-        if ($documentRequest->payment_status === 'verified' && $documentRequest->is_paid) {
+        if ($documentRequest->paymentNotRequired()) {
+            return "Your {$document} is ready for pickup. No Payment Required. Bring a valid ID to the Registrar's Office.";
+        }
+        if ($documentRequest->paymentSatisfied()) {
             return "Your {$document} is ready for pickup. Your payment is verified. Visit the Registrar's Office and bring a valid ID.";
         }
         if ($documentRequest->payment_status === 'pending_verification') {

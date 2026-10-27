@@ -258,13 +258,21 @@
                                 <div>
                                     <div class="u-text-sm-bold-primary">{{ $appointment->user->name }}</div>
                                     <div class="u-text-xs-secondary">{{ $appointment->user->email }}</div>
+                                    <div class="u-text-xs-secondary">{{ $appointment->user->hasRole('alumni') ? 'Alumni' : ($appointment->user->hasRole('student') ? 'Student' : 'Applicant') }}</div>
                                 </div>
                             </div>
                         </td>
                         <td data-reg-label="Document">
-                            <span class="dtc-status-badge is-info" style="font-weight:600;">
-                                {{ ucfirst($appointment->document_type) }}
-                            </span>
+                            @if ($appointment->documentRequests->isNotEmpty())
+                                @foreach ($appointment->documentRequests as $documentRequest)
+                                    <div class="mb-1">
+                                        <span class="dtc-status-badge is-info" style="font-weight:600;">{{ $documentRequest->document_label }} × {{ $documentRequest->copies }}</span>
+                                        <span class="u-text-xs-secondary">{{ ucfirst($documentRequest->status) }} · ₱{{ number_format($documentRequest->fee, 2) }}</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                <span class="dtc-status-badge is-info" style="font-weight:600;">{{ ucfirst($appointment->document_type) }}</span>
+                            @endif
                         </td>
                         <td data-reg-label="Date &amp; Time">
                             <div style="font-size:13px;font-weight:600;color:var(--dtc-text);">
@@ -278,8 +286,12 @@
                             {{ $appointment->purpose ?? '—' }}
                         </td>
                         <td data-reg-label="Payment">
-                            @if(!$pay)
+                            @if($appointment->paymentNotRequired())
+                                <span class="dtc-status-badge is-info">No Payment Required</span>
+                            @elseif(!$pay)
                                 <span style="font-size:11px;color:var(--dtc-text-muted);">—</span>
+                            @elseif($pay->payment_method === 'walk_in' && $pay->is_document_bundle && $pay->status !== 'verified')
+                                <span class="dtc-status-badge is-warning" style="font-size:10px;">Walk-in unpaid</span>
                             @elseif($pay->payment_method === 'walk_in')
                                 <span class="dtc-status-badge is-info" style="font-size:10px;">
                                     <i data-lucide="building-2" style="width:10px;height:10px;"></i> Walk-in
@@ -297,6 +309,9 @@
                                     <i data-lucide="x-circle" style="width:10px;height:10px;"></i> GCash Rejected
                                 </span>
                             @endif
+                            @if($pay && $pay->is_document_bundle)
+                                <div class="u-text-xs-secondary mt-1">Bundle total: ₱{{ number_format($pay->amount, 2) }}</div>
+                            @endif
                         </td>
                         <td data-reg-label="Status">
                             <x-dtc.status-badge :status="ucfirst($appointment->status)" />
@@ -304,24 +319,28 @@
                         <td data-reg-label="Actions">
                             <div class="u-actions-gap">
                                 @if($appointment->status === 'pending')
-                                    {{-- Confirm --}}
-                                    <form id="confirm-appt-{{ $appointment->id }}"
-                                          method="POST"
-                                          action="{{ route('registrar.appointments.confirm', $appointment) }}">
-                                        @csrf
-                                        <button type="button"
-                                                class="dtc-icon-btn success rg-booking-confirm"
-                                                title="Confirm appointment"
-                                                data-dtc-confirm
-                                                data-dtc-confirm-title="Confirm appointment?"
-                                                data-dtc-confirm-message="The appointment for {subject} will be confirmed."
-                                                data-dtc-confirm-subject="{{ $appointment->user->name }}"
-                                                data-dtc-confirm-ok="Confirm"
-                                                data-dtc-confirm-tone="success"
-                                                data-dtc-confirm-form="#confirm-appt-{{ $appointment->id }}">
-                                            <i data-lucide="check"></i><span class="rg-appointment-action-label">Confirm</span>
-                                        </button>
-                                    </form>
+                                    @if($appointment->canBeConfirmed())
+                                        {{-- Confirm --}}
+                                        <form id="confirm-appt-{{ $appointment->id }}"
+                                              method="POST"
+                                              action="{{ route('registrar.appointments.confirm', $appointment) }}">
+                                            @csrf
+                                            <button type="button"
+                                                    class="dtc-icon-btn success rg-booking-confirm"
+                                                    title="Confirm appointment"
+                                                    data-dtc-confirm
+                                                    data-dtc-confirm-title="Confirm appointment?"
+                                                    data-dtc-confirm-message="The appointment for {subject} will be confirmed."
+                                                    data-dtc-confirm-subject="{{ $appointment->user->name }}"
+                                                    data-dtc-confirm-ok="Confirm"
+                                                    data-dtc-confirm-tone="success"
+                                                    data-dtc-confirm-form="#confirm-appt-{{ $appointment->id }}">
+                                                <i data-lucide="check"></i><span class="rg-appointment-action-label">Confirm</span>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="dtc-status-badge is-secondary" style="font-size:10px;">Unavailable</span>
+                                    @endif
 
                                     {{-- Cancel --}}
                                     <button type="button"

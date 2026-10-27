@@ -34,12 +34,16 @@ class PortalPaymentPagesTest extends TestCase
 
     public function test_all_portal_roles_get_owned_pages_and_foreign_records_are_forbidden(): void
     {
-        foreach (['new_applicant', 'student', 'alumni'] as $role) {
+        foreach (['student', 'alumni'] as $role) {
             $user = $this->makeUserWithRole($role);
             $document = $this->document($user);
             $appointment = Appointment::factory()->create(['user_id' => $user->id]);
             $enrollment = Enrollment::factory()->create(['user_id' => $user->id, 'status' => 'approved']);
-            $this->actingAs($user)->get(route('portal.payments.document', $document))->assertOk()->assertViewIs('portal.payments.details')->assertDontSee('data-toggle="modal"', false);
+            $this->actingAs($user)->get(route('portal.payments.document', $document))
+                ->assertOk()
+                ->assertViewIs('portal.payments.details')
+                ->assertSee('css/portal-payments.css')
+                ->assertDontSee('data-toggle="modal"', false);
             $this->get(route('portal.payments.appointment', $appointment))->assertOk()->assertViewIs('portal.payments.details');
             $this->get(route('portal.enrollment.payment-info', $enrollment))->assertOk()->assertViewIs('student.enrollment.payment')->assertDontSee('data-dismiss="modal"', false);
             $this->actingAs($this->makeUserWithRole($role));
@@ -51,7 +55,7 @@ class PortalPaymentPagesTest extends TestCase
 
     public function test_document_states_show_only_eligible_proof_forms_and_preserve_alumni_rules(): void
     {
-        foreach (['new_applicant', 'student', 'alumni'] as $role) {
+        foreach (['student', 'alumni'] as $role) {
             $user = $this->makeUserWithRole($role);
             $document = $this->document($user);
             $this->actingAs($user)->get(route('portal.payments.document', $document))->assertViewHas('canSubmit', $role !== 'alumni');
@@ -92,7 +96,7 @@ class PortalPaymentPagesTest extends TestCase
     public function test_document_proof_submission_returns_each_role_to_its_payment_page(): void
     {
         \Illuminate\Support\Facades\Mail::fake();
-        foreach (['new_applicant', 'student', 'alumni'] as $role) {
+        foreach (['student', 'alumni'] as $role) {
             $user = $this->makeUserWithRole($role);
             $document = $this->document($user, $role === 'alumni' ? ['payment_status' => 'rejected', 'payment_method' => 'gcash_qr'] : []);
             $url = route('portal.payments.document', $document);

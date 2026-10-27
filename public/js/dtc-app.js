@@ -285,8 +285,7 @@ function clearRecent() {
 function renderSuggestions() {
     const el = document.getElementById("suggestions-list");
     if (!el) return;
-    el.innerHTML = SUGGESTIONS.map(
-        (s) => `
+    el.innerHTML = SUGGESTIONS.filter(s => s !== 'Appointments' || !el.hasAttribute('data-hide-document-booking')).map(s => `
         <div class="search-suggestion-item"
              onclick="fillSearch('${s}')">
             <i data-lucide="search"></i>
@@ -699,3 +698,76 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 })();
+
+// Render rail labels outside the scrolling sidebar so they cannot be clipped.
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.querySelector('.main-sidebar.sidebar-no-expand');
+    if (!sidebar) return;
+    const tooltip = document.createElement('div');
+    tooltip.id = 'dtcRailTooltip';
+    tooltip.className = 'dtc-rail-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+    let current = null;
+    function hide() {
+        if (current) {
+            const ids = (current.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== tooltip.id);
+            if (ids.length) current.setAttribute('aria-describedby', ids.join(' '));
+            else current.removeAttribute('aria-describedby');
+        }
+        current = null;
+        tooltip.hidden = true;
+    }
+    function show(target) {
+        hide();
+        if (!window.matchMedia('(min-width:992px)').matches || !document.body.classList.contains('sidebar-collapse')) return;
+        if (target.id === 'dtcSidebarProfileToggle' && target.getAttribute('aria-expanded') === 'true') return;
+        const label = target.querySelector('.dtc-sidebar-menu-label');
+        const copy = target.querySelector('.dtc-sidebar-user-copy');
+        tooltip.textContent = label ? label.textContent.trim() : copy ? Array.from(copy.children).map(node => node.textContent.trim()).filter(Boolean).join(' / ') : '';
+        if (!tooltip.textContent) return;
+        current = target;
+        target.setAttribute('aria-describedby', [target.getAttribute('aria-describedby'), tooltip.id].filter(Boolean).join(' '));
+        tooltip.hidden = false;
+        const rect = target.getBoundingClientRect();
+        tooltip.style.left = (sidebar.getBoundingClientRect().right + 12) + 'px';
+        tooltip.style.top = Math.max(8, Math.min(window.innerHeight - tooltip.offsetHeight - 8, rect.top + (rect.height - tooltip.offsetHeight) / 2)) + 'px';
+    }
+    // AdminLTE owns treeview expansion; mirror its classes for assistive technology.
+    sidebar.querySelectorAll('.has-treeview').forEach(function (item) {
+        const toggle = item.querySelector(':scope > .nav-link');
+        if (!toggle) return;
+        function syncExpanded() { toggle.setAttribute('aria-expanded', String(item.classList.contains('menu-open'))); }
+        syncExpanded();
+        new MutationObserver(syncExpanded).observe(item, { attributes:true, attributeFilter:['class'] });
+        toggle.addEventListener('keydown', function (event) {
+            if (event.key === ' ') { event.preventDefault(); toggle.click(); }
+        });
+    });
+    // Reuse the navbar count as the source for polling and read-state changes.
+    const bell = document.getElementById('notifBell');
+    if (bell) {
+        function syncUnread() {
+            const badge = document.getElementById('notif-badge');
+            const count = !badge || badge.hidden ? '' : badge.textContent.trim();
+            sidebar.querySelectorAll('[data-sidebar-unread]').forEach(function (target) {
+                target.hidden = !count || count === '0';
+                target.textContent = count;
+                target.setAttribute('aria-label', (count || '0') + ' unread notifications');
+            });
+        }
+        new MutationObserver(syncUnread).observe(bell, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['hidden'] });
+    }
+    sidebar.querySelectorAll('.nav-sidebar .nav-link, #dtcSidebarProfileToggle').forEach(function (target) {
+        target.addEventListener('mouseenter', function () { show(target); });
+        target.addEventListener('mouseleave', hide);
+        target.addEventListener('focus', function () { show(target); });
+        target.addEventListener('blur', hide);
+        target.addEventListener('click', hide);
+    });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape') hide(); });
+    window.addEventListener('resize', hide);
+    window.addEventListener('scroll', hide, true);
+    new MutationObserver(hide).observe(document.body, { attributes:true, attributeFilter:['class'] });
+});

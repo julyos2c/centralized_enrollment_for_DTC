@@ -7,7 +7,6 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 font-weight-bold">Alumni Dashboard</h4>
-            <p class="mb-0 u-text-secondary-sm" >Welcome to Danao Technological College!</p>
         </div>
     </div>
 @endsection
@@ -36,7 +35,7 @@
         $dashboardNextStep = 'Payment under review';
         $dashboardNextStepNote = 'The Cashier is checking payment for ' . $latestRequest->document_label . '.';
         $dashboardNextStepUrl = route('portal.documents.index');
-    } elseif ($latestRequest && $latestRequest->payment_status === 'unpaid') {
+    } elseif ($latestRequest && !$latestRequest->paymentNotRequired() && $latestRequest->payment_status === 'unpaid') {
         $dashboardNextStep = 'Pay at the Cashier’s Office';
         $dashboardNextStepNote = 'Pay the fee for ' . $latestRequest->document_label . ' to continue processing.';
         $dashboardNextStepUrl = route('portal.documents.index');
@@ -52,6 +51,7 @@
 @endphp
 
 <div class="dtc-portal-dashboard">
+@include('portal.partials.dashboard-profile', ['profileRole' => 'alumni'])
 <div class="dtc-dashboard-overview mb-3" aria-label="Document request overview">
     <div class="dtc-overview-item">
         <span class="dtc-overview-label">Document requests</span>
@@ -76,27 +76,6 @@
 </div>
 
 {{-- ══ WELCOME CARD ════════════════════════════════════════════════════ --}}
-<div class="card mb-3 dtc-welcome-card">
-    <div class="card-body">
-        <div class="dtc-welcome-layout">
-            @include('portal.partials.dashboard-avatar')
-            <div class="dtc-welcome-copy">
-                <h4 class="dtc-welcome-title">
-                    <span class="dtc-welcome-greeting">Welcome back,</span>{{ auth()->user()->name }}
-                </h4>
-                @if($studentProfile && ($studentProfile->graduation_year || $studentProfile->program))
-                <p class="dtc-welcome-meta">
-                    @if($studentProfile->program)<span>{{ $studentProfile->program->name }}</span>@endif
-                    @if($studentProfile->graduation_year)<span>Batch {{ $studentProfile->graduation_year }}</span>@endif
-                </p>
-                @endif
-                <p class="dtc-welcome-text">
-                    Request transcripts, diplomas, and other documents.
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- ══ MAIN CONTENT ROW ════════════════════════════════════════════════ --}}
 <div class="row">
@@ -113,7 +92,7 @@
                     @php
                         $statusText  = ['submitted' => 'Submitted', 'processing' => 'Preparing', 'ready' => 'Ready', 'released' => 'Released'][$req->status] ?? ucfirst($req->status);
                         $paymentTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'][$req->payment_status] ?? 'neutral';
-                        $paymentText = ['unpaid' => 'Unpaid', 'pending_verification' => 'Under review', 'verified' => 'Paid', 'rejected' => 'Rejected'][$req->payment_status] ?? ucwords(str_replace('_', ' ', $req->payment_status));
+                        $paymentText = $req->paymentNotRequired() ? 'No Payment Required' : ['unpaid' => 'Unpaid', 'pending_verification' => 'Under review', 'verified' => 'Paid', 'rejected' => 'Rejected'][$req->payment_status] ?? ucwords(str_replace('_', ' ', $req->payment_status));
                     @endphp
                     <a href="{{ route('portal.documents.index') }}" class="dtc-recent-row">
                         <span class="dtc-recent-main">
@@ -122,7 +101,7 @@
                         </span>
                         <span class="dtc-recent-status">
                             <span class="dtc-status-badge is-{{ $statusTones[$req->status] ?? 'neutral' }}">{{ $statusText }}</span>
-                            @if ($req->payment_status === 'verified')
+                            @if ($req->paymentSatisfied())
                                 <span class="dtc-recent-paid">{{ $paymentText }}</span>
                             @else
                                 <span class="dtc-status-badge is-{{ $paymentTone }}">{{ $paymentText }}</span>
@@ -184,7 +163,7 @@
                     </div>
                     <div>
                         <div  class="u-text-sm-bold">
-                            {{ ucfirst($nextAppointment->document_type) }}
+                            {{ $nextAppointment->document_labels->join(', ') }}
                         </div>
                         <div style="font-size:11px; opacity:0.75; margin-top:2px;">
                             <i data-lucide="clock" class="mr-1"></i>
@@ -210,7 +189,8 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<link rel="stylesheet" href="{{ asset_v('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/dashboard-profile.css') }}">
 <style>
     .dtc-recent-head { display: flex !important; align-items: center; justify-content: space-between !important; gap: 14px; padding-left: 20px !important; padding-right: 20px !important; }
     .dtc-recent-all { margin-left: auto; text-align: right; }

@@ -24,6 +24,103 @@ class StudentDashboardEnrollmentStatusTest extends TestCase
         $this->seedRoles();
     }
 
+    /** @dataProvider calendarDates */
+    public function test_calendar_progress_uses_configured_dates(string $start, string $end, string $today, string $status, ?int $progress, ?int $daysLeft): void
+    {
+        $student = $this->makeUserWithRole('student');
+        \App\Models\Setting::set('default_timezone', 'Asia/Manila');
+        \App\Models\Setting::set('semester_starts_on', $start);
+        \App\Models\Setting::set('semester_ends_on', $end);
+        $this->travelTo(\Carbon\Carbon::parse($today, 'Asia/Manila'));
+
+        try {
+            $response = $this->actingAs($student)->get(route('portal.dashboard'));
+            $response->assertOk()
+                ->assertViewHas('termStatus', $status)
+                ->assertViewHas('termProgress', $progress)
+                ->assertViewHas('termDaysLeft', $daysLeft);
+            if ($progress === null) {
+                $response->assertDontSee('role="progressbar"', false)
+                    ->assertSee('Semester dates are unavailable.');
+            } else {
+                $response->assertSee('aria-valuenow="'.$progress.'"', false);
+            }
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    public static function calendarDates(): array
+    {
+        return [
+            'midterm' => ['2026-10-01', '2026-10-10', '2026-10-06 12:00:00', 'in_progress', 50, 4],
+            'upcoming' => ['2026-10-01', '2026-10-10', '2026-09-29 12:00:00', 'upcoming', 0, 11],
+            'ended' => ['2026-10-01', '2026-10-10', '2026-10-11 12:00:00', 'ended', 100, 0],
+            'last day' => ['2026-10-01', '2026-10-10', '2026-10-10 12:00:00', 'in_progress', 90, 0],
+            'reversed dates' => ['2026-10-10', '2026-10-01', '2026-10-06 12:00:00', 'dates_missing', null, null],
+            'invalid dates' => ['invalid', '2026-10-10', '2026-10-06 12:00:00', 'dates_missing', null, null],
+        ];
+    }
+
+    public function test_new_semester_starts_a_new_journey_instead_of_showing_last_terms_completion(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        \App\Models\Setting::set('current_school_year', '2026-2027');
+        \App\Models\Setting::set('current_semester', '2nd');
+        Enrollment::factory()->paid()->create([
+            'user_id' => $student->id, 'school_year' => '2026-2027', 'semester' => 1,
+        ]);
+
+        $response = $this->actingAs($student)->get(route('portal.dashboard'));
+        $response->assertOk()
+            ->assertViewHas('latestEnrollment', null)
+            ->assertViewHas('subjects', fn ($subjects) => $subjects->isEmpty())
+            ->assertSee('Enrollment progress')
+            ->assertSee('2nd semester')
+            ->assertSee('0 of 5 complete')
+            ->assertSee('Current Step: Submit Application')
+            ->assertDontSee('First enrollment progress')
+            ->assertDontSee('All steps completed! You are officially enrolled.');
+    }
+
+    public function test_journey_selects_the_configured_term_even_when_an_old_term_record_was_created_later(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        \App\Models\Setting::set('current_school_year', '2027-2028');
+        \App\Models\Setting::set('current_semester', '1st');
+        $current = Enrollment::factory()->pending()->create([
+            'user_id' => $student->id, 'school_year' => '2027-2028', 'semester' => 1,
+            'created_at' => now()->subDay(),
+        ]);
+        Enrollment::factory()->paid()->create([
+            'user_id' => $student->id, 'school_year' => '2026-2027', 'semester' => 1,
+        ]);
+
+        $this->actingAs($student)->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertViewHas('latestEnrollment', fn ($enrollment) => $enrollment->is($current))
+            ->assertViewHas('currentTermEnrollment', fn ($enrollment) => $enrollment->is($current))
+            ->assertSee('1 of 5 complete')
+            ->assertSee('Await Registrar Review')
+            ->assertDontSee('All steps completed! You are officially enrolled.');
+    }
+
+    public function test_summer_enrollment_can_complete_its_own_journey(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        \App\Models\Setting::set('current_school_year', '2026-2027');
+        \App\Models\Setting::set('current_semester', 'Summer');
+        Enrollment::factory()->paid()->create([
+            'user_id' => $student->id, 'school_year' => '2026-2027', 'semester' => 3,
+        ]);
+
+        $this->actingAs($student)->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('Summer semester')
+            ->assertSee('5 of 5 complete')
+            ->assertSee('All steps completed! You are officially enrolled.');
+    }
+
     public function test_rejected_enrollment_displays_feedback_and_supported_resubmission_action(): void
     {
         $student = $this->makeUserWithRole('student');
@@ -134,7 +231,7 @@ class StudentDashboardEnrollmentStatusTest extends TestCase
         $this->actingAs($student)->get(route('portal.dashboard'))
             ->assertOk()
             ->assertSee('Enrolled')
-            ->assertSee('Confirmed')
+            ->assertSee('Your payment is confirmed.')
             ->assertSee('All steps completed! You are officially enrolled.');
     }
 
@@ -178,6 +275,34 @@ class StudentDashboardEnrollmentStatusTest extends TestCase
             ->assertSee('Payment Verification')
             ->assertSee('Your payment proof is awaiting Cashier verification.')
             ->assertDontSee('All steps completed! You are officially enrolled.');
+    }
+
+    public function test_student_dashboard_shows_a_subject_preview_with_a_view_all_footer(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        $program = Program::factory()->create();
+        $subjects = collect(range(1, 5))->map(fn ($index) => CourseSubject::factory()->for($program)->create([
+            'subject_code' => 'SUBJ'.$index,
+            'subject_name' => 'Subject name '.$index,
+            'units' => 3,
+        ]));
+        Enrollment::factory()->paid()->create([
+            'user_id' => $student->id,
+            'program_id' => $program->id,
+            'subject_ids' => $subjects->pluck('id')->all(),
+        ]);
+
+        $this->actingAs($student)->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('5 subjects · 15 units')
+            ->assertSee('Subject name 1')
+            ->assertSee('Subject name 2')
+            ->assertSee('Subject name 3')
+            ->assertDontSee('Subject name 4')
+            ->assertDontSee('Subject name 5')
+            ->assertSee('Showing 3 of 5 subjects')
+            ->assertSee('View all subjects')
+            ->assertSee('href="'.route('portal.cor.show').'"', false);
     }
 
     public function test_student_avatar_links_to_the_existing_profile_settings_page(): void

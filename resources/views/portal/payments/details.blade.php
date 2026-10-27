@@ -12,7 +12,9 @@
     @if($errors->any())<div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>@endif
     <section class="portal-payment-card">
         <div class="portal-payment-total"><span>Fee</span><strong>₱{{ number_format($fee, 2) }}</strong></div>
-        @if($status === 'verified')
+        @if($status === 'not_required')
+            <h2>No Payment Required</h2><p>The document fee is ?0.00. No payment, receipt, or Cashier verification is needed. The Registrar still processes and releases your request.</p>
+        @elseif($status === 'verified')
             <h2>Payment verified</h2>
             @if($receipt)<p>Receipt: {{ $receipt }}</p>@endif
         @elseif($closed)
@@ -32,7 +34,8 @@
             @if($gcashQrReady)
                 <p>Send exactly <strong>₱{{ number_format($fee, 2) }}</strong> through GCash to the account below. Then submit the reference number and payment proof for Cashier verification.</p>
                 <dl class="portal-payment-account"><dt>Account</dt><dd>{{ $gcashName ?: 'See official QR' }}</dd><dt>Number</dt><dd>{{ $gcashNumber ?: 'See official QR' }} @if($gcashNumber)<button type="button" data-copy-value="{{ $gcashNumber }}" data-copy-label="GCash number">Copy</button>@endif</dd></dl>
-                <details class="portal-payment-qr"><summary>Show GCash QR</summary><img src="{{ $qrUrl }}" width="180" height="180" alt="Official GCash QR code"></details>
+                <dl class="portal-payment-account"><dt>Amount to pay</dt><dd>₱{{ number_format($fee, 2) }} <button type="button" data-copy-value="{{ number_format($fee, 2, '.', '') }}" data-copy-label="Amount">Copy amount</button></dd></dl>
+                <details class="portal-payment-qr"><summary>Show GCash QR</summary><img src="{{ $qrUrl }}" width="180" height="180" alt="Official GCash QR code"><a class="portal-payment-save" href="{{ $qrUrl }}?download=1">Save QR to phone</a></details>
                 <form method="POST" action="{{ $submitUrl }}" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group"><label for="payment-reference">GCash reference number</label><input id="payment-reference" class="form-control" name="reference_number" value="{{ old('reference_number') }}" maxlength="{{ $referenceMax }}" required autocomplete="off"></div>

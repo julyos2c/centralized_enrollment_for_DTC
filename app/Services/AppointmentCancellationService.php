@@ -14,7 +14,8 @@ class AppointmentCancellationService
 {
     /**
      * Cancel an appointment while keeping the separate document and payment
-     * lifecycles consistent. Only an unstarted submitted request is cancelled.
+     * lifecycles consistent. Applicant-side cancellation is blocked once a
+     * linked document is already in progress, ready, or released.
      */
     public function cancel(Appointment $appointment, User $actor, Request $request, ?string $remarks = null): array
     {
@@ -40,34 +41,41 @@ class AppointmentCancellationService
                 return ['result' => 'verified_legacy_payment'];
             }
 
-            $documentRequest = DocumentRequest::where('appointment_id', $lockedAppointment->id)
+            $documentRequests = DocumentRequest::where('appointment_id', $lockedAppointment->id)
                 ->lockForUpdate()
-                ->first();
+                ->get();
+
+            if (! $isStaff && $documentRequests->contains(fn ($documentRequest) => in_array($documentRequest->status, ['processing', 'ready', 'released'], true))) {
+                return ['result' => 'resolved_request'];
+            }
+
             $requestDisposition = 'none';
 
-            if ($documentRequest && $documentRequest->status === 'submitted') {
-                $documentRequest->update(['status' => 'cancelled']);
-                $requestDisposition = 'cancelled';
+            foreach ($documentRequests as $documentRequest) {
+                if ($documentRequest->status === 'submitted') {
+                    $documentRequest->update(['status' => 'cancelled']);
+                    $requestDisposition = 'cancelled';
 
-                AuditLog::create([
-                    'user_id' => $actor->id,
-                    'action' => 'document_request.cancelled_with_appointment',
-                    'description' => "Cancelled submitted document request #{$documentRequest->id} with appointment #{$lockedAppointment->id}.",
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'metadata' => [
-                        'document_request_id' => $documentRequest->id,
-                        'appointment_id' => $lockedAppointment->id,
-                        'previous_request_status' => 'submitted',
-                        'payment_status' => $documentRequest->payment_status,
-                        'is_paid' => $documentRequest->is_paid,
-                        'verified_payment_preserved' => $documentRequest->is_paid || $documentRequest->payment_status === 'verified',
-                    ],
-                ]);
-            } elseif ($documentRequest) {
+                    AuditLog::create([
+                        'user_id' => $actor->id,
+                        'action' => 'document_request.cancelled_with_appointment',
+                        'description' => "Cancelled submitted document request #{$documentRequest->id} with appointment #{$lockedAppointment->id}.",
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'metadata' => [
+                            'document_request_id' => $documentRequest->id,
+                            'appointment_id' => $lockedAppointment->id,
+                            'previous_request_status' => 'submitted',
+                            'payment_status' => $documentRequest->payment_status,
+                            'is_paid' => $documentRequest->is_paid,
+                            'verified_payment_preserved' => $documentRequest->is_paid || $documentRequest->payment_status === 'verified',
+                        ],
+                    ]);
+                } elseif ($documentRequest->status !== 'cancelled') {
                 // Processing, ready, and released requests remain active and
                 // linked to the cancelled appointment for history and follow-up.
-                $requestDisposition = 'preserved';
+                    $requestDisposition = 'preserved';
+                }
             }
 
             $lockedAppointment->update([
@@ -83,10 +91,9 @@ class AppointmentCancellationService
                 'user_agent' => $request->userAgent(),
                 'metadata' => [
                     'appointment_id' => $lockedAppointment->id,
-                    'document_request_id' => $documentRequest?->id,
+                    'document_request_ids' => $documentRequests->pluck('id')->all(),
                     'request_disposition' => $requestDisposition,
-                    'request_status' => $documentRequest?->fresh()->status,
-                    'payment_status' => $documentRequest?->payment_status,
+                    'request_statuses' => $documentRequests->mapWithKeys(fn ($item) => [$item->id => $item->fresh()->status])->all(),
                     'remarks' => $remarks,
                 ],
             ]);
@@ -94,7 +101,8 @@ class AppointmentCancellationService
             return [
                 'result' => 'cancelled',
                 'appointment' => $lockedAppointment->fresh(['user', 'slot']),
-                'document_request' => $documentRequest?->fresh(),
+                'document_requests' => $documentRequests->map(fn ($item) => $item->fresh()),
+                'document_request' => $documentRequests->first()?->fresh(),
                 'request_disposition' => $requestDisposition,
             ];
         });
@@ -104,15 +112,17 @@ class AppointmentCancellationService
         }
 
         $cancelledAppointment = $result['appointment'];
+        $documentRequests = $result['document_requests'];
         $documentRequest = $result['document_request'];
         $requestDisposition = $result['request_disposition'];
-        $result['user_message'] = $this->applicantMessage($documentRequest, $requestDisposition, $remarks);
+        $result['user_message'] = $this->applicantMessage($documentRequests, $requestDisposition, $remarks);
         $destination = $cancelledAppointment->user->hasRole('alumni')
             ? route('portal.documents.index')
             : route('portal.appointments.index');
+        if (!$cancelledAppointment->user->hasAnyRole(['student', 'alumni'])) $destination = route('portal.dashboard');
 
         if ($isStaff) {
-            $applicantMessage = $this->applicantMessage($documentRequest, $requestDisposition, $remarks);
+            $applicantMessage = $this->applicantMessage($documentRequests, $requestDisposition, $remarks);
             NotificationService::sendUserUpdateSafely(
                 $cancelledAppointment->user,
                 'appointment-cancelled:'.$cancelledAppointment->id,
@@ -135,7 +145,7 @@ class AppointmentCancellationService
             }
         }
 
-        if ($documentRequest) {
+        if ($documentRequest && $documentRequests->contains(fn ($item) => !$item->paymentNotRequired())) {
             $cashierMessage = $this->cashierMessage($cancelledAppointment, $documentRequest, $requestDisposition);
             foreach (User::role('cashier')->get() as $cashier) {
                 NotificationService::sendSafely(
@@ -151,12 +161,19 @@ class AppointmentCancellationService
         return $result;
     }
 
-    private function applicantMessage(?DocumentRequest $documentRequest, string $disposition, ?string $remarks): string
+    private function applicantMessage($documentRequests, string $disposition, ?string $remarks): string
     {
         $reason = $remarks ? ' Reason: ' . $remarks : '';
-        if (! $documentRequest) {
+        if ($documentRequests->isEmpty()) {
             return 'Your appointment was cancelled.' . $reason;
         }
+        if ($documentRequests->count() > 1) {
+            if ($disposition === 'cancelled') {
+                return 'Your appointment and unstarted document requests were cancelled. Any payment proof and payment records were preserved; contact the Cashier and Registrar to resolve payment before submitting again.' . $reason;
+            }
+            return 'Your appointment was cancelled, but the linked document requests remain active with their existing processing statuses. Contact the Registrar to arrange another pickup time.' . $reason;
+        }
+        $documentRequest = $documentRequests->first();
         if ($disposition === 'cancelled') {
             if ($documentRequest->is_paid || $documentRequest->payment_status === 'verified') {
                 return 'Your appointment and unstarted document request were cancelled. The verified payment and receipt were preserved; contact the Cashier and Registrar to resolve the paid request before submitting another.' . $reason;

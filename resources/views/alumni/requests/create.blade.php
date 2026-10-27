@@ -30,7 +30,7 @@
     $errorKey = $errors->any() ? $errors->keys()[0] : null;
     $initialStep = match (true) {
         $errorKey === null => 1,
-        in_array($errorKey, ['document_type', 'copies'], true) => 1,
+        in_array($errorKey, ['document_type', 'copies', 'documents', 'documents.0.document_type', 'documents.0.copies'], true) => 1,
         in_array($errorKey, ['appointment_slot_id', 'pickup_date'], true) => 2,
         default => 3,
     };
@@ -44,6 +44,9 @@
     $selectedPickupDate = ($pickedDay !== '' && $slotGroups->has($pickedDay)) ? $pickedDay : '';
     $todayKey  = now()->format('Y-m-d');
     $dayParts  = ['Morning' => [0, 12], 'Afternoon' => [12, 17], 'Evening' => [17, 24]];
+    $oldDocuments = old('documents', old('document_type') ? [['document_type' => old('document_type'), 'copies' => old('copies', 1)]] : []);
+    $oldDocuments = is_array($oldDocuments) ? array_filter($oldDocuments, 'is_array') : [];
+    $selectedTotal = collect($oldDocuments)->sum(fn ($item) => ($documentFees[$item['document_type'] ?? ''] ?? 0) * (int) ($item['copies'] ?? 1));
 @endphp
 
 @section('content')
@@ -58,6 +61,7 @@
     <form method="POST" action="{{ route('portal.documents.store') }}" enctype="multipart/form-data"
           id="drForm" class="dr-grid" novalidate
           data-initial-step="{{ $initialStep }}"
+          data-current-step="{{ $initialStep }}"
           data-fees='@json($documentFees)'
           data-max-copies="10">
         @csrf
@@ -80,36 +84,56 @@
 
                 {{-- 1. Document + copies --}}
                 <fieldset class="dr-sec" data-step-panel="1">
-                    <legend class="dr-sec-title">Choose a document</legend>
-                    <div class="dr-opts" role="radiogroup" aria-label="Document type">
+                    <legend class="dr-sec-title">Choose documents</legend>
+                    <p class="dr-sec-hint">Tap to select. Each document has its own quantity and fee. Combined requests need one pickup time.</p>
+                    <div class="dr-document-progress" role="progressbar" aria-label="Request progress" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+                        <span></span>
+                    </div>
+                    <div class="dr-opts dr-document-options" id="drTypeGroup" aria-label="Document types">
                         @foreach ($documentOptions as $value => $doc)
-                            <label class="dr-opt">
-                                <input type="radio" name="document_type" value="{{ $value }}"
-                                       class="dr-opt-input dr-visually-hidden"
+                            @php
+                                $documentIcon = ['tor' => 'file-text', 'diploma' => 'award', 'certification' => 'badge-check', 'true_copy' => 'copy'][$value] ?? 'file-text';
+                                $oldIndex = collect($oldDocuments)->search(fn ($item) => ($item['document_type'] ?? null) === $value);
+                                $selectedDocument = $oldIndex !== false ? $oldDocuments[$oldIndex] : [];
+                            @endphp
+                            <div class="dr-opt dr-opt--stack" data-document-option>
+                                <input id="document-type-{{ $loop->index }}" type="checkbox" name="documents[{{ $loop->index }}][document_type]" value="{{ $value }}"
+                                       class="dr-opt-input dr-visually-hidden js-document-type"
                                        data-label="{{ $doc['label'] }}"
-                                       {{ old('document_type') === $value ? 'checked' : '' }}>
-                                <span class="dr-opt-mark" aria-hidden="true"></span>
-                                <span class="dr-opt-text">
-                                    <span class="dr-opt-name">{{ $doc['label'] }}</span>
-                                    <span class="dr-opt-desc">{{ $doc['desc'] }}</span>
-                                </span>
-                                <span class="dr-opt-price">&#8369;{{ number_format($documentFees[$value], 2) }}<small>per copy</small></span>
-                            </label>
+                                       {{ $oldIndex !== false || old('document_type') === $value ? 'checked' : '' }}>
+                                <label class="dr-document-choice" for="document-type-{{ $loop->index }}">
+                                    <span class="dr-opt-icon" aria-hidden="true"><i data-lucide="{{ $documentIcon }}"></i></span>
+                                    <span class="dr-opt-text">
+                                        <span class="dr-opt-name">{{ $doc['label'] }}</span>
+                                        <span class="dr-opt-desc">{{ $doc['desc'] }}</span>
+                                    </span>
+                                    <span class="dr-opt-price">&#8369;{{ number_format($documentFees[$value], 2) }}<small>per copy</small></span>
+                                    <span class="dr-opt-mark" aria-hidden="true"></span>
+                                </label>
+                                <div class="dr-field dr-document-quantity">
+                                    <label class="dr-visually-hidden" for="document-copies-{{ $loop->index }}">Number of {{ $doc['label'] }} copies</label>
+                                    <span class="dr-quantity-control">
+                                        <button type="button" data-copy-step="-1" aria-label="Remove one {{ $doc['label'] }} copy" {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>-</button>
+                                    <input type="number" id="document-copies-{{ $loop->index }}"
+                                           name="documents[{{ $loop->index }}][copies]"
+                                           class="dr-input js-document-copies" min="1" max="10"
+                                           value="{{ $selectedDocument['copies'] ?? 1 }}"
+                                           aria-label="Copies of {{ $doc['label'] }}"
+                                           {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>
+                                        <button type="button" data-copy-step="1" aria-label="Add one {{ $doc['label'] }} copy" {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>+</button>
+                                    </span>
+                                    <span class="dr-document-subtotal">
+                                        <strong data-document-subtotal>&#8369;{{ number_format($documentFees[$value] * (int) ($selectedDocument['copies'] ?? 1), 2) }}</strong>
+                                        <small data-document-copy-summary>{{ (int) ($selectedDocument['copies'] ?? 1) }} × &#8369;{{ number_format($documentFees[$value], 2) }}</small>
+                                    </span>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
-                    <p class="dr-error" data-step-error="1" role="alert">Choose a document to continue.</p>
-
-                    <div class="dr-field" style="margin-top:20px;">
-                        <label class="dr-label" for="copies">Copies</label>
-                        <div class="dr-stepper">
-                            <button type="button" id="drCopiesMinus" aria-label="Fewer copies">&minus;</button>
-                            <input type="number" name="copies" id="copies" value="{{ old('copies', 1) }}"
-                                   min="1" max="10" inputmode="numeric" aria-describedby="copies-help">
-                            <button type="button" id="drCopiesPlus" aria-label="More copies">+</button>
-                        </div>
-                        <p class="dr-help" id="copies-help">Maximum of 10.</p>
-                        @error('copies') <p class="dr-error is-shown">{{ $message }}</p> @enderror
-                    </div>
+                    <p class="dr-error" id="drTypeError" data-step-error="1" role="alert">Select at least one document and valid copy quantities.</p>
+                    @error('documents') <p class="dr-error is-shown">{{ $message }}</p> @enderror
+                    @error('documents.*.document_type') <p class="dr-error is-shown">{{ $message }}</p> @enderror
+                    @error('documents.*.copies') <p class="dr-error is-shown">{{ $message }}</p> @enderror
                 </fieldset>
 
                 {{-- 2. Pickup time (optional) --}}
@@ -208,12 +232,13 @@
                         </div>
                     @endif
                     @error('appointment_slot_id') <p class="dr-error is-shown">{{ $message }}</p> @enderror
+                    <p class="dr-error" data-step-error="2" role="alert">Choose one pickup time when requesting multiple documents together.</p>
                 </fieldset>
 
                 {{-- 3. Purpose + payment --}}
                 <fieldset class="dr-sec" data-step-panel="3" hidden>
                     <legend class="dr-sec-title">Purpose and payment</legend>
-                    <p class="dr-sec-hint">Total: <strong data-total-text>Choose a document first</strong>. The Cashier verifies every payment.</p>
+                    <p class="dr-sec-hint">Combined total: <strong data-total-text>{{ $selectedTotal > 0 ? '₱'.number_format($selectedTotal, 2) : 'Choose documents first' }}</strong>. The Cashier verifies the full payment.</p>
 
                     <div class="dr-field">
                         <label class="dr-label" for="document-purpose">Purpose <span>(optional)</span></label>
@@ -223,7 +248,8 @@
                     </div>
 
                     <div class="dr-sec-sub">How will you pay?</div>
-                    <div class="dr-opts">
+                    <p class="dr-no-payment" data-no-payment hidden role="status">No Payment Required. This selection is free; no receipt or payment proof is needed.</p>
+                    <div data-payment-choices class="dr-opts">
                         <label class="dr-opt dr-opt--stack">
                             <input type="radio" name="payment_method" id="paymentWalkIn" value="walk_in"
                                    class="dr-opt-input dr-visually-hidden" data-label="Cashier’s Office"
@@ -252,10 +278,14 @@
 
                     @if ($gcashOk)
                         <div id="gcashPaymentDetails" class="dr-gcash {{ $gcashChosen ? 'is-open' : '' }}">
-                            <div class="dr-gcash-qr">
-                                <img src="{{ route('portal.documents.gcash.qr') }}" alt="Official DTC GCash QR code" loading="lazy">
+                            <div>
+                                <a class="dr-gcash-save" href="{{ route('portal.documents.gcash.qr', ['download' => 1]) }}"><i data-lucide="download" aria-hidden="true"></i> Save QR</a>
+                                <div class="dr-gcash-qr">
+                                    <img src="{{ route('portal.documents.gcash.qr') }}" alt="Official DTC GCash QR code" loading="lazy">
+                                </div>
                             </div>
                             <div class="dr-gcash-fields">
+                                @include('portal.partials.document-gcash-account', ['gcashAmount' => null])
                                 <p class="dr-gcash-note">Send exactly <strong data-gcash-total>the total shown</strong>. Proof is verified by the Cashier.</p>
                                 <div class="dr-field">
                                     <label class="dr-label" for="documentPaymentReference">GCash reference number</label>
@@ -312,7 +342,10 @@
                 </div>
                 <div class="dr-slip-tear" aria-hidden="true"></div>
                 <div class="dr-slip-total" aria-live="polite">
-                    <span class="dr-slip-total-label">Total</span>
+                    <span class="dr-slip-total-meta">
+                        <span class="dr-slip-total-label">Document fee</span>
+                        <span class="dr-slip-count" data-slip-count>Choose documents</span>
+                    </span>
                     <span class="dr-slip-total-amount is-empty" data-slip-total>&#8369;0.00</span>
                 </div>
                 <div class="dr-slip-foot">
@@ -361,9 +394,10 @@
     var panels  = form.querySelectorAll('[data-step-panel]');
     var rail    = form.querySelector('[data-date-rail]');
     var picked  = form.querySelector('[data-picked]');
-    var copies  = document.getElementById('copies');
-    var minus   = document.getElementById('drCopiesMinus');
-    var plus    = document.getElementById('drCopiesPlus');
+    var typeInputs = form.querySelectorAll('.js-document-type');
+    var quantityInputs = form.querySelectorAll('.js-document-copies');
+    var typeGroup = document.getElementById('drTypeGroup');
+    var typeError = document.getElementById('drTypeError');
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var labels = { 1: 'Next: Pickup time', 2: 'Next: Payment', 3: 'Review request', 4: 'Submit request' };
 
@@ -379,29 +413,60 @@
         el.textContent = text;
         el.classList.toggle('is-empty', !!empty);
     };
-    var clampCopies = function () {
-        var v = parseInt(copies.value, 10);
-        if (isNaN(v)) v = 1;
-        return Math.min(maxCopies, Math.max(1, v));
+    var selectedDocuments = function () {
+        return Array.prototype.map.call(typeInputs, function (input) {
+            if (!input.checked) return null;
+            var quantity = input.closest('[data-document-option]').querySelector('.js-document-copies');
+            var copies = parseInt(quantity.value, 10) || 1;
+            var unit = Number(fees[input.value]) || 0;
+            return { input: input, quantity: quantity, copies: copies, unit: unit, subtotal: unit * copies };
+        }).filter(Boolean);
     };
 
     /* ---------- summary (slip + review + totals) ---------- */
+    var payableTotal = null;
     var refresh = function () {
-        var qty  = clampCopies();
-        var doc  = checked('document_type');
+        var documents = selectedDocuments();
         var slot = checked('appointment_slot_id');
         var pay  = checked('payment_method');
         var purpose = $('[name="purpose"]');
-        var unit  = doc ? Number(fees[doc.value]) || 0 : null;
-        var total = unit === null ? null : unit * qty;
-        var qtyText = qty + (qty === 1 ? ' copy' : ' copies');
+        var total = documents.length ? documents.reduce(function (sum, doc) { return sum + doc.subtotal; }, 0) : null;
+        form.querySelectorAll('[data-document-copy-amount]').forEach(function (button) {
+            button.disabled = total === null;
+            button.setAttribute('data-copy-value', total === null ? '' : Number(total).toFixed(2));
+        });
+        setText('[data-document-amount]', total === null ? 'Choose documents first' : peso(total));
+        payableTotal = total;
+        form.querySelectorAll('[data-payment-choices]').forEach(function (el) { el.hidden = payableTotal === 0; });
+        form.querySelectorAll('[data-no-payment]').forEach(function (el) { el.hidden = payableTotal !== 0; });
+        if (payableTotal === 0) { setText('[data-slip="pay"]', 'No Payment Required'); setText('[data-review="pay"]', 'No Payment Required'); }
+        var selectedCopies = documents.reduce(function (sum, doc) { return sum + doc.copies; }, 0);
+        var countSummary = $('[data-slip-count]');
+        if (countSummary) {
+            countSummary.textContent = documents.length
+                ? documents.length + (documents.length === 1 ? ' document' : ' documents') + ' · ' + selectedCopies + (selectedCopies === 1 ? ' copy' : ' copies')
+                : 'Choose documents';
+        }
+        typeInputs.forEach(function (input) {
+            var row = input.closest('[data-document-option]');
+            var quantity = row.querySelector('.js-document-copies');
+            quantity.disabled = !input.checked;
+            row.querySelectorAll('[data-copy-step]').forEach(function (button) { button.disabled = !input.checked; });
+            var copies = parseInt(quantity.value, 10) || 1;
+            var unitFee = Number(fees[input.value]) || 0;
+            var subtotal = row.querySelector('[data-document-subtotal]');
+            var copySummary = row.querySelector('[data-document-copy-summary]');
+            if (subtotal) subtotal.textContent = peso(unitFee * copies);
+            if (copySummary) copySummary.textContent = copies + ' × ' + peso(unitFee);
+        });
+        var docText = documents.map(function (doc) { return doc.input.getAttribute('data-label') + ' × ' + doc.copies + ' — ' + peso(doc.subtotal); }).join(', ');
+        var qtyText = documents.map(function (doc) {
+            return doc.input.getAttribute('data-label') + ': ' + doc.copies + (doc.copies === 1 ? ' copy' : ' copies') + ' at ' + peso(doc.unit);
+        }).join('; ');
         var slotText = slot && slot.value ? slot.getAttribute('data-date') + ', ' + slot.getAttribute('data-time') : '';
 
-        minus.disabled = qty <= 1;
-        plus.disabled = qty >= maxCopies;
-
-        setText('[data-slip="doc"]', doc ? doc.getAttribute('data-label') : 'Not chosen yet', !doc);
-        setText('[data-slip="qty"]', qtyText + (unit === null ? '' : ' at ' + peso(unit)));
+        setText('[data-slip="doc"]', docText || 'Not chosen yet', !docText);
+        setText('[data-slip="qty"]', qtyText || 'Choose documents');
         setText('[data-slip="pickup"]', slotText || 'Book later');
         setText('[data-slip="pay"]', pay ? pay.getAttribute('data-label') : 'Cashier’s Office');
 
@@ -409,15 +474,15 @@
         slipTotal.textContent = total === null ? peso(0) : peso(total);
         slipTotal.classList.toggle('is-empty', total === null);
 
-        setText('[data-review="doc"]', doc ? doc.getAttribute('data-label') : '—');
-        setText('[data-review="copies"]', qtyText + (unit === null ? '' : ' at ' + peso(unit) + ' each'));
+        setText('[data-review="doc"]', docText || '—');
+        setText('[data-review="copies"]', qtyText || '—');
         setText('[data-review="pickup"]', slotText || 'Book later');
         setText('[data-review="pay"]', pay ? (pay.value === 'gcash_qr' ? 'GCash QR' : 'Cashier’s Office') : '—');
         setText('[data-review="purpose"]', purpose && purpose.value.trim() ? purpose.value.trim() : '—');
         var rt = $('[data-review="total"]');
         if (rt) rt.innerHTML = '<strong>' + (total === null ? '—' : peso(total)) + '</strong>';
 
-        var totalText = total === null ? 'Choose a document first' : peso(total);
+        var totalText = total === null ? 'Choose documents first' : peso(total);
         var t1 = $('[data-total-text]'); if (t1) t1.textContent = totalText;
         var t2 = $('[data-gcash-total]'); if (t2) t2.textContent = total === null ? 'the total shown' : peso(total);
 
@@ -427,7 +492,8 @@
         }
 
         var gcash = document.getElementById('gcashPaymentDetails');
-        if (gcash) gcash.classList.toggle('is-open', !!(pay && pay.value === 'gcash_qr'));
+        if (gcash) gcash.classList.toggle('is-open', total > 0 && !!(pay && pay.value === 'gcash_qr'));
+        if (payableTotal === 0) { setText('[data-slip="pay"]', 'No Payment Required'); setText('[data-review="pay"]', 'No Payment Required'); }
     };
 
     /* ---------- pickup day strip ---------- */
@@ -483,8 +549,21 @@
     };
     var validate = function (n) {
         clearErrors();
-        if (n === 1 && !checked('document_type')) return fail('1');
+        if (n === 1) {
+            var documents = selectedDocuments();
+            if (!documents.length) return fail('1');
+            for (var i = 0; i < documents.length; i++) {
+                if (!documents[i].quantity.value || documents[i].copies < 1 || documents[i].copies > maxCopies) {
+                    return fail('1', documents[i].quantity);
+                }
+            }
+        }
+        if (n === 2 && selectedDocuments().length > 1) {
+            var pickup = checked('appointment_slot_id');
+            if (!pickup || !pickup.value) return fail('2');
+        }
         if (n === 3) {
+            if (payableTotal === 0) return true;
             var pay = checked('payment_method');
             if (pay && pay.value === 'gcash_qr') {
                 var ref = $('#documentPaymentReference'), proof = $('#documentPaymentProof');
@@ -498,6 +577,9 @@
     /* ---------- navigation ---------- */
     var go = function (n, opts) {
         step = n;
+        form.setAttribute('data-current-step', String(n));
+        var progress = form.querySelector('.dr-document-progress');
+        if (progress) progress.setAttribute('aria-valuenow', String(n));
         reached = Math.max(reached, n);
         panels.forEach(function (p) { p.hidden = String(p.getAttribute('data-step-panel')) !== String(n); });
 
@@ -524,12 +606,15 @@
     };
 
     var advance = function () {
+        refresh();
         if (nextBtn.classList.contains('is-busy')) return;
         if (step < 4) { if (validate(step)) go(step + 1); return; }
         for (var i = 1; i <= 3; i++) {
             if (!validate(i)) { go(i); validate(i); return; }
         }
-        copies.value = clampCopies();
+        quantityInputs.forEach(function (input) {
+            if (!input.disabled) input.value = Math.min(maxCopies, Math.max(1, parseInt(input.value, 10) || 1));
+        });
         nextBtn.classList.add('is-busy');
         nextBtn.textContent = 'Submitting…';
         form.submit();
@@ -554,20 +639,41 @@
 
     form.addEventListener('change', function (e) {
         if (e.target.matches('input[type="radio"]')) clearErrors();
+        if (e.target.matches('.js-document-type')) {
+            var row = e.target.closest('[data-document-option]');
+            row.querySelector('.js-document-copies').disabled = !e.target.checked;
+            row.querySelectorAll('[data-copy-step]').forEach(function (button) { button.disabled = !e.target.checked; });
+            typeGroup.classList.remove('is-invalid');
+            typeError.classList.remove('is-shown');
+        }
         refresh();
+    });
+    form.addEventListener('click', function (e) {
+        var button = e.target.closest('[data-copy-step]');
+        if (!button || button.disabled) return;
+        var input = button.closest('[data-document-option]').querySelector('.js-document-copies');
+        input.value = Math.min(maxCopies, Math.max(1, (parseInt(input.value, 10) || 1) + parseInt(button.getAttribute('data-copy-step'), 10)));
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     });
     form.addEventListener('input', function (e) {
         if (e.target.id === 'documentPaymentReference') {
             e.target.classList.remove('is-invalid');
             show(errFor('ref'), false);
         }
+        if (e.target.matches('.js-document-copies')) {
+            e.target.classList.remove('is-invalid');
+            typeError.classList.remove('is-shown');
+        }
         refresh();
     });
 
-    /* copies stepper */
-    copies.addEventListener('blur', function () { copies.value = clampCopies(); refresh(); });
-    minus.addEventListener('click', function () { copies.value = Math.max(1, clampCopies() - 1); refresh(); });
-    plus.addEventListener('click', function () { copies.value = Math.min(maxCopies, clampCopies() + 1); refresh(); });
+    quantityInputs.forEach(function (input) {
+        input.addEventListener('blur', function () {
+            if (!input.disabled && input.value) input.value = Math.min(maxCopies, Math.max(1, parseInt(input.value, 10) || 1));
+            refresh();
+        });
+    });
 
     /* day rail */
     if (rail) {

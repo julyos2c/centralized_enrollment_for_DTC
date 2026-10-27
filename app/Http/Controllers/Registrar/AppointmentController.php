@@ -129,7 +129,7 @@ class AppointmentController extends Controller
         $allowed = ['pending', 'confirmed', 'cancelled', 'all'];
         if (! in_array($status, $allowed)) $status = 'pending';
 
-        $query = Appointment::with(['user', 'slot', 'latestPayment'])
+        $query = Appointment::with(['user', 'slot', 'latestPayment', 'documentRequests'])
             ->latest();
 
         if ($status !== 'all') {
@@ -150,9 +150,10 @@ class AppointmentController extends Controller
         $appointments = $query->paginate(\App\Support\TablePagination::perPage(15))->withQueryString();
 
         // Pending GCash payments needing attention (across all appointments)
-        $pendingPayments = AppointmentPayment::with(['appointment.user', 'appointment.slot'])
+        $pendingPayments = AppointmentPayment::with(['appointment.user', 'appointment.slot', 'appointment.documentRequests'])
             ->where('status', 'pending')
             ->where('payment_method', 'gcash')
+            ->where('is_document_bundle', false)
             ->whereHas('appointment', fn ($query) => $query->where('status', '!=', 'cancelled'))
             ->latest()
             ->get();
@@ -186,8 +187,9 @@ class AppointmentController extends Controller
                 return 'invalid_status';
             }
 
-            $linkedRequest = DocumentRequest::where('appointment_id', $locked->id)->lockForUpdate()->first();
-            if (! $linkedRequest) {
+            $linkedRequests = DocumentRequest::where('appointment_id', $locked->id)->lockForUpdate()->get();
+            $linkedRequest = $linkedRequests->first();
+            if ($linkedRequests->isEmpty()) {
                 // Safely connect a legacy standalone booking only when there is
                 // exactly one eligible document request it could belong to.
                 $documentTypes = match ($locked->document_type) {
@@ -198,8 +200,7 @@ class AppointmentController extends Controller
                 $eligibleRequests = DocumentRequest::where('user_id', $locked->user_id)
                     ->whereIn('document_type', $documentTypes)
                     ->where('status', 'ready')
-                    ->where('is_paid', true)
-                    ->where('payment_status', 'verified')
+                    ->where(fn ($q) => $q->where(fn ($paid) => $paid->where('is_paid', true)->where('payment_status', 'verified'))->orWhere(fn ($free) => $free->where('fee', 0)->where('is_paid', false)->where('payment_status', '!=', 'verified')))
                     ->whereNull('appointment_id')
                     ->lockForUpdate()
                     ->get();
@@ -207,16 +208,18 @@ class AppointmentController extends Controller
                 if ($eligibleRequests->count() === 1) {
                     $linkedRequest = $eligibleRequests->first();
                     $linkedRequest->update(['appointment_id' => $locked->id]);
+                    $linkedRequests = collect([$linkedRequest]);
                 }
             }
-            $studentBooking = $linkedRequest
+            $studentBooking = $linkedRequests->isNotEmpty()
                 && User::whereKey($locked->user_id)->first()?->hasRole(['student', 'new_applicant']);
-            $requestInProgress = $studentBooking && in_array($linkedRequest->status, ['submitted', 'processing'], true);
-            $requestReadyAndPaid = $linkedRequest
-                && $linkedRequest->status === 'ready'
-                && $linkedRequest->is_paid
-                && $linkedRequest->payment_status === 'verified';
-            if ($linkedRequest && ! $requestInProgress && ! $requestReadyAndPaid) {
+            $requestsCanBeConfirmed = $linkedRequests->every(function ($item) use ($studentBooking) {
+                $requestInProgress = $studentBooking && in_array($item->status, ['submitted', 'processing'], true);
+                $requestReadyAndPaid = $item->status === 'ready'
+                    && $item->paymentSatisfied();
+                return $requestInProgress || $requestReadyAndPaid;
+            });
+            if ($linkedRequests->isNotEmpty() && ! $requestsCanBeConfirmed) {
                 return 'request_not_ready';
             }
 
@@ -235,12 +238,7 @@ class AppointmentController extends Controller
                     'tor' => 'true_copy',
                     default => $locked->document_type,
                 };
-                $baseFee = (float) Setting::get('document_fee_' . $requestType, match ($requestType) {
-                    'tor' => 50,
-                    'diploma' => 100,
-                    'certification' => 30,
-                    'true_copy' => 50,
-                });
+                $baseFee = app(\App\Services\DocumentRequestPricing::class)->quote([['document_type' => $requestType, 'copies' => 1]])['total'];
 
                 $linkedRequest = DocumentRequest::create([
                     'user_id' => $locked->user_id,
@@ -253,6 +251,7 @@ class AppointmentController extends Controller
                     'payment_method' => 'walk_in',
                     'payment_status' => 'unpaid',
                 ]);
+                app(\App\Services\DocumentRequestPricing::class)->auditNoPayment($linkedRequest, request());
             }
 
             $locked->update(['status' => 'confirmed']);
@@ -270,14 +269,18 @@ class AppointmentController extends Controller
         }
 
         $appointment->refresh()->load(['slot', 'user']);
-        $linkedRequest = DocumentRequest::where('appointment_id', $appointment->id)->first();
+        $confirmedRequests = DocumentRequest::where('appointment_id', $appointment->id)->get();
+        $linkedRequest = $confirmedRequests->first();
+        $documentSummary = $confirmedRequests->map(fn ($item) => $item->document_label . ' × ' . $item->copies)->implode(', ');
         $pickupDate = \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y');
         $pickupTime = \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A');
         if ($linkedRequest && in_array($linkedRequest->status, ['submitted', 'processing'], true)) {
-            $notificationMessage = 'Your request for ' . $linkedRequest->document_label . ' and appointment on ' . $pickupDate . ' at ' . $pickupTime . ' are confirmed. The Registrar will process your document request. Bring a valid ID when you visit.';
+            $notificationMessage = 'Your requests for ' . $documentSummary . ' and appointment on ' . $pickupDate . ' at ' . $pickupTime . ' are confirmed. The Registrar will process your document requests. Bring a valid ID when you visit.';
             $applicantDestination = route('portal.appointments.index');
         } elseif ($linkedRequest) {
-            $notificationMessage = 'Your pickup appointment for ' . $linkedRequest->document_label . ' is confirmed for ' . $pickupDate . ' at ' . $pickupTime . '. Bring a valid ID and your payment receipt. After pickup, the Registrar will mark your request as released.';
+            $pickupInstructions = $confirmedRequests->every(fn ($item) => $item->paymentNotRequired())
+                ? 'Bring a valid ID. No Payment Required.' : 'Bring a valid ID and your payment receipt.';
+            $notificationMessage = 'Your pickup appointment for ' . $documentSummary . ' is confirmed for ' . $pickupDate . ' at ' . $pickupTime . '. '.$pickupInstructions.' After pickup, the Registrar will mark each request as released.';
             $applicantDestination = $appointment->user->hasRole('alumni')
                 ? route('portal.documents.index')
                 : route('portal.appointments.index');
@@ -286,6 +289,7 @@ class AppointmentController extends Controller
             $applicantDestination = route('portal.appointments.index');
         }
 
+        if (!$appointment->user->hasAnyRole(['student', 'alumni'])) $applicantDestination = route('portal.dashboard');
         $notified = NotificationService::sendUserUpdateSafely(
             $appointment->user,
             'appointment-confirmed:'.$appointment->id,
@@ -331,6 +335,7 @@ class AppointmentController extends Controller
             $appointment = Appointment::whereKey($payment->appointment_id)->lockForUpdate()->firstOrFail();
             $lockedPayment = AppointmentPayment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
+            abort_if($lockedPayment->is_document_bundle, 422, 'Bundled payments must be verified by the Cashier.');
             abort_if($lockedPayment->status !== 'pending' || $lockedPayment->payment_method !== 'gcash', 422, 'Payment is not pending.');
             abort_if($appointment->status === 'cancelled', 422, 'Payment cannot be verified for a cancelled appointment.');
             abort_if(
@@ -376,6 +381,7 @@ class AppointmentController extends Controller
         DB::transaction(function () use ($payment, $validated) {
             Appointment::whereKey($payment->appointment_id)->lockForUpdate()->firstOrFail();
             $lockedPayment = AppointmentPayment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
+            abort_if($lockedPayment->is_document_bundle, 422, 'Bundled payments must be reviewed by the Cashier.');
             abort_if($lockedPayment->status !== 'pending' || $lockedPayment->payment_method !== 'gcash', 422, 'Payment is not pending.');
 
             $lockedPayment->update([

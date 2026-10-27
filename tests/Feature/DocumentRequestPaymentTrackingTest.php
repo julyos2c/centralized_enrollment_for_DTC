@@ -58,6 +58,84 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $this->assertDatabaseCount('document_payment_notification_outbox', 0);
     }
 
+    public function test_alumni_can_submit_multiple_documents_and_quantities_for_one_pickup_appointment(): void
+    {
+        $alumni = $this->makeUserWithRole('alumni');
+        $slot = AppointmentSlot::factory()->create();
+
+        $this->actingAs($alumni)->post(route('portal.documents.store'), [
+            'documents' => [
+                ['document_type' => 'tor', 'copies' => 1],
+                ['document_type' => 'diploma', 'copies' => 1],
+                ['document_type' => 'certification', 'copies' => 2],
+            ],
+            'appointment_slot_id' => $slot->id,
+            'payment_method' => 'walk_in',
+            'purpose' => 'Employment',
+        ])->assertRedirect(route('portal.documents.index'))->assertSessionHasNoErrors();
+
+        $appointment = Appointment::where('user_id', $alumni->id)->firstOrFail();
+        $requests = DocumentRequest::where('appointment_id', $appointment->id)->orderBy('id')->get();
+        $this->assertCount(3, $requests);
+        $this->assertSame(['tor', 'diploma', 'certification'], $requests->pluck('document_type')->all());
+        $this->assertSame(['50.00', '100.00', '60.00'], $requests->pluck('fee')->all());
+        $this->assertSame([1, 1, 2], $requests->pluck('copies')->all());
+        $this->assertSame('210.00', $appointment->payments()->where('is_document_bundle', true)->value('amount'));
+
+        $this->actingAs($alumni)->get(route('portal.documents.index'))
+            ->assertOk()
+            ->assertSee('Appointment #' . $appointment->id)
+            ->assertSee('Transcript of Records')
+            ->assertSee('Diploma')
+            ->assertSee('Certification')
+            ->assertSee('Appointment combined total');
+    }
+
+    public function test_student_and_alumni_document_selection_use_the_shared_redesigned_cards(): void
+    {
+        $student = $this->makeUserWithRole('student');
+        $alumni = $this->makeUserWithRole('alumni');
+
+        $this->actingAs($student)->get(route('portal.appointments.create'))
+            ->assertOk()
+            ->assertSee('css/document-request-flow.css')
+            ->assertSee('dr-document-options', false)
+            ->assertSee('per copy')
+            ->assertSee('data-copy-step="-1"', false)
+            ->assertSee('data-document-subtotal', false);
+
+        $this->actingAs($alumni)->get(route('portal.documents.create'))
+            ->assertOk()
+            ->assertSee('css/document-request-flow.css')
+            ->assertSee('dr-document-options', false)
+            ->assertSee('per copy')
+            ->assertSee('data-copy-step="-1"', false)
+            ->assertSee('data-document-subtotal', false);
+    }
+
+    public function test_alumni_cannot_mix_legacy_and_combined_document_fields_or_book_a_bundle_without_a_slot(): void
+    {
+        $alumni = $this->makeUserWithRole('alumni');
+
+        $this->actingAs($alumni)->post(route('portal.documents.store'), [
+            'document_type' => 'tor',
+            'copies' => 1,
+            'documents' => [['document_type' => 'diploma', 'copies' => 1]],
+            'payment_method' => 'walk_in',
+        ])->assertSessionHasErrors('documents');
+
+        $this->actingAs($alumni)->post(route('portal.documents.store'), [
+            'documents' => [
+                ['document_type' => 'tor', 'copies' => 1],
+                ['document_type' => 'diploma', 'copies' => 1],
+            ],
+            'payment_method' => 'walk_in',
+        ])->assertSessionHasErrors('appointment_slot_id');
+
+        $this->assertDatabaseCount('appointments', 0);
+        $this->assertDatabaseCount('document_requests', 0);
+    }
+
     public function test_alumni_cannot_submit_gcash_claim_without_a_configured_official_qr(): void
     {
         $alumni = $this->makeUserWithRole('alumni');
@@ -160,7 +238,7 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $this->actingAs($cashier)->get(route('cashier.document-payments.index'))
             ->assertOk()->assertSee('Document Fee Payments');
         $this->actingAs($cashier)->get(route('cashier.document-payments.show', $documentRequest))
-            ->assertOk()->assertSee('GCASH-REF-300');
+            ->assertOk()->assertSee('GCASH-REF-300')->assertSee('css/cashier-payment-pages.css');
     }
 
     public function test_cashier_can_verify_a_walk_in_payment_with_exact_amount_and_manual_receipt(): void
@@ -618,6 +696,45 @@ class DocumentRequestPaymentTrackingTest extends TestCase
 
         $this->assertFalse($request->fresh()->is_paid);
         $this->assertSame('unpaid', $request->fresh()->payment_status);
+    }
+
+    public function test_alumni_history_has_a_cancelled_filter_and_preserves_cancelled_request_details(): void
+    {
+        $alumni = $this->makeUserWithRole('alumni');
+        $appointment = Appointment::factory()->create([
+            'user_id' => $alumni->id,
+            'status' => 'cancelled',
+            'remarks' => 'Pickup appointment cancelled.',
+        ]);
+        $request = $this->makeDocumentRequest($alumni, [
+            'appointment_id' => $appointment->id,
+            'document_type' => 'diploma',
+            'status' => 'cancelled',
+            'payment_status' => 'unpaid',
+        ]);
+        $cancelledPickup = Appointment::factory()->cancelled()->create(['user_id' => $alumni->id]);
+        $activeRequest = $this->makeDocumentRequest($alumni, [
+            'appointment_id' => $cancelledPickup->id,
+            'document_type' => 'certification',
+            'status' => 'ready',
+            'is_paid' => true,
+            'payment_status' => 'verified',
+        ]);
+
+        $this->actingAs($alumni)->get(route('portal.documents.index'))
+            ->assertOk()
+            ->assertSee('data-filter="cancelled"', false)
+            ->assertSee('data-group="cancelled"', false)
+            ->assertSee('data-group="ready"', false)
+            ->assertSee('Diploma')
+            ->assertSee('Certification')
+            ->assertSee('This document request was cancelled and is kept here for your records.')
+            ->assertSee('Pickup appointment cancelled.')
+            ->assertSee('Choose a new pickup time')
+            ->assertSee('Payment details');
+
+        $this->assertSame('cancelled', $request->fresh()->status);
+        $this->assertSame('ready', $activeRequest->fresh()->status);
     }
 
     private function makeDocumentRequest($user, array $attributes = []): DocumentRequest

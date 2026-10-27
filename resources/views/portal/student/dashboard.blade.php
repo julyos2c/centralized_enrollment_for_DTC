@@ -7,7 +7,6 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 font-weight-bold">Student Dashboard</h4>
-            <p class="mb-0 u-text-secondary-sm" >Welcome to Danao Technological College!</p>
         </div>
     </div>
 @endsection
@@ -22,7 +21,7 @@
     if (!$latestEnrollment) {
         $appStatusLabel = 'Not Started';
     } elseif ($latestEnrollment->status === 'approved' && $latestEnrollment->is_paid) {
-        $appStatusLabel = 'Enrolled ✓';
+        $appStatusLabel = 'Enrolled';
     } elseif ($latestEnrollment->status === 'approved') {
         $appStatusLabel = 'Approved';
     } elseif ($latestEnrollment->status === 'pending') {
@@ -43,74 +42,12 @@
     } else {
         $paymentStatusLabel = 'Awaiting Payment';
     }
-    $nextStepSummary = $nextSteps[0]['label'] ?? 'Review enrollment record';
 @endphp
 
 <div class="dtc-portal-dashboard">
-<div class="dtc-dashboard-overview mb-3" aria-label="Enrollment overview">
-    <div class="dtc-overview-item">
-        <span class="dtc-overview-label">Enrollment</span>
-        <strong>{{ $appStatusLabel }}</strong>
-        <a href="{{ route('portal.enrollment.index') }}">View application</a>
-    </div>
-    <div class="dtc-overview-item">
-        <span class="dtc-overview-label">Payment</span>
-        <strong>{{ $paymentStatusLabel }}</strong>
-        @if($latestEnrollment && $latestEnrollment->status === 'approved' && !$latestEnrollment->is_paid && (!$latestEnrollment->payment || $latestEnrollment->payment->status !== 'pending'))
-            <a href="{{ route('portal.enrollment.payment-info', $latestEnrollment) }}">Payment details</a>
-        @else
-            <span class="dtc-overview-note">{{ $latestEnrollment && $latestEnrollment->is_paid ? 'Payment recorded' : 'No payment action due' }}</span>
-        @endif
-    </div>
-    <div class="dtc-overview-item">
-        <span class="dtc-overview-label">Next step</span>
-        <strong>{{ $nextStepSummary }}</strong>
-        @if(!empty($nextSteps[0]['url']))
-            <a href="{{ $nextSteps[0]['url'] }}">Continue</a>
-        @else
-            <span class="dtc-overview-note">See the Registrar for guidance</span>
-        @endif
-    </div>
-</div>
 
 {{-- ══ WELCOME CARD ════════════════════════════════════════════════════ --}}
-<div class="card mb-3 dtc-welcome-card">
-    <div class="card-body">
-        <div class="dtc-welcome-layout">
-            @include('portal.partials.dashboard-avatar')
-            <div class="dtc-welcome-copy">
-                <h4 class="dtc-welcome-title">
-                    <span class="dtc-welcome-greeting">Hello,</span>{{ auth()->user()->name }}
-                </h4>
-                @if($studentProfile && $studentProfile->enrolled_ay)
-                <p class="dtc-welcome-meta">
-                    @if($studentProfile->program)<span>{{ $studentProfile->program->name }}</span>@endif
-                    <span>Enrolled AY {{ $studentProfile->enrolled_ay }}</span>
-                </p>
-                @endif
-                <p class="dtc-welcome-text">
-                    @if(!$latestEnrollment)
-                        Submit your application to begin enrollment.
-                    @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
-                        Enrollment complete. Your payment is confirmed.
-                    @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->payment && $latestEnrollment->payment->status === 'pending')
-                        Your payment proof is awaiting Cashier verification.
-                    @elseif($latestEnrollment->status === 'approved' && $latestEnrollment->payment && $latestEnrollment->payment->status === 'rejected')
-                        Your payment proof was rejected. Review the payment details and submit a corrected proof.
-                    @elseif($latestEnrollment->status === 'approved')
-                        Your enrollment is approved! Please proceed to the Cashier to pay ₱{{ number_format($fee, 2) }}.
-                    @elseif($latestEnrollment->status === 'pending')
-                        Your enrollment is under review. Please wait for the Registrar's approval.
-                    @elseif($latestEnrollment->status === 'rejected')
-                        Your enrollment was rejected. Review the Registrar's feedback and follow the resubmission step below.
-                    @else
-                        Your enrollment was not approved. Please contact the Registrar.
-                    @endif
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
+@include('portal.partials.dashboard-profile', ['profileRole' => 'student'])
 
 {{-- ══ MAIN CONTENT ROW ════════════════════════════════════════════════ --}}
 <div class="row">
@@ -121,12 +58,14 @@
         <section class="card mb-3 dtc-current-term" aria-labelledby="current-term-title">
             <div class="card-body">
                 <div class="dtc-current-term-heading">
-                    <div>
-                        <span class="dtc-current-term-kicker">Academic calendar</span>
-                        <h2 id="current-term-title">Current semester</h2>
-                        <p>{{ $currentSemester ?: 'Semester not set' }}{{ $currentSchoolYear ? ' · AY '.$currentSchoolYear : '' }}</p>
+                    <div class="dtc-term-identity">
+                        <span class="dtc-term-icon" aria-hidden="true"><i data-lucide="calendar"></i></span>
+                        <div>
+                            <span class="dtc-current-term-kicker">Current semester</span>
+                            <h2 id="current-term-title">{{ $currentSemester ? ($currentSemester === 'Summer' ? 'Summer term' : $currentSemester.' Semester') : 'Semester not set' }}</h2>
+                        </div>
                     </div>
-                    <span class="dtc-term-badge is-{{ $termStatus }}">
+                    <span class="dtc-term-badge is-{{ $termStatus }}"><span aria-hidden="true"></span>
                         @if($termStatus === 'in_progress') In progress
                         @elseif($termStatus === 'upcoming') Upcoming
                         @elseif($termStatus === 'ended') Term ended
@@ -134,57 +73,58 @@
                         @endif
                     </span>
                 </div>
-
-                @if($semesterStartsOn && $semesterEndsOn)
-                    <p class="dtc-current-term-dates">
-                        <i data-lucide="calendar-days" aria-hidden="true"></i>
-                        {{ \Carbon\Carbon::parse($semesterStartsOn)->format('M j, Y') }} – {{ \Carbon\Carbon::parse($semesterEndsOn)->format('M j, Y') }}
-                    </p>
+                @if($termProgress !== null)
+                    <div class="dtc-term-dates">
+                        <div><span>Starts</span><time datetime="{{ $termStartDate->toDateString() }}">{{ $termStartDate->format('M j, Y') }}</time></div>
+                        <div><span>Ends</span><time datetime="{{ $termEndDate->toDateString() }}">{{ $termEndDate->format('M j, Y') }}</time></div>
+                    </div>
+                    <div class="dtc-term-progress" role="progressbar" aria-label="Semester elapsed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $termProgress }}" style="--term-progress: {{ $termProgress }}%">
+                        <span></span>
+                    </div>
+                    <div class="dtc-term-progress-meta">
+                        <span><strong>{{ $termProgress }}%</strong> complete</span>
+                        <span>
+                            @if($termStatus === 'upcoming') <strong>{{ $termDaysUntilStart }} {{ $termDaysUntilStart === 1 ? 'day' : 'days' }}</strong> until start
+                            @elseif($termStatus === 'ended') Term ended
+                            @elseif($termDaysLeft === 0) <strong>Ends today</strong>
+                            @else <strong>{{ $termDaysLeft }} {{ $termDaysLeft === 1 ? 'day' : 'days' }}</strong> left
+                            @endif
+                        </span>
+                    </div>
                 @else
-                    <p class="dtc-current-term-dates">The Registrar has not published the semester dates yet.</p>
+                    <p class="dtc-term-empty">Semester dates are unavailable. Please check with the Registrar.</p>
                 @endif
-
-                <div class="dtc-current-term-enrollment">
-                    <span>Your enrollment</span>
-                    @if(!$currentTermEnrollment)
-                        <strong>No enrollment record for this term</strong>
-                    @elseif($currentTermEnrollment->status === 'rejected')
-                        <strong class="is-rejected">Returned for correction</strong>
-                    @elseif($currentTermEnrollment->status === 'pending')
-                        <strong class="is-pending">Awaiting Registrar review</strong>
-                    @elseif($currentTermEnrollment->status === 'approved' && $currentTermEnrollment->is_paid)
-                        <strong class="is-complete">Enrollment confirmed</strong>
-                    @elseif($currentTermEnrollment->status === 'approved' && $currentTermEnrollment->payment && $currentTermEnrollment->payment->status === 'pending')
-                        <strong class="is-pending">Payment awaiting verification</strong>
-                    @elseif($currentTermEnrollment->status === 'approved' && $currentTermEnrollment->payment && $currentTermEnrollment->payment->status === 'rejected')
-                        <strong class="is-rejected">Payment proof rejected</strong>
-                    @else
-                        <strong class="is-pending">Awaiting payment</strong>
-                    @endif
-                    <a href="{{ route('portal.enrollment.index') }}">Enrollment history</a>
-                </div>
+                <div class="dtc-term-footer"><a href="{{ route('portal.enrollment.index') }}">Enrollment history <i data-lucide="arrow-right" aria-hidden="true"></i></a></div>
             </div>
         </section>
 
         {{-- Enrollment Progress Stepper --}}
         @if($timeline)
         @php
-            // The track spans first-to-last marker, so fill it 0–100% up to the last finished step.
-            $timelineCount = max(count($timeline), 2);
-            $lastDone = -1;
-            foreach (array_values($timeline) as $idx => $st) { if (! empty($st['done'])) { $lastDone = $idx; } }
-            $timelineProgress = $lastDone > 0 ? ($lastDone / ($timelineCount - 1)) * 100 : 0;
+            $journeyCompleted = collect($timeline)->where('done', true)->count();
+            $journeyComplete = $journeyCompleted === count($timeline);
         @endphp
         <section class="card mb-3 dtc-enrollment-card" aria-labelledby="enrollment-progress-title">
             <div class="card-header dtc-enrollment-card-header">
                 <div>
-                    <h2 id="enrollment-progress-title">First enrollment progress</h2>
-                    <p>Your admission and first enrollment milestones.</p>
+                    <span class="dtc-enrollment-eyebrow">Enrollment journey</span>
+                    <h2 id="enrollment-progress-title">Enrollment progress</h2>
+                    <p>
+                        @if($currentSchoolYear && $currentSemester)
+                            {{ $currentSemester }} semester &middot; AY {{ $currentSchoolYear }}
+                        @elseif($latestEnrollment)
+                            Latest enrollment{{ $latestEnrollment->school_year ? ' · AY '.$latestEnrollment->school_year : '' }}
+                        @else
+                            Track your enrollment milestones.
+                        @endif
+                    </p>
                 </div>
+                <span class="dtc-enrollment-status {{ $journeyComplete ? 'is-complete' : '' }}" aria-label="{{ $journeyCompleted }} of {{ count($timeline) }} milestones complete">
+                    <span aria-hidden="true"></span>{{ $journeyCompleted }} of {{ count($timeline) }} complete
+                </span>
             </div>
             <div class="card-body dtc-enrollment-card-body">
-                <ol class="dtc-enrollment-steps" style="--enrollment-progress: {{ $timelineProgress }}%; --enrollment-step-count: {{ count($timeline) }};">
-                    <li class="dtc-enrollment-track" aria-hidden="true"><span></span></li>
+                <ol class="dtc-enrollment-steps" style="--enrollment-step-count: {{ count($timeline) }};">
                     @foreach ($timeline as $i => $step)
                         @php
                             $stepState = ($step['rejected'] ?? false) ? 'rejected' : ($step['done'] ? 'done' : ($step['active'] ? 'active' : 'pending'));
@@ -200,6 +140,7 @@
                                 @endif
                             </span>
                             <span class="dtc-enrollment-step-copy">
+                                <small class="dtc-enrollment-step-number">Step {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</small>
                                 <strong>{{ $step['label'] }}</strong>
                                 <span>{{ $step['sublabel'] }}</span>
                             </span>
@@ -215,7 +156,7 @@
                     </div>
                 @elseif($latestEnrollment && $latestEnrollment->status === 'approved' && $latestEnrollment->is_paid)
                     <div class="dtc-enrollment-notice is-complete" role="status">
-                        <i data-lucide="circle-check" aria-hidden="true"></i>
+                        <i data-lucide="award" aria-hidden="true"></i>
                         <div><strong>Enrollment complete</strong><span>All steps completed! You are officially enrolled.</span></div>
                     </div>
                 @elseif($latestEnrollment && $latestEnrollment->status === 'rejected')
@@ -258,35 +199,6 @@
 
     {{-- RIGHT: Announcements + Quick Actions --}}
     <div class="col-lg-4">
-
-        {{-- Important Reminder --}}
-        @if($latestEnrollment && $latestEnrollment->status === 'approved' && !$latestEnrollment->is_paid && (!$latestEnrollment->payment || $latestEnrollment->payment->status !== 'pending'))
-        <div class="card mb-3 alert alert-warning"
-             style="border-radius:16px;">
-            <div class="card-body p-3">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                    <div class="dtc-icon-swatch is-warning" style="width:32px; height:32px;">
-                        <i data-lucide="bell" style="font-size:14px;"></i>
-                    </div>
-                    <span style="font-size:13px; font-weight:700;">
-                        Important Reminder
-                    </span>
-                </div>
-                <p style="font-size:12px; opacity:0.85; margin:0 0 12px; line-height:1.6;">
-                    @if($latestEnrollment->payment && $latestEnrollment->payment->status === 'rejected')
-                        Your payment proof was rejected. Review the cashier's feedback and submit a corrected proof.
-                    @else
-                        Please complete your enrollment process by paying the ₱{{ number_format($fee, 2) }} fee at the Cashier's Office.
-                    @endif
-                </p>
-                <a class="btn btn-warning btn-sm btn-block  u-text-xxs"
-                        href="{{ route('portal.enrollment.payment-info', $latestEnrollment) }}"
-                        >
-                    Proceed to Payment →
-                </a>
-            </div>
-        </div>
-        @endif
 
         {{-- Recent notifications use the real messages stored for this student. --}}
         <div class="card mb-3">
@@ -368,7 +280,7 @@
                     </div>
                     <div>
                         <div  class="u-text-sm-bold">
-                            {{ ucfirst($nextAppointment->document_type) }}
+                            {{ $nextAppointment->document_labels->join(', ') }}
                         </div>
                         <div style="font-size:11px; opacity:0.75; margin-top:2px;">
                             <i data-lucide="clock" class="mr-1"></i>
@@ -396,8 +308,9 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<link rel="stylesheet" href="{{ asset_v('css/profile.css') }}">
-<link rel="stylesheet" href="{{ asset_v('css/student-dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/dashboard-profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/student-dashboard.css') }}">
 @endsection
 
 @section('js')

@@ -43,7 +43,7 @@
         <div id="search-default">
             <div class="search-section">
                 <div class="search-section-label">Suggestions</div>
-                <div id="suggestions-list"></div>
+                <div id="suggestions-list" @unless(auth()->user()->hasAnyRole(['student', 'alumni', 'admin', 'registrar', 'cashier'])) data-hide-document-booking @endunless></div>
             </div>
 
             <div class="search-section-footer">

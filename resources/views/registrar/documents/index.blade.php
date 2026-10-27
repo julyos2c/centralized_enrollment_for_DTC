@@ -180,12 +180,12 @@
                             <div class="dq-sub dq-purpose">{{ $req->purpose ?: 'No purpose given' }}</div>
                             <div class="dq-mobile-pay" style="align-items:center; justify-content:space-between; margin-top:8px;">
                                 <span class="dq-fee" style="margin:0; font-size:15px;">₱{{ number_format($req->fee, 2) }}</span>
-                                <span class="dq-pay is-{{ $paymentTone[$req->payment_status] ?? 'neutral' }}">{{ $paymentText[$req->payment_status] ?? ucfirst($req->payment_status) }}</span>
+                                <span class="dq-pay is-{{ $paymentTone[$req->payment_status] ?? 'neutral' }}">{{ $req->paymentNotRequired() ? 'No Payment Required' : ($paymentText[$req->payment_status] ?? ucfirst($req->payment_status)) }}</span>
                             </div>
                         </td>
                         <td>
                             <div class="dq-fee">₱{{ number_format($req->fee, 2) }}</div>
-                            <span class="dq-pay is-{{ $paymentTone[$req->payment_status] ?? 'neutral' }}">{{ $paymentText[$req->payment_status] ?? ucfirst($req->payment_status) }}</span>
+                            <span class="dq-pay is-{{ $paymentTone[$req->payment_status] ?? 'neutral' }}">{{ $req->paymentNotRequired() ? 'No Payment Required' : ($paymentText[$req->payment_status] ?? ucfirst($req->payment_status)) }}</span>
                         </td>
                         <td>
                             <span class="dtc-status-badge dq-badge is-{{ $statusTone($req->status) }}" style="font-weight:700;">
@@ -251,7 +251,7 @@
 {{-- Status modals (kept outside the table so they never inherit row styling) --}}
 @foreach ($requests as $req)
     @if ($req->status !== 'cancelled')
-    @php $releaseLocked = ! $req->is_paid || $req->payment_status !== 'verified'; @endphp
+    @php $releaseLocked = !$req->paymentSatisfied(); @endphp
     <div class="modal fade" id="statusModal{{ $req->id }}" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">

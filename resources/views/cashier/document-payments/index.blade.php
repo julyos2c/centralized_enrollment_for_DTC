@@ -42,6 +42,47 @@
         </div>
     </div>
 </form>
+@if ($bundles->isNotEmpty())
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
+        <strong class="u-text">Combined appointment payments</strong><span class="u-text-secondary-sm">{{ $bundles->total() }} payments</span>
+    </div>
+    <div class="card-body p-0 table-responsive">
+        <table class="table dtc-table dtc-docpay-table mb-0">
+            <thead><tr><th>Requester</th><th>Appointment</th><th>Documents</th><th>Method</th><th>Total</th><th>Payment status</th><th></th></tr></thead>
+            <tbody>
+            @foreach ($bundles as $bundle)
+                @php
+                    $bundleStatus = $bundle->status === 'pending'
+                        ? ($bundle->payment_method === 'gcash' ? 'pending_verification' : 'unpaid')
+                        : $bundle->status;
+                    $bundleTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'][$bundleStatus] ?? 'neutral';
+                    $firstRequest = $bundle->appointment->documentRequests->first();
+                @endphp
+                <tr>
+                    <td>{{ $bundle->appointment->user->name }}</td>
+                    <td>#{{ $bundle->appointment_id }} · {{ optional($bundle->appointment->slot)->date }}</td>
+                    <td>{{ $bundle->appointment->documentRequests->count() }} documents</td>
+                    <td>{{ $bundle->payment_method === 'gcash' ? 'GCash QR' : 'Walk-in' }}</td>
+                    <td class="dtc-pay-fee">₱{{ number_format($bundle->amount, 2) }}</td>
+                    <td><span class="dtc-status-badge is-{{ $bundleTone }}">{{ ucfirst(str_replace('_', ' ', $bundleStatus)) }}</span></td>
+                    <td>
+                        @if ($firstRequest)
+                            <a class="btn btn-sm btn-primary dtc-docpay-action" href="{{ route('cashier.document-payments.show', $firstRequest) }}">Review bundle</a>
+                        @else
+                            <span class="u-text-muted">No linked requests</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+    @if ($bundles->hasPages())
+        <div class="card-footer">{{ $bundles->onEachSide(1)->links('pagination::bootstrap-4') }}</div>
+    @endif
+</div>
+@endif
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
         <strong class="u-text">Document requests</strong><span class="u-text-secondary-sm">{{ $requests->total() }} records</span>

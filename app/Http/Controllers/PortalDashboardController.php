@@ -51,7 +51,7 @@ class PortalDashboardController extends Controller
         $nextStep = $this->getNewApplicantNextStep($application, $enrollment, $fee);
 
         return view('portal.new-applicant.dashboard', compact(
-            'application', 'enrollment', 'unreadCount', 'announcements', 'nextStep'
+            'application', 'enrollment', 'unreadCount', 'announcements', 'nextStep', 'fee'
         ));
     }
 
@@ -163,17 +163,13 @@ class PortalDashboardController extends Controller
             ->latest()->get();
 
         $totalRequests = $requests->count();
-        $readyRequests = $requests->filter(fn ($item) => $item->status === 'ready' && $item->is_paid && $item->payment_status === 'verified')->count();
+        $readyRequests = $requests->filter(fn ($item) => $item->status === 'ready' && $item->paymentSatisfied())->count();
         $releasedDocs  = $requests->where('status', 'released')->count();
         $totalFees     = $requests->sum('fee');
 
         $recentRequests = $requests->take(5);
 
-        $nextAppointment = Appointment::with('slot')
-            ->where('user_id', $user->id)
-            ->where('status', 'confirmed')
-            ->whereHas('slot', fn($q) => $q->whereDate('date', '>=', today()))
-            ->latest()->first();
+        $nextAppointment = $this->nextConfirmedAppointment($user->id);
 
         $unreadCount = $user->unreadNotificationsCount();
 
@@ -193,9 +189,18 @@ class PortalDashboardController extends Controller
 
     private function studentDashboard($user)
     {
+        $currentSchoolYear = Setting::get('current_school_year');
+        $currentSemester = Setting::get('current_semester');
+        $semesterNumbers = ['1st' => 1, '2nd' => 2, 'Summer' => 3];
+        $hasConfiguredTerm = $currentSchoolYear && isset($semesterNumbers[$currentSemester]);
+
+        // Progress, subjects and actions must all refer to the same enrollment term.
         $latestEnrollment = Enrollment::where('user_id', $user->id)
             ->with('payment')
-            ->latest()->first();
+            ->when($hasConfiguredTerm, fn ($query) => $query
+                ->where('school_year', $currentSchoolYear)
+                ->where('semester', $semesterNumbers[$currentSemester]))
+            ->latest()->orderByDesc('id')->first();
 
         $totalEnrollments = Enrollment::where('user_id', $user->id)->count();
         $approvedCount    = Enrollment::where('user_id', $user->id)
@@ -209,41 +214,44 @@ class PortalDashboardController extends Controller
             $subjects = CourseSubject::whereIn('id', $latestEnrollment->subject_ids ?? [])->get();
         }
 
-        $nextAppointment = Appointment::with('slot')
-            ->where('user_id', $user->id)
-            ->where('status', 'confirmed')
-            ->whereHas('slot', fn($q) => $q->whereDate('date', '>=', today()))
-            ->latest()->first();
+        $nextAppointment = $this->nextConfirmedAppointment($user->id);
 
         $fee = Setting::get('enrollment_fee', 500);
-        $currentSchoolYear = Setting::get('current_school_year');
-        $currentSemester = Setting::get('current_semester');
-        $semesterNumbers = ['1st' => 1, '2nd' => 2, 'Summer' => 3];
         $timezone = Setting::get('default_timezone', config('app.timezone', 'Asia/Manila'));
         $semesterStartsOn = Setting::get('semester_starts_on');
         $semesterEndsOn = Setting::get('semester_ends_on');
         $termStatus = 'dates_missing';
+        $termProgress = null;
+        $termDaysLeft = null;
+        $termDaysUntilStart = null;
+        $termStartDate = null;
+        $termEndDate = null;
 
         if ($semesterStartsOn && $semesterEndsOn) {
+            try {
+                $termStartDate = Carbon::parse($semesterStartsOn, $timezone)->startOfDay();
+                $termEndDate = Carbon::parse($semesterEndsOn, $timezone)->startOfDay();
+            } catch (\Exception $exception) {
+                $termStartDate = $termEndDate = null;
+            }
+        }
+        if ($termStartDate && $termEndDate && $termStartDate->lte($termEndDate)) {
             $today = Carbon::today($timezone);
-            if ($today->lt(Carbon::parse($semesterStartsOn, $timezone)->startOfDay())) {
+            $duration = $termStartDate->diffInDays($termEndDate) + 1;
+            $elapsed = $termStartDate->diffInDays($today, false);
+            $termProgress = (int) floor(max(0, min(1, $elapsed / $duration)) * 100);
+            $termDaysLeft = (int) max(0, $today->diffInDays($termEndDate, false));
+            $termDaysUntilStart = (int) max(0, $today->diffInDays($termStartDate, false));
+            if ($today->lt($termStartDate)) {
                 $termStatus = 'upcoming';
-            } elseif ($today->gt(Carbon::parse($semesterEndsOn, $timezone)->endOfDay())) {
+            } elseif ($today->gt($termEndDate)) {
                 $termStatus = 'ended';
             } else {
                 $termStatus = 'in_progress';
             }
         }
 
-        $currentTermEnrollment = null;
-        if ($currentSchoolYear && isset($semesterNumbers[$currentSemester])) {
-            $currentTermEnrollment = Enrollment::where('user_id', $user->id)
-                ->where('school_year', $currentSchoolYear)
-                ->where('semester', $semesterNumbers[$currentSemester])
-                ->with('payment')
-                ->latest()
-                ->first();
-        }
+        $currentTermEnrollment = $hasConfiguredTerm ? $latestEnrollment : null;
         $timeline = [];
         $completedSteps = 0;
         if ($latestEnrollment) {
@@ -308,8 +316,34 @@ class PortalDashboardController extends Controller
             'paidCount', 'unreadCount', 'subjects', 'nextAppointment',
             'timeline', 'completedSteps', 'announcements', 'nextSteps', 'fee',
             'studentProfile', 'currentSchoolYear', 'currentSemester', 'semesterStartsOn',
-            'semesterEndsOn', 'termStatus', 'currentTermEnrollment'
+            'semesterEndsOn', 'termStatus', 'currentTermEnrollment',
+            'termProgress', 'termDaysLeft', 'termDaysUntilStart', 'termStartDate', 'termEndDate'
         ));
+    }
+
+    private function nextConfirmedAppointment(int $userId): ?Appointment
+    {
+        $now = now(config('app.timezone'));
+
+        return Appointment::query()
+            ->select('appointments.*')
+            ->join('appointment_slots', 'appointment_slots.id', '=', 'appointments.appointment_slot_id')
+            ->where('appointments.user_id', $userId)
+            ->where('appointments.status', 'confirmed')
+            ->whereNotNull('appointment_slots.date')
+            ->whereNotNull('appointment_slots.start_time')
+            ->where(function ($query) use ($now) {
+                $query->where('appointment_slots.date', '>', $now->toDateString())
+                    ->orWhere(function ($query) use ($now) {
+                        $query->where('appointment_slots.date', '=', $now->toDateString())
+                            ->where('appointment_slots.start_time', '>', $now->format('H:i:s'));
+                    });
+            })
+            ->with(['slot', 'documentRequests'])
+            ->orderBy('appointment_slots.date')
+            ->orderBy('appointment_slots.start_time')
+            ->orderBy('appointments.id')
+            ->first();
     }
 
     private function getNextSteps($enrollment, $fee): array
@@ -317,7 +351,6 @@ class PortalDashboardController extends Controller
         if (!$enrollment) {
             return [
                 ['icon' => 'file-text',      'label' => 'Submit Application',  'desc' => 'Fill out and submit your enrollment form.',        'url' => route('portal.enrollment.create'), 'active' => true],
-                ['icon' => 'calendar-check', 'label' => 'Book Appointment',    'desc' => 'Schedule a pickup appointment.',                   'url' => route('portal.appointments.create'), 'active' => false],
             ];
         }
 

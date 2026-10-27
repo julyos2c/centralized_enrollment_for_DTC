@@ -1,4 +1,4 @@
-<aside class="main-sidebar {{ config('adminlte.classes_sidebar', 'sidebar-light-primary elevation-4') }}">
+<aside class="main-sidebar sidebar-no-expand {{ config('adminlte.classes_sidebar', 'sidebar-light-primary elevation-4') }}">
 
     {{-- Brand --}}
     @if(config('adminlte.logo_img_xl'))

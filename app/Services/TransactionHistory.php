@@ -12,8 +12,8 @@ class TransactionHistory
     {
         $staff = in_array($role, ['admin', 'cashier', 'registrar'], true);
         $includeEnrollments = $staff || in_array($role, ['student', 'new_applicant'], true);
-        $includeDocuments = $staff || in_array($role, ['alumni', 'student', 'new_applicant'], true);
-        $includeAppointments = $staff || in_array($role, ['alumni', 'student', 'new_applicant'], true);
+        $includeDocuments = $staff || in_array($role, ['alumni', 'student'], true);
+        $includeAppointments = $staff || in_array($role, ['alumni', 'student'], true);
         $parts = [];
 
         if ($includeEnrollments) {
@@ -31,6 +31,7 @@ class TransactionHistory
                 ->leftJoin('users as verifier', 'verifier.id', '=', 'd.verified_by')
                 ->leftJoin('users as rejecter', 'rejecter.id', '=', 'd.rejected_by')
                 ->where('d.status', '<>', 'cancelled')
+                ->where(fn ($q) => $q->where('d.fee', '>', 0)->orWhere('d.is_paid', true))
                 ->where(function ($q) use ($staff, $userId) { if (! $staff) $q->where('d.user_id', $userId); })
                 ->selectRaw("CONCAT('D-', d.id) as transaction_key, d.id as source_id, 'document' as category, u.name as payer, u.email as email, CONCAT('Document request #', d.id, ' — ', d.document_type) as related, COALESCE(d.amount_received, d.fee) as amount, d.payment_method as method, d.payment_status as status, COALESCE(d.payment_submitted_at, d.created_at) as occurred_at, d.verified_at as verified_at, COALESCE(verifier.name, rejecter.name) as staff_name, d.reference_number as reference, NULL as enrollment_id, d.id as document_request_id, d.payment_rejection_reason as rejection_reason");
         }

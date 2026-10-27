@@ -34,6 +34,22 @@ class DocumentRequest extends Model
         return $this->belongsTo(Appointment::class);
     }
 
+    public function usesBundledPayment(): bool
+    {
+        return $this->appointment_id && AppointmentPayment::where('appointment_id', $this->appointment_id)
+            ->where('is_document_bundle', true)->exists();
+    }
+
+    public function paymentNotRequired(): bool
+    {
+        return $this->fee !== null && (float) $this->fee === 0.0 && !$this->is_paid && $this->payment_status !== 'verified';
+    }
+
+    public function paymentSatisfied(): bool
+    {
+        return $this->paymentNotRequired() || ($this->is_paid && $this->payment_status === 'verified');
+    }
+
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');

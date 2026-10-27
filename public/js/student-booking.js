@@ -59,76 +59,73 @@
         el.classList.toggle("is-empty", !!empty);
     };
 
+    var payableTotal = null;
     var refresh = function () {
-        var doc = checked("document_type");
-        var slot = checked("appointment_slot_id");
-        var pay = checked("payment_method");
+        var selectedDocuments = Array.prototype.map.call(form.querySelectorAll('.js-document-type:checked'), function (input) {
+            var row = input.closest('[data-document-option]');
+            var quantity = row && row.querySelector('.js-document-copies');
+            return {
+                label: input.getAttribute('data-label'),
+                copies: quantity ? parseInt(quantity.value, 10) || 1 : 1,
+                subtotal: (Number(fees[input.value]) || 0) * (quantity ? parseInt(quantity.value, 10) || 1 : 1)
+            };
+        });
+        var slot = checked('appointment_slot_id');
+        var pay = checked('payment_method');
         var purpose = $('[name="purpose"]');
+        var documentLabel = selectedDocuments.map(function (item) {
+            return item.label + ' × ' + item.copies + ' — ' + peso(item.subtotal);
+        }).join(', ');
 
-        setText(
-            '[data-slip="doc"]',
-            doc ? doc.getAttribute("data-label") : "Not chosen yet",
-            !doc,
-        );
-        setText(
-            '[data-slip="when"]',
-            slot
-                ? slot.getAttribute("data-date") +
-                      ", " +
-                      slot.getAttribute("data-time")
-                : "Not chosen yet",
-            !slot,
-        );
-        setText(
-            '[data-slip="pay"]',
-            pay ? pay.getAttribute("data-label") : "Cashier’s Office",
-        );
+        setText('[data-slip="doc"]', documentLabel || 'Not chosen yet', !documentLabel);
+        setText('[data-slip="when"]', slot ? slot.getAttribute('data-date') + ', ' + slot.getAttribute('data-time') : 'Not chosen yet', !slot);
+        setText('[data-slip="pay"]', pay ? pay.getAttribute('data-label') : 'Cashier’s Office');
 
-        setText(
-            '[data-review="doc"]',
-            doc ? doc.getAttribute("data-label") : "—",
-        );
-        setText(
-            '[data-review="date"]',
-            slot ? slot.getAttribute("data-date") : "—",
-        );
-        setText(
-            '[data-review="time"]',
-            slot ? slot.getAttribute("data-time") : "—",
-        );
-        setText(
-            '[data-review="pay"]',
-            pay
-                ? pay.value === "gcash"
-                    ? "GCash (receipt will be verified)"
-                    : "Cashier’s Office"
-                : "—",
-        );
-        setText(
-            '[data-review="purpose"]',
-            purpose && purpose.value.trim() ? purpose.value.trim() : "—",
-        );
+        setText('[data-review="doc"]', documentLabel || '—');
+        setText('[data-review="date"]', slot ? slot.getAttribute('data-date') : '—');
+        setText('[data-review="time"]', slot ? slot.getAttribute('data-time') : '—');
+        setText('[data-review="pay"]', pay ? (pay.value === 'gcash' ? 'GCash (receipt will be verified)' : 'Cashier’s Office') : '—');
+        setText('[data-review="purpose"]', purpose && purpose.value.trim() ? purpose.value.trim() : '—');
 
-        var documentFee = doc ? Number(fees[doc.value]) || 0 : null;
-        var feeText =
-            documentFee === null
-                ? "Choose a document first"
-                : peso(documentFee);
-        form.querySelectorAll("[data-document-fee], [data-gcash-fee]").forEach(
-            function (el) {
-                el.textContent =
-                    documentFee === null
-                        ? el.hasAttribute("data-gcash-fee")
-                            ? "the document fee"
-                            : feeText
-                        : feeText;
-            },
-        );
-        var slipFee = $("[data-slip-fee]");
+        var documentFee = selectedDocuments.length
+            ? selectedDocuments.reduce(function (total, item) { return total + item.subtotal; }, 0)
+            : null;
+        form.querySelectorAll('[data-document-copy-amount]').forEach(function (button) {
+            button.disabled = documentFee === null;
+            button.setAttribute('data-copy-value', documentFee === null ? '' : Number(documentFee).toFixed(2));
+        });
+        setText('[data-document-amount]', documentFee === null ? 'Choose documents first' : peso(documentFee));
+        payableTotal = documentFee;
+        form.querySelectorAll('[data-payment-choices]').forEach(function (el) { el.hidden = payableTotal === 0; });
+        form.querySelectorAll('[data-no-payment]').forEach(function (el) { el.hidden = payableTotal !== 0; });
+        if (payableTotal === 0) { setText('[data-slip="pay"]', 'No Payment Required'); setText('[data-review="pay"]', 'No Payment Required'); }
+        var selectedCopies = selectedDocuments.reduce(function (total, item) { return total + item.copies; }, 0);
+        var countSummary = $('[data-slip-count]');
+        if (countSummary) {
+            countSummary.textContent = selectedDocuments.length
+                ? selectedDocuments.length + (selectedDocuments.length === 1 ? ' document' : ' documents') + ' · ' + selectedCopies + (selectedCopies === 1 ? ' copy' : ' copies')
+                : 'Choose documents';
+        }
+        form.querySelectorAll('[data-document-option]').forEach(function (row) {
+            var input = row.querySelector('.js-document-type');
+            var quantity = row.querySelector('.js-document-copies');
+            quantity.disabled = !input.checked;
+            row.querySelectorAll('[data-copy-step]').forEach(function (button) { button.disabled = !input.checked; });
+            var unitFee = input ? Number(fees[input.value]) || 0 : 0;
+            var copies = quantity ? parseInt(quantity.value, 10) || 1 : 1;
+            var subtotal = row.querySelector('[data-document-subtotal]');
+            var copySummary = row.querySelector('[data-document-copy-summary]');
+            if (subtotal) subtotal.textContent = peso(unitFee * copies);
+            if (copySummary) copySummary.textContent = copies + ' × ' + peso(unitFee);
+        });
+        var feeText = documentFee === null ? 'Choose documents first' : peso(documentFee);
+        form.querySelectorAll('[data-document-fee], [data-gcash-fee]').forEach(function (el) {
+            el.textContent = documentFee === null ? (el.hasAttribute('data-gcash-fee') ? 'the total fee' : feeText) : feeText;
+        });
+        var slipFee = $('[data-slip-fee]');
         if (slipFee) {
-            slipFee.textContent =
-                documentFee === null ? "Choose a document" : feeText;
-            slipFee.classList.toggle("is-free", documentFee === null);
+            slipFee.textContent = documentFee === null ? 'Choose documents' : feeText;
+            slipFee.classList.toggle('is-free', documentFee === null);
         }
 
         if (picked) {
@@ -140,9 +137,9 @@
             picked.classList.toggle("has-value", !!slot);
         }
 
-        var gcash = document.getElementById("gcash-details");
-        var useGcash = !!(pay && pay.value === "gcash");
-        if (gcash) gcash.classList.toggle("is-open", useGcash);
+        var gcash = document.getElementById('gcash-details');
+        var useGcash = documentFee > 0 && !!(pay && pay.value === 'gcash');
+        if (gcash) gcash.classList.toggle('is-open', useGcash);
     };
 
     /* ---------- pickup day strip ---------- */
@@ -217,13 +214,23 @@
 
     var validate = function (n) {
         clearErrors();
-        if (n === 1 && !checked("document_type")) return fail("1");
-        if (n === 2 && !checked("appointment_slot_id")) return fail("2");
+        if (n === 1) {
+            var selected = form.querySelectorAll('.js-document-type:checked');
+            if (!selected.length) return fail('1');
+            for (var i = 0; i < selected.length; i++) {
+                var copiesInput = selected[i].closest('[data-document-option]').querySelector('.js-document-copies');
+                var copies = parseInt(copiesInput.value, 10);
+                if (!copiesInput.value || isNaN(copies) || copies < 1 || copies > 10) {
+                    return fail('1', copiesInput);
+                }
+            }
+        }
+        if (n === 2 && !checked('appointment_slot_id')) return fail('2');
         if (n === 3) {
             var purpose = $('[name="purpose"]');
-            if (purpose && !purpose.value.trim())
-                return fail("purpose", purpose);
-            var pay = checked("payment_method");
+            if (purpose && !purpose.value.trim()) return fail('purpose', purpose);
+            if (payableTotal === 0) return true;
+            var pay = checked('payment_method');
             if (!pay) return false;
             if (pay.value === "gcash") {
                 var ref = $("#gcash-ref"),
@@ -239,6 +246,9 @@
     /* ---------- navigation ---------- */
     var go = function (n, opts) {
         step = n;
+        form.setAttribute('data-current-step', String(n));
+        var progress = form.querySelector('.dr-document-progress');
+        if (progress) progress.setAttribute('aria-valuenow', String(n));
         reached = Math.max(reached, n);
         panels.forEach(function (p) {
             p.hidden = String(p.getAttribute("data-step-panel")) !== String(n);
@@ -276,7 +286,8 @@
     };
 
     var advance = function () {
-        if (nextBtn.classList.contains("is-busy")) return; // already submitting: ignore repeat taps and Enter
+        refresh();
+        if (nextBtn.classList.contains('is-busy')) return; // already submitting: ignore repeat taps and Enter
         if (step < 4) {
             if (validate(step)) go(step + 1);
             return;
@@ -327,11 +338,24 @@
         }
     });
 
-    form.addEventListener("change", function (e) {
-        if (e.target.matches('input[type="radio"]')) {
-            clearErrors();
+    form.addEventListener('change', function (e) {
+        if (e.target.matches('input[type="radio"], .js-document-type')) { clearErrors(); }
+        if (e.target.matches('.js-document-type')) {
+            var row = e.target.closest('[data-document-option]');
+            var quantity = row.querySelector('.js-document-copies');
+            quantity.disabled = !e.target.checked;
+            row.querySelectorAll('[data-copy-step]').forEach(function (button) { button.disabled = !e.target.checked; });
         }
         refresh();
+    });
+    form.addEventListener('click', function (e) {
+        var button = e.target.closest('[data-copy-step]');
+        if (!button || button.disabled) return;
+        var input = button.closest('[data-document-option]').querySelector('.js-document-copies');
+        var max = parseInt(input.max, 10) || 10;
+        input.value = Math.min(max, Math.max(1, (parseInt(input.value, 10) || 1) + parseInt(button.getAttribute('data-copy-step'), 10)));
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     });
     if (rail) {
         rail.addEventListener("change", function (e) {
@@ -367,6 +391,10 @@
             e.target.classList.remove("is-invalid");
             var key = e.target.name === "purpose" ? "purpose" : "ref";
             show(errFor(key), false);
+        }
+        if (e.target.matches('.js-document-copies')) {
+            e.target.classList.remove('is-invalid');
+            show(errFor('1'), false);
         }
         refresh();
     });

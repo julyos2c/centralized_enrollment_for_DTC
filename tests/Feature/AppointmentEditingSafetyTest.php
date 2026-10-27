@@ -79,6 +79,24 @@ class AppointmentEditingSafetyTest extends TestCase
         $this->assertSame('verified', $document->fresh()->payment_status);
     }
 
+    public function test_edit_dialog_shows_document_choices_only_when_editable(): void
+    {
+        [$appointment] = $this->booking('unpaid');
+        $this->get(route('portal.appointments.index'))
+            ->assertOk()
+            ->assertSee('dr-edit-modal')
+            ->assertSee('name="document_type"', false)
+            ->assertSee('value="diploma"', false)
+            ->assertSee('No other slots available');
+
+        $appointment->documentRequests()->update(['payment_status' => 'pending_verification']);
+        $this->get(route('portal.appointments.index'))
+            ->assertOk()
+            ->assertSee('To change these documents, contact the Registrar.')
+            ->assertSee('Transcript of Records')
+            ->assertDontSee('value="diploma"', false);
+    }
+
     public function test_edit_rechecks_database_status_even_when_route_model_is_stale(): void
     {
         foreach (['confirmed', 'cancelled'] as $status) {

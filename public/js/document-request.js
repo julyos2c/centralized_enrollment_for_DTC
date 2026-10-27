@@ -298,8 +298,9 @@
         var apply = function (key) {
             var shown = 0;
             cards.forEach(function (card) {
-                var group = card.getAttribute("data-group");
-                var match = key === "all" || group === key;
+                var group = card.getAttribute('data-group');
+                var groups = (card.getAttribute('data-groups') || group || '').split(/\s+/);
+                var match = key === 'all' || groups.indexOf(key) !== -1;
                 card.hidden = !match;
                 if (match) shown++;
             });

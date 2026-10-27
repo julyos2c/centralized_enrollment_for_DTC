@@ -11,6 +11,17 @@
 .portal-payment-account dt { font-size: 11px; color: var(--dtc-text-secondary, #64748b); }
 .portal-payment-account dd { margin-bottom: 12px; font-size: 14px; overflow-wrap: anywhere; }
 .portal-payment-account button { margin-left: 10px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 6px; background: transparent; color: var(--dtc-on-primary-soft, #0f4cdb); font-size: 12px; }
+.portal-payment-page .form-group { margin-bottom: 18px; }
+.portal-payment-page .form-group label { display: block; margin-bottom: 6px; color: var(--dtc-text, #1e293b); font-weight: 600; }
+.portal-payment-page .form-control { min-height: 44px; border-color: var(--dtc-border, #cbd5e1); border-radius: 9px; background: var(--dtc-surface-soft, #f8fafc); color: var(--dtc-text, #1e293b); }
+.portal-payment-page .form-control:focus { border-color: var(--dtc-primary, #0f4cdb); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dtc-primary, #0f4cdb) 18%, transparent); }
+.portal-payment-page input[type="file"].form-control-file { display: block; width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 9px; background: var(--dtc-surface-soft, #f8fafc); color: var(--dtc-text, #1e293b); font-size: 12px; }
+.portal-payment-page input[type="file"]::file-selector-button { min-height: 30px; margin-right: 10px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--dtc-primary, #0f4cdb); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.portal-payment-page input[type="file"]::-webkit-file-upload-button { min-height: 30px; margin-right: 10px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--dtc-primary, #0f4cdb); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.portal-payment-page input[type="file"]::file-selector-button:hover,
+.portal-payment-page input[type="file"]::-webkit-file-upload-button:hover { background: var(--dtc-primary-hover, #0b43c1); }
+.portal-payment-page .form-group small { display: block; margin-top: 6px; color: var(--dtc-text-secondary, #64748b); font-size: 12px; }
+.portal-payment-page form .btn { min-height: 44px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; }
 .portal-payment-qr { margin-bottom: 22px; font-size: 13px; }
 .portal-payment-qr img { display: block; margin: 16px auto; max-width: 100%; object-fit: contain; }
 .portal-payment-heading { padding: 4px 0 20px; border-bottom: 1px solid var(--dtc-border, #e2e8f0); }
@@ -25,3 +36,7 @@
 .portal-payment-method-body .dtc-gcash-mobile-note { margin-top: 0; }
 @media(max-width: 767px) { .portal-payment-methods { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
 @media(max-width: 575px) { .portal-payment-card { padding: 20px 16px; } .portal-payment-page h1 { font-size: 22px; } }
+body.dtc-dark .portal-payment-page .form-control,
+body.dtc-dark .portal-payment-page input[type="file"].form-control-file { background: var(--dtc-surface-soft, #1e293b); color: var(--dtc-text, #f8fafc); }
+
+.portal-payment-save { display:flex; align-items:center; justify-content:center; min-height:44px; width:fit-content; margin-top:12px; padding:9px 14px; border:1px solid var(--dtc-border); border-radius:8px; color:var(--dtc-on-primary-soft,var(--dtc-primary)); font-size:12px; font-weight:500; }

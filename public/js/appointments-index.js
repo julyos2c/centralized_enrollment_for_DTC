@@ -23,6 +23,46 @@ document.querySelectorAll('[data-reschedule-date-select]').forEach(function (sel
     var list = document.querySelector('[data-reschedule-slot-list="' + id + '"]');
     if (!list) return;
 
+    // Keep the native select as a fallback; enhance it with a bounded date list.
+    var picker = document.createElement('details');
+    picker.className = 'dr-date-picker';
+    var summary = document.createElement('summary');
+    summary.textContent = 'Keep current schedule';
+    var choices = document.createElement('div');
+    choices.className = 'dr-date-picker-options';
+    Array.from(select.options).forEach(function (option) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = option.textContent;
+        button.setAttribute('aria-pressed', String(option.selected));
+        button.addEventListener('click', function () {
+            select.value = option.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            summary.textContent = option.textContent;
+            choices.querySelectorAll('button').forEach(function (item) {
+                item.setAttribute('aria-pressed', String(item === button));
+            });
+            picker.open = false;
+            summary.focus();
+        });
+        choices.appendChild(button);
+    });
+    picker.append(summary, choices);
+    select.insertAdjacentElement('afterend', picker);
+    select.hidden = true;
+    var label = select.previousElementSibling;
+    if (label && label.tagName === 'LABEL') {
+        summary.id = select.id + '-summary';
+        label.htmlFor = summary.id;
+        picker.setAttribute('aria-label', label.textContent.trim());
+    }
+    picker.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            picker.open = false;
+            summary.focus();
+        }
+    });
+
     select.addEventListener('change', function () {
         var date = select.value;
         list.hidden = !date;

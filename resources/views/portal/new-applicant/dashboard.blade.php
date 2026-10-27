@@ -86,32 +86,8 @@
     </div>
 </div>
 
-{{-- ══ WELCOME CARD ════════════════════════════════════════════════════ --}}
-<div class="card mb-3 dtc-welcome-card">
-    <div class="card-body">
-        <div class="dtc-welcome-layout">
-            @include('portal.partials.dashboard-avatar')
-            <div class="dtc-welcome-copy">
-                <h4 class="dtc-welcome-title">
-                    <span class="dtc-welcome-greeting">Hello,</span>{{ auth()->user()->name }}
-                </h4>
-                @if($application && $application->program)
-                <p class="dtc-welcome-meta">{{ $application->program->name }}</p>
-                @endif
-                <p class="dtc-welcome-text">
-                    @if($application && $application->status === 'approved')
-                        Your application is approved.
-                        @if(!$enrollment)
-                            Complete your official enrollment to continue.
-                        @endif
-                    @else
-                        Welcome to Danao Technological College!
-                    @endif
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- ══ PROFILE SUMMARY ══════════════════════════════════════════════════ --}}
+@include('portal.partials.dashboard-profile', ['profileRole' => 'new-applicant', 'latestEnrollment' => $enrollment, 'studentProfile' => null])
 
 {{-- ══ MAIN CONTENT ROW ════════════════════════════════════════════════ --}}
 <div class="row">
@@ -322,7 +298,8 @@
 
 @section('css')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<link rel="stylesheet" href="{{ asset_v('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/dashboard-profile.css') }}">
 @endsection
 
 @section('js')

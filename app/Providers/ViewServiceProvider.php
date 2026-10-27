@@ -25,6 +25,7 @@ class ViewServiceProvider extends ServiceProvider
                 'icon'        => 'bell',
                 'label'       => $unreadCount ?: null,
                 'label_color' => 'danger',
+                'is_notification' => true,
             ];
 
             $sidebar = [];

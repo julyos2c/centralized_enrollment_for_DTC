@@ -265,6 +265,9 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::post('/document-payments/{documentRequest}/verify-walk-in', [CashierDocumentPaymentController::class, 'verifyWalkIn'])->name('document-payments.verify-walk-in');
     Route::post('/document-payments/{documentRequest}/verify-gcash', [CashierDocumentPaymentController::class, 'verifyGcash'])->name('document-payments.verify-gcash');
     Route::post('/document-payments/{documentRequest}/reject', [CashierDocumentPaymentController::class, 'reject'])->name('document-payments.reject');
+    Route::get('/document-payments/bundles/{payment}/proof', [CashierDocumentPaymentController::class, 'viewBundleProof'])->name('document-payments.bundles.proof');
+    Route::post('/document-payments/bundles/{payment}/verify', [CashierDocumentPaymentController::class, 'verifyBundle'])->name('document-payments.bundles.verify');
+    Route::post('/document-payments/bundles/{payment}/reject', [CashierDocumentPaymentController::class, 'rejectBundle'])->name('document-payments.bundles.reject');
     });
 
     // ── PORTAL (Student / Alumni / New Applicant) ─────────────────────────────────
@@ -278,14 +281,17 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::post('/enrollment', [EnrollmentController::class, 'store'])->name('enrollment.store');
     Route::get('/enrollment', [EnrollmentController::class, 'index'])->name('enrollment.index');
     Route::get('/enrollment/{enrollment}/payment-info', [EnrollmentController::class, 'paymentInfo'])->name('enrollment.payment-info');
+    Route::middleware('role:student|alumni')->group(function () {
     Route::get('/payments/documents/{documentRequest}', [\App\Http\Controllers\PortalPaymentController::class, 'document'])->name('payments.document');
     Route::get('/payments/appointments/{appointment}', [\App\Http\Controllers\PortalPaymentController::class, 'appointment'])->name('payments.appointment');
+    });
     Route::get('/programs/{program}/subjects', [EnrollmentController::class, 'getSubjects'])->name('enrollment.subjects');
     
     Route::post('/enrollment/{enrollment}/payment/gcash', [EnrollmentController::class, 'submitGcash'])->name('enrollment.payment.gcash');
     Route::get('/payment/proof/{payment}', [EnrollmentController::class, 'viewProof'])->name('enrollment.payment.proof');
     Route::get('/payment/gcash-qr', [EnrollmentController::class, 'showGcashQr'])->name('enrollment.gcash.qr');
 
+    Route::middleware('role:student|alumni')->group(function () {
     Route::get('/appointments/create', [StudentAppointmentController::class, 'create'])->name('appointments.create');
     Route::post('/appointments', [StudentAppointmentController::class, 'store'])->name('appointments.store');
     Route::get('/appointments', [StudentAppointmentController::class, 'index'])->name('appointments.index');
@@ -293,10 +299,13 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::get('/appointments/{appointment}/edit', [StudentAppointmentController::class, 'edit'])->name('appointments.edit');
     Route::put('/appointments/{appointment}', [StudentAppointmentController::class, 'update'])->name('appointments.update');
     Route::post('/appointments/{appointment}/payment/gcash', [StudentAppointmentController::class, 'submitGcash'])->name('appointments.payment.gcash');
+    Route::post('/appointments/{appointment}/bundle-payment/gcash', [StudentAppointmentController::class, 'submitBundleGcash'])->name('appointments.bundle-payment.gcash');
     Route::get('/appointments/payment/proof/{payment}', [StudentAppointmentController::class, 'viewProof'])->name('appointments.payment.proof');
     Route::post('/appointments/document-requests/{documentRequest}/payment/gcash', [StudentAppointmentController::class, 'submitDocumentGcash'])->name('appointments.document-payment.gcash');
     Route::get('/appointments/document-requests/{documentRequest}/payment/proof', [StudentAppointmentController::class, 'viewDocumentProof'])->name('appointments.document-payment.proof');
     Route::get('/appointments/payment/gcash-qr', [StudentAppointmentController::class, 'showGcashQr'])->name('appointments.gcash.qr');
+
+    });
 
     Route::middleware('role:alumni')->group(function () {
         Route::get('/documents', [AlumniDocumentController::class, 'index'])->name('documents.index');

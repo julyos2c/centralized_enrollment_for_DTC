@@ -141,6 +141,9 @@ class SearchController extends Controller
             ];
         }
 
+        if (!$user->hasAnyRole(['student', 'alumni', 'admin', 'registrar', 'cashier'])) {
+            $pages = array_values(array_filter($pages, fn ($page) => !in_array($page['url'], [route('portal.appointments.create'), route('portal.appointments.index')], true)));
+        }
         return $pages;
     }
 }

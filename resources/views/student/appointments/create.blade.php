@@ -36,8 +36,12 @@
     $selectedPickupDate = $slotGroups->has($pickedDay) ? $pickedDay : $firstOpenDay;
     $todayKey = now()->format('Y-m-d');
     $dayParts = ['Morning' => [0, 12], 'Afternoon' => [12, 17], 'Evening' => [17, 24]];
-    $selectedFee = $documentFees[old('document_type')] ?? null;
-    $feeText = $selectedFee === null ? 'Choose a document' : '₱'.number_format($selectedFee, 2);
+    $oldDocuments = old('documents', old('document_type') ? [['document_type' => old('document_type'), 'copies' => 1]] : []);
+    $oldDocuments = is_array($oldDocuments) ? array_filter($oldDocuments, 'is_array') : [];
+    $selectedFee = count($oldDocuments) ? collect($oldDocuments)->sum(function ($item) use ($documentFees) {
+        return ($documentFees[$item['document_type'] ?? ''] ?? 0) * (int) ($item['copies'] ?? 1);
+    }) : null;
+    $feeText = $selectedFee !== null ? '₱'.number_format($selectedFee, 2) : 'Choose documents';
 @endphp
 
 @section('content')
@@ -52,6 +56,7 @@
     <form method="POST" action="{{ route('portal.appointments.store') }}" enctype="multipart/form-data"
           id="bkForm" class="dr-grid" novalidate
           data-initial-step="{{ $initialStep }}"
+          data-current-step="{{ $initialStep }}"
           data-fees='@json($documentFees)'>
         @csrf
 
@@ -71,25 +76,57 @@
 
                 {{-- 1. Document --}}
                 <fieldset class="dr-sec" data-step-panel="1">
-                    <legend class="dr-sec-title">Which document do you need?</legend>
-                    <p class="dr-sec-hint">You can book one document type per appointment.</p>
-                    <div class="dr-opts">
+                    <legend class="dr-sec-title">Which documents do you need?</legend>
+                    <p class="dr-sec-hint">Tap to select. Each document has its own quantity and fee.</p>
+                    <div class="dr-document-progress" role="progressbar" aria-label="Booking progress" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+                        <span></span>
+                    </div>
+                    <div class="dr-opts dr-document-options">
                         @foreach ($documentOptions as $value => $doc)
-                            <label class="dr-opt dr-opt--stack">
-                                <input type="radio" name="document_type" value="{{ $value }}"
-                                       class="dr-opt-input dr-visually-hidden"
+                            @php
+                                $requestType = $value === 'transcript' ? 'tor' : ($value === 'tor' ? 'true_copy' : $value);
+                                $documentIcon = ['transcript' => 'file-text', 'tor' => 'copy', 'diploma' => 'award', 'certification' => 'badge-check'][$value] ?? 'file-text';
+                                $oldIndex = collect($oldDocuments)->search(fn ($item) => ($item['document_type'] ?? null) === $value);
+                                $selectedDocument = $oldIndex !== false ? $oldDocuments[$oldIndex] : [];
+                            @endphp
+                            <div class="dr-opt dr-opt--stack" data-document-option>
+                                <input id="document-type-{{ $loop->index }}" type="checkbox" name="documents[{{ $loop->index }}][document_type]" value="{{ $value }}"
+                                       class="dr-opt-input dr-visually-hidden js-document-type"
                                        data-label="{{ $doc['label'] }}"
                                        data-fee="{{ $documentFees[$value] }}"
-                                       {{ old('document_type') === $value ? 'checked' : '' }}>
-                                <span class="dr-opt-mark" aria-hidden="true"></span>
-                                <span class="dr-opt-text">
-                                    <span class="dr-opt-name">{{ $doc['label'] }}</span>
-                                    <span class="dr-opt-desc">{{ $doc['desc'] }}</span>
-                                </span>
-                            </label>
+                                       {{ $oldIndex !== false || old('document_type') === $value ? 'checked' : '' }}>
+                                <label class="dr-document-choice" for="document-type-{{ $loop->index }}">
+                                    <span class="dr-opt-icon" aria-hidden="true"><i data-lucide="{{ $documentIcon }}"></i></span>
+                                    <span class="dr-opt-text">
+                                        <span class="dr-opt-name">{{ $doc['label'] }}</span>
+                                        <span class="dr-opt-desc">{{ $doc['desc'] }}</span>
+                                    </span>
+                                    <span class="dr-opt-price">&#8369;{{ number_format($documentFees[$value], 2) }}<small>per copy</small></span>
+                                    <span class="dr-opt-mark" aria-hidden="true"></span>
+                                </label>
+                                <div class="dr-field dr-document-quantity">
+                                    <label class="dr-visually-hidden" for="document-copies-{{ $loop->index }}">Number of {{ $doc['label'] }} copies</label>
+                                    <span class="dr-quantity-control">
+                                        <button type="button" data-copy-step="-1" aria-label="Remove one {{ $doc['label'] }} copy" {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>-</button>
+                                    <input id="document-copies-{{ $loop->index }}" type="number"
+                                           name="documents[{{ $loop->index }}][copies]"
+                                           class="dr-input js-document-copies" min="1" max="10" value="{{ $selectedDocument['copies'] ?? 1 }}"
+                                           aria-label="Copies of {{ $doc['label'] }}"
+                                           {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>
+                                        <button type="button" data-copy-step="1" aria-label="Add one {{ $doc['label'] }} copy" {{ $oldIndex === false && old('document_type') !== $value ? 'disabled' : '' }}>+</button>
+                                    </span>
+                                    <span class="dr-document-subtotal">
+                                        <strong data-document-subtotal>&#8369;{{ number_format($documentFees[$value] * (int) ($selectedDocument['copies'] ?? 1), 2) }}</strong>
+                                        <small data-document-copy-summary>{{ (int) ($selectedDocument['copies'] ?? 1) }} × &#8369;{{ number_format($documentFees[$value], 2) }}</small>
+                                    </span>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
-                    <p class="dr-error" data-step-error="1" role="alert">Choose a document to continue.</p>
+                    <p class="dr-error" data-step-error="1" role="alert">Select at least one document and valid copy quantities.</p>
+                    @error('documents') <p class="dr-error is-shown">{{ $message }}</p> @enderror
+                    @error('documents.*.document_type') <p class="dr-error is-shown">{{ $message }}</p> @enderror
+                    @error('documents.*.copies') <p class="dr-error is-shown">{{ $message }}</p> @enderror
                 </fieldset>
 
                 {{-- 2. Pickup time --}}
@@ -186,7 +223,7 @@
                 {{-- 3. Payment --}}
                 <fieldset class="dr-sec" data-step-panel="3" hidden>
                     <legend class="dr-sec-title">Purpose and payment</legend>
-                    <p class="dr-sec-hint">Document fee: <strong data-document-fee>{{ $selectedFee === null ? 'Choose a document first' : '₱'.number_format($selectedFee, 2) }}</strong>. The Cashier verifies every payment.</p>
+                    <p class="dr-sec-hint">Combined total: <strong data-document-fee>{{ $selectedFee === null ? 'Choose documents first' : '₱'.number_format($selectedFee, 2) }}</strong>. The Cashier verifies the full payment.</p>
 
                     <div class="dr-field">
                         <label class="dr-label" for="bk-purpose">What is it for?</label>
@@ -197,7 +234,8 @@
                     </div>
 
                     <div class="dr-sec-sub">How will you pay?</div>
-                    <div class="dr-opts">
+                    <p class="dr-no-payment" data-no-payment hidden role="status">No Payment Required. This selection is free; no receipt or payment proof is needed.</p>
+                    <div data-payment-choices class="dr-opts">
                         <label class="dr-opt dr-opt--stack">
                             <input type="radio" name="payment_method" id="pm-walkin" value="walk_in"
                                    class="dr-opt-input dr-visually-hidden" data-label="Cashier’s Office"
@@ -224,16 +262,15 @@
                     @if ($gcashOk)
                         <div id="gcash-details" class="dr-gcash {{ $gcashChosen ? 'is-open' : '' }}">
                             <div>
+                                <a class="dr-gcash-save" href="{{ route('portal.appointments.gcash.qr', ['download' => 1]) }}"><i data-lucide="download" aria-hidden="true"></i> Save QR</a>
                                 <div class="dr-gcash-qr">
                                     <img src="{{ route('portal.appointments.gcash.qr') }}" alt="Official DTC GCash QR code" loading="lazy">
                                 </div>
-                                @if (! empty($gcashName) || ! empty($gcashNumber))
-                                    <p class="dr-gcash-account"><strong>{{ $gcashName ?? '' }}</strong>{{ $gcashNumber ?? '' }}</p>
-                                @endif
                             </div>
                             <div class="dr-gcash-fields">
+                                @include('portal.partials.document-gcash-account', ['gcashAmount' => $selectedFee])
                                 <p class="dr-gcash-note">
-                                    Send exactly <strong data-gcash-fee>{{ $selectedFee === null ? 'the document fee' : '₱'.number_format($selectedFee, 2) }}</strong>, then add the reference number and a screenshot of the receipt.
+                                    Send exactly <strong data-gcash-fee>{{ $selectedFee === null ? 'the total fee' : '₱'.number_format($selectedFee, 2) }}</strong>, then add the reference number and a screenshot of the receipt.
                                 </p>
                                 <div class="dr-field">
                                     <label class="dr-label" for="gcash-ref">GCash reference number</label>
@@ -285,7 +322,10 @@
                 </div>
                 <div class="dr-slip-tear" aria-hidden="true"></div>
                 <div class="dr-slip-total">
-                    <span class="dr-slip-total-label">Document fee</span>
+                    <span class="dr-slip-total-meta">
+                        <span class="dr-slip-total-label">Document fee</span>
+                        <span class="dr-slip-count" data-slip-count>Choose documents</span>
+                    </span>
                     <span class="dr-slip-total-amount {{ $selectedFee === null ? 'is-free' : '' }}" data-slip-fee>{{ $feeText }}</span>
                 </div>
                 <div class="dr-slip-foot">
