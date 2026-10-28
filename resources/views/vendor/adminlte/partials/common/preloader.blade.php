@@ -1,6 +1,13 @@
 @inject('preloaderHelper', 'JeroenNoten\LaravelAdminLte\Helpers\PreloaderHelper')
 
 <div class="{{ $preloaderHelper->makePreloaderClasses() }} dtc-skeleton-preloader" style="{{ $preloaderHelper->makePreloaderStyle() }}">
+    <div class="dtc-pwa-startup" role="status" aria-live="polite">
+        <img src="{{ asset('pwa/icon-192.png') }}" width="72" height="72" alt="">
+        <strong>DTC EMS</strong>
+        <span>Danao Technological College</span>
+        <div class="dtc-pwa-loading-track" aria-hidden="true"><span></span></div>
+        <small>Opening your portal…</small>
+    </div>
 
     @hasSection('preloader')
 

@@ -70,10 +70,30 @@ test('registration requires a secure context, same-origin worker and browser sup
     ]) {
         let registrations = 0;
         vm.runInNewContext(source, { URL, location: { href: 'https://college.example/ems/', origin: 'https://college.example' },
-            document: { currentScript: { dataset: { worker: workerUrl } } },
-            window: { isSecureContext: secure, addEventListener(type, listener) { listener(); } },
+            document: { documentElement: { classList: { add() {} } }, currentScript: { dataset: { worker: workerUrl } } },
+            window: { setTimeout() {}, isSecureContext: secure, addEventListener(type, listener) { listener(); } },
             navigator: supported ? { serviceWorker: { register(url, options) { registrations++; assert.equal(options.scope, '/ems/'); return Promise.resolve(); } } } : {},
         });
         assert.equal(registrations, expected);
     }
+});
+
+test('startup dismisses on DOM readiness and restored pages even without service-worker support', () => {
+    const events = {}, classes = new Set();
+    let fallback;
+    vm.runInNewContext(fs.readFileSync('public/js/pwa.js', 'utf8'), {
+        document: { readyState: 'loading', currentScript: null,
+            documentElement: { classList: { add(value) { classes.add(value); } } },
+            addEventListener(name, callback) { events[name] = callback; } },
+        window: { addEventListener(name, callback) { events[name] = callback; }, setTimeout(callback) { fallback = callback; } }
+    });
+    assert.equal(classes.has('dtc-pwa-ready'), false);
+    events.DOMContentLoaded();
+    assert.equal(classes.has('dtc-pwa-ready'), true);
+    classes.clear();
+    events.pageshow();
+    assert.equal(classes.has('dtc-pwa-ready'), true);
+    classes.clear();
+    fallback();
+    assert.equal(classes.has('dtc-pwa-ready'), true);
 });

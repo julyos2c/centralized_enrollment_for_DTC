@@ -1,0 +1,18 @@
+.dtc-pwa-startup { display: none; }
+@media (display-mode: standalone), (display-mode: fullscreen) {
+    .dtc-skeleton-preloader { background: #f7f8fa !important; }
+    .dtc-skeleton-preloader > :not(.dtc-pwa-startup) { display: none !important; }
+    .dtc-skeleton-preloader > .dtc-pwa-startup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 100%; min-height: 240px; padding: 32px; color: #10203a; font-family: inherit; text-align: center; }
+    .dtc-pwa-startup img { margin-bottom: 12px; border-radius: 16px; object-fit: contain; }
+    .dtc-pwa-startup strong { font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+    .dtc-pwa-startup > span { font-size: 13px; color: #5b6678; }
+    .dtc-pwa-startup small { font-size: 12px; color: #5b6678; }
+    .dtc-pwa-loading-track { width: 144px; height: 3px; margin: 24px 0 10px; overflow: hidden; border-radius: 3px; background: #e3e7ee; }
+    .dtc-pwa-loading-track span { display: block; height: 100%; width: 45%; border-radius: inherit; background: #1d4ed8; animation: dtc-pwa-progress 1.4s ease-in-out infinite; }
+    html.dtc-pwa-ready .dtc-skeleton-preloader { display: none !important; }
+    body.dtc-dark .dtc-skeleton-preloader, html.dtc-dark .dtc-skeleton-preloader { background: #0f172a !important; }
+    body.dtc-dark .dtc-pwa-startup, html.dtc-dark .dtc-pwa-startup { color: #f1f5f9; }
+    body.dtc-dark .dtc-pwa-startup > span, body.dtc-dark .dtc-pwa-startup small { color: #a6b3c7; }
+}
+@keyframes dtc-pwa-progress { 0% { transform: translateX(-110%); } 100% { transform: translateX(330%); } }
+@media (prefers-reduced-motion: reduce) { .dtc-pwa-loading-track span { animation: none; width: 100%; opacity: .65; } }
