@@ -175,6 +175,10 @@ class ViewServiceProvider extends ServiceProvider
                 ];
             }
 
+            if ($sidebar !== []) {
+                $sidebar[] = ['text' => 'Help Center', 'url' => route('help.index'), 'icon' => 'question-circle'];
+            }
+
             $workCounts = app(\App\Services\SidebarWorkCounts::class)->forUser($user);
             foreach ($sidebar as &$menuItem) {
                 foreach ($workCounts as $route => $count) {

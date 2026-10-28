@@ -1876,15 +1876,29 @@ body.dtc-dark .dr-change {
 
 .dr-no-payment { padding:14px 16px; border:1px solid var(--dr-line); border-radius:10px; color:var(--dr-ink); background:var(--dr-soft); line-height:1.6; font-size:13px; }
 .dr-no-payment[hidden], [data-payment-choices][hidden] { display:none !important; }
+.dr-schedule-notice { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--dtc-border); border-left: 3px solid var(--dtc-primary); border-radius: 10px; background: var(--dtc-surface-soft); font-size: 13px; line-height: 1.6; }
+.dr-schedule-notice strong { font-weight: 600; color: var(--dtc-text); }
+.dr-schedule-notice p { margin: 4px 0 0; color: var(--dtc-text-secondary); }
 
 /* Edit booking: contained choices and a compact, readable current schedule. */
 .dr-edit-modal select[data-reschedule-date-select][hidden] { display: none !important; }
 .dr-date-picker { margin-bottom: 14px; border: 1px solid var(--dtc-border); border-radius: 10px; background: var(--dtc-surface-soft); }
 .dr-date-picker summary { min-height: 46px; padding: 12px 14px; font-size: 13px; line-height: 1.6; cursor: pointer; color: var(--dtc-text); }
 .dr-date-picker summary:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: 3px; border-radius: 10px; }
-.dr-date-picker-options { max-height: 200px; overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-top: 1px solid var(--dtc-border); }
-.dr-date-picker-options button { display: block; width: 100%; min-height: 44px; padding: 10px; border: 0; border-radius: 6px; text-align: left; color: var(--dtc-text); background: transparent; font: inherit; font-size: 13px; line-height: 1.5; }
-.dr-date-picker-options button:hover, .dr-date-picker-options button[aria-pressed="true"] { background: var(--dtc-primary-soft); color: var(--dtc-text); }
+.dr-calendar { padding: 12px; border-top: 1px solid var(--dtc-border); background: var(--dtc-surface); border-radius: 0 0 10px 10px; }
+.dr-calendar-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.dr-calendar-header strong { font-size: 14px; font-weight: 600; }
+.dr-calendar button { border: 0; background: transparent; color: var(--dtc-text); font: inherit; cursor: pointer; }
+.dr-calendar-header button { width: 44px; height: 44px; border: 1px solid var(--dtc-border); border-radius: 10px; font-size: 24px; }
+.dr-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.dr-calendar-weekday { text-align: center; padding: 6px 0; color: var(--dtc-text-muted); font-size: 11px; font-weight: 500; }
+.dr-calendar-grid button { min-height: 44px; padding: 0; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--dtc-surface-soft); }
+.dr-calendar button:disabled { opacity: .3; cursor: default; background: transparent; }
+.dr-calendar button:not(:disabled):hover { background: var(--dtc-primary-soft); }
+.dr-calendar-grid button[aria-pressed="true"] { background: var(--dtc-primary); color: #fff; }
+.dr-calendar p { margin: 12px 0; color: var(--dtc-text-muted); font-size: 12px; line-height: 1.5; }
+.dr-calendar .dr-calendar-keep { width: 100%; min-height: 44px; border: 1px solid var(--dtc-border); border-radius: 8px; font-size: 12px; font-weight: 500; }
+@media (max-width: 359.98px) { .dr-calendar { padding: 6px; } .dr-calendar-grid { gap: 0; } }
 .dr-edit-modal .modal-dialog { max-width: 560px; }
 .dr-edit-modal .modal-content { border: 1px solid var(--dtc-border); border-radius: 16px; overflow: hidden; background: var(--dtc-surface); color: var(--dtc-text); }
 .dr-edit-modal .modal-content > form { display: flex; flex-direction: column; min-height: 0; max-height: inherit; }
@@ -1916,6 +1930,8 @@ body.dtc-dark .dr-change {
 .dr-edit-documents > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 13px; }
 .dr-edit-documents > div + div { border-top: 1px solid var(--dtc-border); }
 .dr-edit-documents span { flex-shrink: 0; color: var(--dtc-text-muted); }
+[data-registrar-contact] .dr-edit-documents strong { flex: 0 0 36%; }
+[data-registrar-contact] .dr-edit-documents span { flex: 1; min-width: 0; text-align: right; overflow-wrap: anywhere; }
 .dr-edit-modal .modal-footer { display: block; }
 .dr-edit-modal .modal-footer > div:last-child { display: flex; justify-content: flex-end; margin: 14px 0 0; }
 .dr-edit-modal .modal-footer .btn { min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; }

@@ -29,6 +29,31 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         Storage::fake('local');
     }
 
+    public function test_released_documents_are_read_only_in_ui_and_status_endpoint(): void
+    {
+        Mail::fake();
+        $owner = $this->makeUserWithRole('alumni');
+        $document = DocumentRequest::create([
+            'user_id' => $owner->id, 'document_type' => 'certification', 'copies' => 1,
+            'status' => 'released', 'fee' => 20, 'is_paid' => true,
+            'payment_method' => 'walk_in', 'payment_status' => 'verified', 'remarks' => 'Collected',
+        ]);
+        $this->actingAs($this->makeUserWithRole('registrar'));
+        $this->get(route('registrar.documents.index'))->assertOk()
+            ->assertSee('Completed')
+            ->assertDontSee('data-target="#statusModal'.$document->id.'"', false)
+            ->assertDontSee('id="statusModal'.$document->id.'"', false);
+        foreach (['submitted', 'processing', 'ready', 'released'] as $status) {
+            $this->post(route('registrar.documents.status', $document), ['status' => $status, 'remarks' => 'Changed'])
+                ->assertSessionHasErrors('status');
+            $this->assertSame('released', $document->fresh()->status);
+            $this->assertSame('Collected', $document->fresh()->remarks);
+            $this->assertSame('verified', $document->fresh()->payment_status);
+        }
+        $this->assertSame(0, AuditLog::where('action', 'document_request.status_changed')->count());
+        Mail::assertNothingSent();
+    }
+
     public function test_alumni_can_submit_gcash_proof_as_pending_without_marking_request_paid(): void
     {
         $alumni = $this->makeUserWithRole('alumni');

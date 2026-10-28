@@ -71,6 +71,15 @@ class Appointment extends Model
         return $this->payments()->where('status', 'verified')->exists();
     }
 
+    public function scheduleHasPassed(): bool
+    {
+        if (! in_array($this->status, ['pending', 'confirmed'], true) || ! $this->slot) {
+            return false;
+        }
+
+        return \Carbon\Carbon::parse($this->slot->date.' '.$this->slot->end_time)->lte(now());
+    }
+
     public function paymentNotRequired(): bool
     {
         $documents = $this->documentRequests;

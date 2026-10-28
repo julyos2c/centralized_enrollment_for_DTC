@@ -18,7 +18,7 @@
         <h2>{{ trim(implode(' ', array_filter([$record->first_name, $record->middle_name, $record->last_name, $record->suffix]))) }}</h2>
     </header>
     <dl class="invitation-record-summary">
-        <div><dt>Student number</dt><dd>{{ $record->student_number ?: 'Not recorded' }}</dd></div>
+        <div><dt>Student ID no.</dt><dd>{{ $record->student_number ?: 'Not recorded' }}</dd></div>
         <div><dt>Academic status</dt><dd>{{ ucfirst($record->academic_status) }}</dd></div>
         <div class="invitation-program"><dt>Program</dt><dd>{{ $record->program->name ?? 'Not recorded' }}</dd></div>
     </dl>

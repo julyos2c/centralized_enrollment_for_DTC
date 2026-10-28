@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\Program;
 use App\Models\StudentProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AcademicRecordController extends Controller
@@ -42,8 +43,11 @@ class AcademicRecordController extends Controller
         $data = $this->validated($request);
         $data['user_id'] = null;
         $data['admission_type'] = 'imported';
-        $record = StudentProfile::create($data);
-        $this->audit($request, 'academic_record.created', $record);
+        $record = DB::transaction(function () use ($request, $data) {
+            $record = StudentProfile::create($data);
+            $this->audit($request, 'academic_record.created', $record);
+            return $record;
+        });
         return redirect()->route('registrar.students.show', $record)->with('success', 'Academic record created. No portal account was created.');
     }
 
@@ -68,20 +72,25 @@ class AcademicRecordController extends Controller
 
     public function update(Request $request, StudentProfile $student)
     {
-        $data = $this->validated($request, $student);
-        if ($student->user_id && $data['academic_status'] !== $student->academic_status) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'academic_status' => 'Use the established student-to-alumni promotion workflow for account-linked students.',
-            ]);
-        }
-        if ($student->user_id && ($data['email'] ?? null) !== $student->email) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'email' => 'This academic record is linked to a portal account. Resolve email changes through the protected account process.',
-            ]);
-        }
-        unset($data['student_number']);
-        $student->update($data);
-        $this->audit($request, 'academic_record.updated', $student);
+        DB::transaction(function () use ($request, $student) {
+            // Provisioning uses the same profile lock: recheck the persisted link
+            // rather than trusting a route model loaded before another request.
+            $student = StudentProfile::whereKey($student->id)->lockForUpdate()->firstOrFail();
+            $data = $this->validated($request, $student);
+            if ($student->user_id && $data['academic_status'] !== $student->academic_status) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'academic_status' => 'Use the established student-to-alumni promotion workflow for account-linked students.',
+                ]);
+            }
+            if ($student->user_id && ($data['email'] ?? null) !== $student->email) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => 'This academic record is linked to a portal account. Resolve email changes through the protected account process.',
+                ]);
+            }
+            unset($data['student_number']);
+            $student->update($data);
+            $this->audit($request, 'academic_record.updated', $student);
+        });
         return redirect()->route('registrar.students.show', $student)->with('success', 'Academic record updated.');
     }
 
@@ -93,10 +102,18 @@ class AcademicRecordController extends Controller
             'first_name' => ['required', 'string', 'max:100'], 'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'], 'suffix' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'], 'program_id' => ['nullable', 'exists:programs,id'],
-            'year_level' => ['nullable', 'integer', 'between:1,8'], 'enrolled_ay' => ['nullable', 'regex:/^\d{4}-\d{4}$/'],
+            'year_level' => ['nullable', 'integer', 'between:1,8'], 'enrolled_ay' => ['nullable', 'string', 'regex:/^\d{4}-\d{4}$/'],
             'graduation_year' => ['nullable', 'integer', 'between:1900,'.(date('Y') + 1)], 'graduation_date' => ['nullable', 'date'],
             'academic_status' => ['required', Rule::in(['active', 'inactive', 'alumni'])],
         ]);
+        if (!empty($data['enrolled_ay'])) {
+            [$start, $end] = array_map('intval', explode('-', $data['enrolled_ay']));
+            if ($end <= $start) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'enrolled_ay' => 'The school year must end after its starting year.',
+                ]);
+            }
+        }
         if (isset($data['record_type']) && (($data['record_type'] === 'alumni') !== ($data['academic_status'] === 'alumni'))) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'academic_status' => 'The academic status must match the selected Student or Alumni record type.',

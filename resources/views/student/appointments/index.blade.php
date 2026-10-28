@@ -123,6 +123,7 @@
                     $when = \Carbon\Carbon::parse($appointment->slot->date);
                     $time = \Carbon\Carbon::parse($appointment->slot->start_time)->format('g:i A').' to '.\Carbon\Carbon::parse($appointment->slot->end_time)->format('g:i A');
                     $cancelled = $appointment->status === 'cancelled';
+                    $schedulePassed = $appointment->scheduleHasPassed();
                     $st = \Carbon\Carbon::parse($appointment->slot->start_time); $en = \Carbon\Carbon::parse($appointment->slot->end_time);
                     $timeShort = $st->format('g:i').($st->format('A') === $en->format('A') ? '' : ' '.$st->format('A')).'–'.$en->format('g:i A');
                     $payRejected = $bundlePayment
@@ -182,7 +183,7 @@
                         @endforeach
                     @endif
 
-                    @if (!$cancelled && !$docRequest)
+                    @if (!$cancelled && !$docRequest && !$schedulePassed)
                         <p class="dr-step-note">{{ $appointment->status === 'confirmed' ? 'Appointment confirmed' : 'Awaiting appointment confirmation' }}</p>
                     @elseif ($cancelled && $documentRequests->contains(fn ($document) => $document->status !== 'cancelled'))
                         <p class="dr-step-note">The pickup appointment was cancelled, but your document request remains active. Contact the Registrar about the next pickup step.</p>
@@ -192,10 +193,17 @@
                         <i data-lucide="calendar-days" aria-hidden="true"></i>
                         <span>
                             <strong>{{ $when->format('D, M j') }}</strong> · {{ $timeShort }}
-                            · {{ ucfirst($badgeTextAppt[$appointment->status] ?? $appointment->status) }}
+                            · {{ $schedulePassed ? 'Scheduled time passed' : ucfirst($badgeTextAppt[$appointment->status] ?? $appointment->status) }}
                             @if ($cancelled && $appointment->remarks)<br>{{ $appointment->remarks }}@endif
                         </span>
                     </div>
+
+                    @if ($schedulePassed)
+                        <div class="dr-schedule-notice" role="status">
+                            <strong>{{ $appointment->status === 'pending' ? 'Schedule passed — choose a new time' : 'Scheduled time passed — contact the Registrar' }}</strong>
+                            <p>{{ $appointment->status === 'pending' ? 'Use Edit booking to select an available future time. The Registrar will review your updated booking.' : 'Contact the Registrar to arrange the next pickup step.' }} Your document progress and payment records are preserved.</p>
+                        </div>
+                    @endif
 
                     @if ($appointment->purpose || $documentRequests->isNotEmpty())
                         <details class="dr-request-details">
@@ -217,11 +225,12 @@
                         $canStudentCancel = $appointment->status === 'pending'
                             && $documentRequests->every(fn ($document) => in_array($document->status, ['submitted', 'cancelled'], true));
                     @endphp
-                    @if ($canStudentCancel)
+                    @if ($appointment->status === 'pending')
                         <div class="dr-actions dr-actions--split">
                             <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm" data-toggle="modal" data-target="#editModal{{ $appointment->id }}">
                                 <i data-lucide="pencil" aria-hidden="true"></i> Edit booking
                             </button>
+                            @if ($canStudentCancel)
                             <form id="cancel-appt-{{ $appointment->id }}" method="POST" action="{{ route('portal.appointments.cancel', $appointment) }}">
                                 @csrf
                                 <button type="button" class="dr-btn dr-btn--danger dr-btn--sm"
@@ -235,9 +244,13 @@
                                     Cancel booking
                                 </button>
                             </form>
+                            @endif
                         </div>
                     @elseif ($appointment->status === 'confirmed')
                         <p class="dr-req-purpose">Contact the Registrar to change or cancel this confirmed booking.</p>
+                    @endif
+                    @if (in_array($appointment->status, ['pending', 'confirmed'], true))
+                        <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm mt-2" data-toggle="modal" data-target="#registrarContactModal" data-booking-reference="{{ $appointment->id }}">Contact Registrar</button>
                     @endif
                 </li>
             @endforeach
@@ -289,9 +302,9 @@
 
                             {{-- Document Type --}}
                             <div class="mb-4">
-                                <label class="font-weight-bold d-block mb-2" style="font-size:13px; color:var(--dtc-text);">
+                                <div class="font-weight-bold d-block mb-2" style="font-size:13px; color:var(--dtc-text);">
                                     Document Type <span style="color:var(--dtc-danger,#dc3545);">*</span>
-                                </label>
+                                </div>
                                 @if($documentTypeLocked)
                                     <input type="hidden" name="document_type" value="{{ $appointment->document_type }}">
                                     <div class="dr-edit-documents">
@@ -332,10 +345,10 @@
 
                             {{-- Schedule --}}
                             <div class="mb-4">
-                                <label class="font-weight-bold d-block mb-2" style="font-size:13px; color:var(--dtc-text);">
+                                <div class="font-weight-bold d-block mb-2" style="font-size:13px; color:var(--dtc-text);">
                                     Schedule <span style="color:var(--dtc-danger,#dc3545);">*</span>
-                                </label>
-                                <div style="max-height:240px; overflow-y:auto; padding-right:4px;">
+                                </div>
+                                <div class="dr-edit-schedule">
                                     {{-- Current slot always shown first --}}
                                     <label class="dtc-slot-card mb-2" style="cursor:pointer; display:block;">
                                         <input type="radio"
@@ -373,7 +386,7 @@
                                         <select id="reschedule-date-{{ $appointment->id }}" class="dr-select mb-3" data-reschedule-date-select="{{ $appointment->id }}">
                                             <option value="">Keep current schedule</option>
                                             @foreach ($otherSlotGroups as $date => $dateSlots)
-                                                <option value="{{ $date }}">{{ \Carbon\Carbon::parse($date)->format('l, F j') }} · {{ $dateSlots->count() }} {{ $dateSlots->count() === 1 ? 'time' : 'times' }}</option>
+                                                <option value="{{ $date }}">{{ \Carbon\Carbon::parse($date)->format('D, M j') }} · {{ $dateSlots->count() }} available {{ $dateSlots->count() === 1 ? 'time slot' : 'time slots' }}</option>
                                             @endforeach
                                         </select>
                                         <div class="dr-reschedule-time-grid" data-reschedule-slot-list="{{ $appointment->id }}" hidden>
@@ -459,6 +472,7 @@
         @endforeach
     @endif
 </div>
+@include('portal.partials.registrar-contact')
 @endsection
 
 @section('css')

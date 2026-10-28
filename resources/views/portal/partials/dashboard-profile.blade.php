@@ -34,7 +34,7 @@
                 <dd>{{ $isAlumniProfile ? ($studentProfile?->graduation_year ? 'Batch '.$studentProfile->graduation_year : 'Not set') : ($isApplicantProfile ? $profileApplicationStatus : $profileYearLabel) }}</dd>
             </div>
             <div>
-                <dt>{{ $isAlumniProfile ? 'Student number' : ($isApplicantProfile ? 'Reference number' : ($profileAcademicYear ? 'Enrolled AY' : 'Academic year')) }}</dt>
+                <dt>{{ $isAlumniProfile ? 'Student ID no.' : ($isApplicantProfile ? 'Reference number' : ($profileAcademicYear ? 'Enrolled AY' : 'Academic year')) }}</dt>
                 <dd>{{ $isAlumniProfile ? ($studentProfile?->student_number ?: 'Not set') : ($isApplicantProfile ? ($application?->reference_no ?: 'Not assigned') : ($profileAcademicYear ? 'AY '.$profileAcademicYear : 'Not set')) }}</dd>
             </div>
         </dl>
