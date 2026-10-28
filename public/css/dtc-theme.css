@@ -121,9 +121,37 @@ textarea {
     left: 0 !important;
     height: 100vh !important;
     height: 100dvh !important;
+    /* AdminLTE's non-layout-fixed min-height:100% follows the long page.
+       Override it so the bottom-anchored account card stays in the viewport. */
+    min-height: 0 !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
     z-index: 1038 !important;
     box-sizing: border-box !important;
+    display: flex;
+    flex-direction: column;
 }
+
+/* Keep navigation and account controls in separate viewport-sized regions.
+   Only navigation scrolls, including on short landscape tablet screens. */
+.main-sidebar > .brand-link { flex-shrink: 0; }
+.main-sidebar > .sidebar {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    overflow-y: auto;
+}
+aside.main-sidebar > .dtc-sidebar-user-panel {
+    position: relative !important;
+    flex: 0 0 auto;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 10px 10px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+}
+aside.main-sidebar > .sidebar .nav-sidebar { padding-bottom: 24px !important; }
+aside.main-sidebar::after { display: none; }
+
 
 /* ── SIDEBAR BRAND ───────────────────────────────────────── */
 /* Left padding matches the nav-links' own left padding (8px)
@@ -212,6 +240,8 @@ textarea {
     margin: 0 !important;
 }
 .main-sidebar .dtc-sidebar-icon-slot { position:relative; display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; flex:0 0 22px; }
+.main-sidebar .dtc-sidebar-icon-slot > .dtc-icon-count { position:absolute; top:-8px; right:-9px; z-index:1; display:flex; align-items:center; justify-content:center; box-sizing:border-box; width:22px; min-width:22px; height:22px; min-height:22px; padding:0; margin:0; border:2px solid var(--dtc-surface); border-radius:50%; background:#991b1b; color:#fff; font-size:9px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; pointer-events:none; }
+.main-sidebar .dtc-sidebar-icon-slot > .dtc-icon-count[hidden] { display:none; }
 .main-sidebar .nav-sidebar .nav-link { min-height:46px; gap:8px; padding-left:calc(2.3rem - 19.5px) !important; transition:background-color var(--dtc-transition),color var(--dtc-transition),box-shadow var(--dtc-transition) !important; }
 .main-sidebar .nav-sidebar .nav-link > .dtc-sidebar-menu-copy { margin:0; }
 .main-sidebar .dtc-sidebar-menu-copy > .right { right:0; }
@@ -574,6 +604,7 @@ textarea {
    NOTIFICATION
    ============================================================ */
 
+.main-header .navbar-help-item,
 .main-header .navbar-notification-item {
     position: relative !important;
 
@@ -607,6 +638,16 @@ textarea {
 }
 
 /* Remove Bootstrap dropdown arrow */
+
+.main-header .navbar-help-link.is-active {
+    background: var(--dtc-primary-soft) !important;
+    color: var(--dtc-primary) !important;
+    border-color: var(--dtc-primary) !important;
+}
+.main-header .navbar-help-link:focus-visible {
+    outline: 2px solid var(--dtc-primary);
+    outline-offset: 3px;
+}
 
 #notifBell::after {
     display: none !important;
@@ -1783,11 +1824,32 @@ body.dtc-dark .quick-action-btn i {
 /* ── MAIN FOOTER ─────────────────────────────────────────── */
 .main-footer {
     flex: 0 0 auto;
+    position: fixed !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
     background: var(--dtc-surface) !important;
     border-top: 1px solid var(--dtc-border) !important;
     font-size: 12px !important;
     color: var(--dtc-text-muted) !important;
-    padding: 12px 24px !important;
+    padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Keep the final controls reachable above the fixed, wrapping footer.
+   AdminLTE's existing footer margins follow expanded/collapsed sidebars. */
+.wrapper > .content-wrapper {
+    padding-bottom: var(--dtc-footer-height, 84px) !important;
+}
+.dtc-footer-content { display: flex; align-items: center; justify-content: space-between; gap: 8px 24px; line-height: 1.5; }
+.dtc-footer-copyright { color: var(--dtc-text-secondary); }
+.dtc-footer-system { color: var(--dtc-text-muted); font-size: 11px; }
+@media (max-width: 991.98px) {
+    .main-footer { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
+    .dtc-footer-content { flex-direction: column; justify-content: center; gap: 3px; text-align: center; }
+    .dtc-footer-copyright { font-size: 11px; }
+    .dtc-footer-rights { display: none; }
+    .dtc-footer-system { font-size: 10px; }
 }
 
 /* ============================================================
@@ -9842,7 +9904,40 @@ body.dtc-dark [data-table-rows-field] select {
 .main-sidebar .dtc-sidebar-menu-copy:has(> .dtc-menu-badge:not([hidden])) { padding-right:32px; }
 .main-sidebar .dtc-sidebar-menu-copy > .dtc-menu-badge { position:absolute !important; right:0 !important; top:50% !important; bottom:auto; transform:translateY(-50%); display:inline-flex; align-items:center; justify-content:center; width:26px; min-width:26px; height:20px; min-height:20px; margin:0 !important; padding:2px 4px; border-radius:999px; font-size:10px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; }
 .main-sidebar .dtc-sidebar-menu-copy > .dtc-menu-badge[hidden] { display:none; }
+.main-sidebar .dtc-menu-badge[data-sidebar-unread] { background: #991b1b; color: #fff; }
 .main-sidebar .dtc-sidebar-menu-label { font-size:12.5px; }
+
+/* Expanded navigation: one spacing rhythm across every role and section. */
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar > .sidebar { padding-left: 10px; padding-right: 10px; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-sidebar { width: 100%; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-sidebar .nav-link {
+    width: 100% !important;
+    min-height: 44px;
+    margin: 2px 0 !important;
+    padding: 10px 12px !important;
+    gap: 10px;
+    border-radius: 10px !important;
+    line-height: 1.4;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-sidebar .nav-link.active { box-shadow: none !important; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-header {
+    padding: 20px 12px 8px;
+    margin: 0;
+    color: var(--dtc-text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .09em;
+    line-height: 1.4;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-header:first-child { padding-top: 12px; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-treeview { margin: 2px 0 6px 10px; padding-left: 10px; border-left: 1px solid var(--dtc-border); }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-treeview .nav-link { min-height: 44px; padding: 10px !important; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .dtc-sidebar-menu-label { font-size: 12.5px; font-weight: 500; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-link.active .dtc-sidebar-menu-label { font-weight: 600; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .dtc-sidebar-menu-copy > .dtc-menu-badge { height: 20px; min-width: 24px; width: 24px; font-weight: 600; }
+aside.main-sidebar > .dtc-sidebar-user-panel { box-shadow: none; border-radius: 12px; }
+.main-sidebar .dtc-sidebar-user-name { font-weight: 600; }
+.main-sidebar .nav-link:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: -2px; }
 /* Collapsed icon rail: keep one live badge per menu and anchor it to its icon. */
 @media (min-width:992px) {
     body.sidebar-collapse .main-sidebar:is(:not(:hover):not(.sidebar-focused), .sidebar-no-expand) .nav-sidebar .nav-link { position:relative; justify-content:center; min-height:44px; }

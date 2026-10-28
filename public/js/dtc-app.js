@@ -1,5 +1,57 @@
 // ── DTC Nexus — Dark Mode ───────────────────────────────────────────────────
-const DTC_THEME_KEY = "dtc-ems-theme";
+// Shared Bootstrap modal focus lifecycle. Keep focus out of aria-hidden dialogs.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery) return;
+    const openers = new WeakMap();
+    window.jQuery(document).on('show.bs.modal', '.modal', function (event) {
+        const opener = event.relatedTarget || document.activeElement;
+        if (opener && opener !== document.body && !this.contains(opener)) openers.set(this, opener);
+    });
+    window.jQuery(document).on('hide.bs.modal', '.modal', function (event) {
+        if (event.isDefaultPrevented()) return;
+        const focused = document.activeElement;
+        if (focused && this.contains(focused) && typeof focused.blur === 'function') focused.blur();
+    });
+    window.jQuery(document).on('hidden.bs.modal', '.modal', function () {
+        const opener = openers.get(this);
+        openers.delete(this);
+        // Do not steal focus from a replacement dialog or another control.
+        const focused = document.activeElement;
+        if (document.querySelector('.modal.show') || (focused && focused !== document.body && !this.contains(focused))) return;
+        if (opener && opener.isConnected && !opener.disabled && opener.getClientRects().length) opener.focus();
+    });
+});
+// End shared modal focus lifecycle.
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery) return;
+    window.jQuery(document).on('show.bs.modal', '[data-registrar-contact]', function (event) {
+        const id = event.relatedTarget && event.relatedTarget.getAttribute('data-booking-reference');
+        if (!id || !/^\d+$/.test(id)) { event.preventDefault(); return; }
+        const reference = 'Appointment #' + id;
+        this.querySelector('[data-contact-reference]').textContent = reference;
+        this.querySelector('[data-contact-copy]').setAttribute('data-copy-value', reference);
+        const emailLink = this.querySelector('[data-contact-email]');
+        if (emailLink) {
+            emailLink.href = 'mailto:' + encodeURIComponent(this.getAttribute('data-email'))
+                + '?subject=' + encodeURIComponent('Pickup rescheduling — ' + reference);
+        }
+    });
+});
+
+const DTC_THEME_KEY = 'dtc-ems-theme';
+
+// Reserve the footer's actual height as its text wraps on smaller screens.
+document.addEventListener('DOMContentLoaded', function () {
+    const footer = document.querySelector('.main-footer');
+    if (!footer) return;
+    function syncFooterHeight() {
+        document.documentElement.style.setProperty('--dtc-footer-height', Math.ceil(footer.getBoundingClientRect().height) + 16 + 'px');
+    }
+    syncFooterHeight();
+    if (window.ResizeObserver) new ResizeObserver(syncFooterHeight).observe(footer);
+    else window.addEventListener('resize', syncFooterHeight);
+});
 
 function getDtcTheme() {
     let saved;

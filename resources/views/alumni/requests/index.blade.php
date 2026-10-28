@@ -151,7 +151,16 @@
                                 {{ \Carbon\Carbon::parse($req->appointment->slot->date)->format('M j, Y') }}
                                 at {{ \Carbon\Carbon::parse($req->appointment->slot->start_time)->format('g:i A') }}
                                 — {{ ucfirst($req->appointment->status) }}.
-                                @if ($req->appointment->status === 'pending')
+                                @if ($req->appointment->scheduleHasPassed())
+                                    Scheduled time passed.
+                                    @if ($req->appointment->status === 'pending')
+                                        Choose a new time using Edit booking in My appointments.
+                                        <a href="{{ route('portal.appointments.index') }}">My appointments</a>
+                                    @else
+                                        Contact the Registrar to arrange the next pickup step.
+                                    @endif
+                                    Your document progress and payment records are preserved.
+                                @elseif ($req->appointment->status === 'pending')
                                     @if ($collect)
                                         Awaiting confirmation.
                                     @else
@@ -164,6 +173,9 @@
                                 @endif
                             </span>
                         </div>
+                        @if (in_array($req->appointment->status, ['pending', 'confirmed'], true))
+                            <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm mt-2" data-toggle="modal" data-target="#registrarContactModal" data-booking-reference="{{ $req->appointment->id }}">Contact Registrar</button>
+                        @endif
                         @if ($req->appointment->documentRequests->count() > 1)
                             <details class="dr-request-details">
                                 <summary>Documents in this appointment ({{ $req->appointment->documentRequests->count() }})</summary>
@@ -208,6 +220,7 @@
         @endif
     @endif
 </div>
+@include('portal.partials.registrar-contact')
 @endsection
 
 @section('css')

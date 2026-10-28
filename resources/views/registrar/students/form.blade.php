@@ -34,7 +34,7 @@
     <section class="card"><div class="card-body">
         <h2>Personal details</h2>
         <div class="record-field-grid">
-            @foreach([['student_number','Student number',true],['first_name','First name',true],['middle_name','Middle name',false],['last_name','Last name',true],['suffix','Suffix',false],['email','Contact email',false]] as [$field,$label,$required])
+            @foreach([['student_number','Student ID no.',true],['first_name','First name',true],['middle_name','Middle name',false],['last_name','Last name',true],['suffix','Suffix',false],['email','Contact email',false]] as [$field,$label,$required])
                 <div class="form-group">
                     <label for="{{ $field }}">{{ $label }} @if($required)<span class="record-required" aria-hidden="true">*</span>@endif</label>
                     <input id="{{ $field }}" name="{{ $field }}" type="{{ $field === 'email' ? 'email' : 'text' }}" class="form-control @error($field) is-invalid @enderror" value="{{ old($field, $record->$field) }}" maxlength="{{ $field === 'student_number' ? 50 : ($field === 'suffix' ? 30 : ($field === 'email' ? 255 : 100)) }}" @if($required)required @endif @if($field === 'student_number' && $record->exists)readonly aria-describedby="number-help" @endif>

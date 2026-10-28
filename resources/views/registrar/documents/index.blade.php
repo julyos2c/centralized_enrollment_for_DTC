@@ -207,13 +207,13 @@
                         </td>
                         <td class="dq-sub" style="white-space:nowrap;">{{ $req->created_at->format('M d, Y') }}</td>
                         <td class="text-right">
-                            @if ($req->status !== 'cancelled')
+                            @if (in_array($req->status, ['submitted', 'processing', 'ready'], true))
                                 <button type="button" class="btn btn-sm btn-primary dq-update"
                                         data-toggle="modal" data-target="#statusModal{{ $req->id }}">
                                     Update status
                                 </button>
                             @else
-                                <span class="dq-sub" aria-label="Cancelled requests cannot be updated">Closed</span>
+                                <span class="dq-sub">{{ $req->status === 'released' ? 'Completed' : 'Closed' }}</span>
                             @endif
                         </td>
                     </tr>
@@ -250,8 +250,11 @@
 
 {{-- Status modals (kept outside the table so they never inherit row styling) --}}
 @foreach ($requests as $req)
-    @if ($req->status !== 'cancelled')
-    @php $releaseLocked = !$req->paymentSatisfied(); @endphp
+    @if (in_array($req->status, ['submitted', 'processing', 'ready'], true))
+    @php
+        $nextStatus = ['submitted' => 'processing', 'processing' => 'ready', 'ready' => 'released'][$req->status];
+        $releaseLocked = $nextStatus === 'released' && !$req->paymentSatisfied();
+    @endphp
     <div class="modal fade" id="statusModal{{ $req->id }}" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -270,13 +273,7 @@
                         <div class="form-group">
                             <label for="status-{{ $req->id }}">Status</label>
                             <select id="status-{{ $req->id }}" name="status" class="form-control" required>
-                                @foreach(['submitted','processing','ready','released'] as $s)
-                                    <option value="{{ $s }}"
-                                        {{ $req->status === $s ? 'selected' : '' }}
-                                        {{ $s === 'released' && $releaseLocked ? 'disabled' : '' }}>
-                                        {{ ucfirst($s) }}
-                                    </option>
-                                @endforeach
+                                <option value="{{ $nextStatus }}" {{ $releaseLocked ? 'disabled' : '' }}>{{ ucfirst($nextStatus) }}</option>
                             </select>
                         </div>
                         @if ($releaseLocked)
@@ -285,12 +282,12 @@
                         <div class="form-group">
                             <label for="remarks-{{ $req->id }}">Remarks <span style="color:var(--dtc-text-muted); font-weight:400;">(optional)</span></label>
                             <textarea id="remarks-{{ $req->id }}" name="remarks" class="form-control" rows="3"
-                                      placeholder="Any notes for the alumni...">{{ $req->remarks }}</textarea>
+                                      maxlength="500" placeholder="Notes for the requester">{{ $req->remarks }}</textarea>
                         </div>
                     </div>
                     <div class="modal-footer dtc-balanced-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Status</button>
+                        <button type="submit" class="btn btn-primary" @if($releaseLocked) disabled @endif>Mark as {{ ucfirst($nextStatus) }}</button>
                     </div>
                 </form>
             </div>

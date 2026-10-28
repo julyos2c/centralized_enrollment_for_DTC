@@ -1,4 +1,5 @@
 @extends('adminlte::page')
+@section('plugins.ChartJs', true)
 @include('partials.navbar')
 
 

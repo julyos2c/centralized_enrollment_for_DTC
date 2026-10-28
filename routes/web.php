@@ -105,6 +105,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     
     // ── NOTIFICATIONS & SEARCH (all roles) ───────────────────────────────────────
     Route::middleware(['auth'])->group(function () {
+    Route::get('/help', [\App\Http\Controllers\HelpCenterController::class, 'index'])
+        ->middleware('role:admin|registrar|cashier|student|alumni|new_applicant')->name('help.index');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/poll', [NotificationController::class, 'poll'])->middleware('throttle:120,1')->name('notifications.poll');
     Route::post('/notifications/student-welcome', [NotificationController::class, 'studentWelcome'])->middleware('throttle:120,1')->name('notifications.student-welcome');

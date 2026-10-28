@@ -109,6 +109,64 @@ class AppointmentEditingSafetyTest extends TestCase
         }
     }
 
+    public function test_passed_schedule_guidance_preserves_booking_documents_and_payment(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-10-28 09:00:00'));
+        try {
+            [$appointment, $document] = $this->booking('verified');
+            $appointment->slot->update(['date' => '2026-10-28', 'start_time' => '08:00:00', 'end_time' => '08:30:00']);
+            $this->assertTrue($appointment->fresh()->scheduleHasPassed());
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertSee('Schedule passed — choose a new time')
+                ->assertSee('Edit booking');
+            $this->assertSame('pending', $appointment->fresh()->status);
+            $this->assertSame('verified', $document->fresh()->payment_status);
+            $this->assertSame('80.00', $document->fresh()->fee);
+
+            $appointment->update(['status' => 'confirmed']);
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertSee('Scheduled time passed — contact the Registrar')
+                ->assertDontSee('data-target="#editModal'.$appointment->id.'"', false);
+
+            $appointment->update(['status' => 'cancelled']);
+            $this->assertFalse($appointment->fresh()->scheduleHasPassed());
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    public function test_schedule_passes_at_end_time_not_start_time(): void
+    {
+        [$appointment] = $this->booking();
+        $appointment->slot->update(['date' => '2026-10-28', 'start_time' => '08:00:00', 'end_time' => '08:30:00']);
+        try {
+            $this->travelTo(\Carbon\Carbon::parse('2026-10-28 08:15:00'));
+            $this->assertFalse($appointment->fresh()->scheduleHasPassed());
+            $this->travelTo(\Carbon\Carbon::parse('2026-10-28 08:30:00'));
+            $this->assertTrue($appointment->fresh()->scheduleHasPassed());
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    public function test_registrar_contact_uses_configured_details_and_falls_back_without_email(): void
+    {
+        [$appointment] = $this->booking();
+        $this->get(route('portal.appointments.index'))->assertOk()
+            ->assertSee('Contact Registrar')
+            ->assertSee('Visit the Registrar’s Office to arrange another pickup time.')
+            ->assertDontSee('data-contact-email', false);
+
+        Setting::set('registrar_email', 'registrar@example.test');
+        Setting::set('registrar_office', '<script>alert(1)</script>');
+        $this->get(route('portal.appointments.index'))->assertOk()
+            ->assertSee('registrar@example.test')
+            ->assertSee('data-booking-reference="'.$appointment->id.'"', false)
+            ->assertSee('data-contact-email', false)
+            ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
+            ->assertDontSee('<script>alert(1)</script>', false);
+    }
+
     public function test_cancellation_explains_payment_follow_up_and_preserves_payment_records(): void
     {
         foreach (['verified', 'pending_verification'] as $status) {

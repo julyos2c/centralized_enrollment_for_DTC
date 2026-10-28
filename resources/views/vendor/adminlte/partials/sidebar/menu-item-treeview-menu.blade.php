@@ -10,11 +10,6 @@
             <span class="dtc-sidebar-menu-label">{{ $item['text'] }}</span>
             <i data-lucide="chevron-left" class="right" style="width:1em;height:1em"></i>
 
-            @isset($item['label'])
-                <span class="badge badge-{{ $item['label_color'] ?? 'primary' }} right">
-                    {{ $item['label'] }}
-                </span>
-            @endisset
         </p>
 
     </a>

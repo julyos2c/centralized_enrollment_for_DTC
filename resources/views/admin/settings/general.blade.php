@@ -62,11 +62,20 @@
                                        value="{{ old('tagline', $settings->tagline ?? 'Excellence in Education, Service to the Community.') }}">
                             </div>
 
-                            <div class="form-group mb-0">
+                            <div class="form-group">
                                 <label>Address</label>
                                 <input type="text" name="address" class="form-control"
                                        value="{{ old('address', $settings->address ?? 'Sta. Rosa St., Danao City, Cebu, Philippines') }}">
                             </div>
+                            <h4 class="h6 mt-4">Registrar contact</h4>
+                            <p class="text-muted small">Shown to students and alumni who need help with their booking. Leave unavailable details blank.</p>
+                            @foreach(['registrar_email' => 'Registrar email', 'registrar_phone' => 'Phone number', 'registrar_office' => 'Office location', 'registrar_hours' => 'Office hours'] as $contactKey => $contactLabel)
+                                <div class="form-group">
+                                    <label for="{{ $contactKey }}">{{ $contactLabel }}</label>
+                                    <input id="{{ $contactKey }}" name="{{ $contactKey }}" type="{{ $contactKey === 'registrar_email' ? 'email' : 'text' }}" class="form-control @error($contactKey) is-invalid @enderror" maxlength="{{ $contactKey === 'registrar_phone' ? 100 : 255 }}" value="{{ old($contactKey, $settings->{$contactKey} ?? '') }}">
+                                    @error($contactKey)<span class="invalid-feedback">{{ $message }}</span>@enderror
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>

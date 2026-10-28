@@ -23,6 +23,74 @@ class AcademicRecordManagementTest extends TestCase
         return $this->makeUserWithRole($role);
     }
 
+    private function recordPayload(): array
+    {
+        return ['student_number' => 'GAP-1001', 'first_name' => 'Ana', 'last_name' => 'Santos',
+            'academic_status' => 'active', 'email' => 'ana@example.test', 'enrolled_ay' => '2025-2026'];
+    }
+
+    public function test_school_year_order_is_enforced_on_creation_and_update(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        $payload = $this->recordPayload();
+        foreach (['2026-2025', '2026-2026'] as $year) {
+            $this->post(route('registrar.students.store'), array_replace($payload, ['enrolled_ay' => $year]))
+                ->assertSessionHasErrors('enrolled_ay');
+        }
+        $this->assertDatabaseMissing('student_profiles', ['student_number' => 'GAP-1001']);
+        $this->post(route('registrar.students.store'), $payload)->assertSessionHasNoErrors();
+        $record = StudentProfile::where('student_number', 'GAP-1001')->firstOrFail();
+        $this->put(route('registrar.students.update', $record), array_replace($payload, ['enrolled_ay' => '2027-2026']))
+            ->assertSessionHasErrors('enrolled_ay');
+        $this->assertSame('2025-2026', $record->fresh()->enrolled_ay);
+    }
+
+    public function test_stale_route_model_cannot_bypass_new_account_link_restrictions(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        $payload = $this->recordPayload();
+        $stale = StudentProfile::create($payload);
+        $owner = $this->makeUserWithRole('student');
+        StudentProfile::whereKey($stale->id)->update(['user_id' => $owner->id]);
+        \Illuminate\Support\Facades\Route::bind('student', fn () => $stale);
+        foreach ([['email', 'other@example.test'], ['academic_status', 'alumni']] as [$field, $value]) {
+            $this->put(route('registrar.students.update', $stale), array_replace($payload, [$field => $value]))
+                ->assertSessionHasErrors($field);
+        }
+        $record = $stale->fresh();
+        $this->assertSame($owner->id, $record->user_id);
+        $this->assertSame('active', $record->academic_status);
+        $this->assertSame('ana@example.test', $record->email);
+    }
+
+    public function test_audit_failure_rolls_back_record_creation_and_update(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        $this->withoutExceptionHandling();
+        $payload = $this->recordPayload();
+        $record = StudentProfile::create(array_replace($payload, ['student_number' => 'EXISTING-1001']));
+        $event = 'eloquent.creating: '.\App\Models\AuditLog::class;
+        \Illuminate\Support\Facades\Event::listen($event, function ($audit) {
+            if (str_starts_with($audit->action, 'academic_record.')) throw new \RuntimeException('Simulated audit failure');
+        });
+        try {
+            foreach (['create', 'update'] as $operation) {
+                try {
+                    if ($operation === 'create') $this->post(route('registrar.students.store'), $payload);
+                    else $this->put(route('registrar.students.update', $record), array_replace($payload, ['student_number' => $record->student_number, 'first_name' => 'Changed']));
+                    $this->fail('Expected audit failure');
+                } catch (\RuntimeException $exception) {
+                    $this->assertSame('Simulated audit failure', $exception->getMessage());
+                }
+            }
+        } finally {
+            \Illuminate\Support\Facades\Event::forget($event);
+        }
+        $this->assertDatabaseMissing('student_profiles', ['student_number' => 'GAP-1001']);
+        $this->assertSame('Ana', $record->fresh()->first_name);
+        $this->assertSame(0, \App\Models\AuditLog::where('action', 'like', 'academic_record.%')->count());
+    }
+
     public function test_record_type_and_academic_status_must_agree(): void
     {
         $this->actingAs($this->staff('registrar'));
