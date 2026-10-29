@@ -51,7 +51,7 @@ class ProgramController extends Controller
         Program::create($validated);
 
         return redirect()->route('admin.programs.index')
-            ->with('success', 'Program added successfully.');
+            ->with('success', 'Program added.');
     }
 
     public function update(Request $request, Program $program)
@@ -64,7 +64,7 @@ class ProgramController extends Controller
         $program->update($validated);
 
         return redirect()->route('admin.programs.index', $request->only('program'))
-            ->with('success', 'Program updated successfully.');
+            ->with('success', 'Program updated.');
     }
 
     public function destroy(Program $program)

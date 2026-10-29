@@ -10,6 +10,8 @@
 @php
     $dr        = $documentRequest;
     $isBundle  = $bundlePayment !== null;
+    $documentCount = $documentRequests->count();
+    $isCombined = $isBundle && $documentCount > 1;
     $bundleStatus = $isBundle
         ? ($bundlePayment->status === 'pending' ? ($bundlePayment->payment_method === 'gcash' ? 'pending_verification' : 'unpaid') : $bundlePayment->status)
         : $dr->payment_status;
@@ -27,13 +29,15 @@
         $canWalkIn = $canGcash = false; $statusTxt = 'No Payment Required';
     }
     $feeDue = $isBundle ? $bundlePayment->amount : $dr->fee;
+    $proofPath = $isBundle ? $bundlePayment->proof_of_payment : $dr->proof_of_payment;
+    $hasAvailableProof = $proofPath && \Illuminate\Support\Facades\Storage::disk('local')->exists($proofPath);
 @endphp
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px;">
         <div>
             <h4 class="mb-0 font-weight-bold u-text">Review Document Payment</h4>
-            <p class="mb-0 u-text-secondary-sm">{{ $isBundle ? 'Appointment #' . $bundlePayment->appointment_id . ' · Combined document payment' : 'Request #' . $dr->id . ' · ' . $dr->document_label }}</p>
+            <p class="mb-0 u-text-secondary-sm">{{ $isBundle ? 'Appointment #' . $bundlePayment->appointment_id . ' · ' . ($isCombined ? 'Combined document payment' : 'Document payment') : 'Request #' . $dr->id . ' · ' . $dr->document_label }}</p>
         </div>
         <a href="{{ route('cashier.document-payments.index') }}" class="btn btn-secondary dtc-docpay-back">
             <i data-lucide="arrow-left" class="mr-1"></i> Back to payments
@@ -43,7 +47,9 @@
 
 @section('content')
 <div class="cashier-payment-page cashier-payment-review">
-@if ($errors->any()) <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div> @endif
+@if ($errors->any() && ! ($errors->has('payment') && ! $hasAvailableProof))
+    <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+@endif
 
 {{-- At-a-glance strip --}}
 <div class="dpr-summary">
@@ -66,17 +72,20 @@
     {{-- ───────── Details ───────── --}}
     <div class="card mb-0">
         <div class="dpr-section">
-            <h6>Request</h6>
+            <h6>{{ $isCombined ? 'Requests' : 'Request' }}</h6>
             <dl class="dpr-rows">
                 <dt>Requester</dt>
-                <dd>{{ $dr->user->name }}<span class="dpr-sub">{{ $dr->user->email }}</span></dd>
+                <dd><span class="dpr-primary-value">{{ $dr->user->name }}</span><span class="dpr-sub">{{ $dr->user->email }}</span></dd>
                 @if ($isBundle)
                     <dt>Appointment</dt>
                     <dd>#{{ $bundlePayment->appointment_id }} · {{ \Carbon\Carbon::parse($bundlePayment->appointment->slot->date)->format('M j, Y') }} · {{ ucfirst($bundlePayment->appointment->status) }}</dd>
-                    <dt>Documents</dt>
-                    <dd>
+                    <dt>{{ $isCombined ? 'Documents' : 'Document' }}</dt>
+                    <dd class="dpr-document-list">
                         @foreach ($documentRequests as $item)
-                            {{ $item->document_label }} × {{ $item->copies }} — ₱{{ number_format($item->fee, 2) }} ({{ ucfirst($item->status) }}){{ $loop->last ? '' : '; ' }}
+                            <span class="dpr-document-item">
+                                <span>{{ $item->document_label }} × {{ $item->copies }} <span class="dpr-document-fee">₱{{ number_format($item->fee, 2) }}</span></span>
+                                <span class="dpr-request-status">{{ ucfirst($item->status) }}</span>
+                            </span>
                         @endforeach
                     </dd>
                 @else
@@ -85,7 +94,7 @@
                 @endif
                 <dt>Purpose</dt>
                 <dd>{{ $dr->purpose ?: 'Not provided' }}</dd>
-                @unless ($isBundle)
+                @unless ($isCombined)
                     <dt>Request status</dt>
                     <dd>{{ ucfirst($dr->status) }}</dd>
                 @endunless
@@ -94,7 +103,7 @@
 
         <div class="dpr-section">
             <h6>Payment record</h6>
-            <dl class="dpr-rows">
+            <dl class="dpr-rows dpr-payment-rows">
                 <dt>Amount received</dt>
                 <dd>{{ $isBundle ? ($bundlePayment->status === 'verified' ? '₱' . number_format($bundlePayment->amount, 2) : 'Not recorded') : ($dr->amount_received !== null ? '₱' . number_format($dr->amount_received, 2) : 'Not recorded') }}</dd>
 
@@ -103,7 +112,10 @@
                     <dd>
                         <span class="dpr-ref">
                             <code id="gcashRef">{{ $isBundle ? $bundlePayment->reference_number : $dr->reference_number }}</code>
-                            <button type="button" class="dpr-copy" data-copy="#gcashRef">Copy</button>
+                            <button type="button" class="dpr-copy" data-copy="#gcashRef" aria-label="Copy GCash reference" title="Copy GCash reference">
+                                <i data-lucide="copy" aria-hidden="true"></i>
+                                <span>Copy</span>
+                            </button>
                         </span>
                     </dd>
                 @endif
@@ -132,17 +144,17 @@
         <div class="card mb-0">
         @if ($canWalkIn)
             <div class="dpr-section">
-                <h6>{{ $isBundle ? 'Record combined walk-in payment' : 'Record walk-in payment' }}</h6>
-                <p class="u-text-secondary-sm" style="margin-bottom:14px;">Confirm the funds were received at the Cashier’s Office, then enter the receipt or reference assigned under current college procedures.</p>
-                <form method="POST" action="{{ $isBundle ? route('cashier.document-payments.bundles.verify', $bundlePayment) : route('cashier.document-payments.verify-walk-in', $dr) }}">@csrf
-                    <div class="form-group">
+                <h6>{{ $isCombined ? 'Record combined walk-in payment' : 'Record walk-in payment' }}</h6>
+                <p class="dpr-instructions">Confirm the funds were received at the Cashier’s Office, then enter the amount and official receipt or reference.</p>
+                <form class="dpr-verification-form" method="POST" action="{{ $isBundle ? route('cashier.document-payments.bundles.verify', $bundlePayment) : route('cashier.document-payments.verify-walk-in', $dr) }}">@csrf
+                    <div class="form-group dpr-form-group">
                         <label for="walkin-amount">Amount received</label>
                         <div class="dpr-money"><span>₱</span>
-                            <input id="walkin-amount" class="form-control js-amount" type="number" inputmode="decimal" name="amount_received" min="0.01" max="999999.99" step="0.01" value="{{ number_format($feeDue, 2, '.', '') }}" data-fee="{{ number_format($feeDue, 2, '.', '') }}" required>
+                            <input id="walkin-amount" class="form-control js-amount" type="number" inputmode="decimal" name="amount_received" min="0.01" max="999999.99" step="0.01" value="{{ number_format($feeDue, 2, '.', '') }}" data-fee="{{ number_format($feeDue, 2, '.', '') }}" aria-describedby="walkin-amount-hint" required>
                         </div>
-                        <div class="dpr-hint js-amount-hint" aria-live="polite"></div>
+                        <div id="walkin-amount-hint" class="dpr-hint js-amount-hint" aria-live="polite"></div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group dpr-form-group">
                         <label for="walkin-receipt">Official receipt / reference</label>
                         <input id="walkin-receipt" class="form-control" name="receipt_no" maxlength="100" required>
                     </div>
@@ -152,16 +164,22 @@
 
         @elseif ($canGcash)
             <div class="dpr-section">
-                <h6>{{ $isBundle ? 'Verify combined GCash payment' : 'Verify GCash payment' }}</h6>
+                <h6>{{ $isCombined ? 'Verify combined GCash payment' : 'Verify GCash payment' }}</h6>
                 <div class="dpr-note" role="note">
                     <i data-lucide="alert-triangle" aria-hidden="true"></i>
                     <span>Match the reference and proof against the college’s actual GCash account records. A screenshot alone does not confirm that funds were received.</span>
                 </div>
-                @if ($isBundle ? $bundlePayment->proof_of_payment : $dr->proof_of_payment)
+                @if ($hasAvailableProof)
                     <a class="dpr-proof" href="{{ $isBundle ? route('cashier.document-payments.bundles.proof', $bundlePayment) : route('cashier.document-payments.proof', $dr) }}" target="_blank" rel="noopener">
                         <i data-lucide="image"></i> Open submitted proof
                     </a>
                 @endif
+                @unless ($hasAvailableProof)
+                    <div class="dpr-proof-unavailable" role="alert">
+                        The uploaded proof file is unavailable. Don’t confirm this payment yet. Reject it and ask the requester to submit the proof again.
+                    </div>
+                @endunless
+                @if ($hasAvailableProof)
                 <form method="POST" action="{{ $isBundle ? route('cashier.document-payments.bundles.verify', $bundlePayment) : route('cashier.document-payments.verify-gcash', $dr) }}">@csrf
                     <div class="form-group">
                         <label for="gcash-amount">Amount actually received</label>
@@ -176,6 +194,7 @@
                     </div>
                     <button class="btn btn-success dpr-action-btn" type="submit">Confirm funds received</button>
                 </form>
+                @endif
 
                 <details class="dpr-reject" @if($errors->has('rejection_reason')) open @endif>
                     <summary>Can’t verify this claim?</summary>
@@ -224,10 +243,23 @@
     document.querySelectorAll('.dpr-copy').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var el = document.querySelector(btn.dataset.copy);
-            if (!el || !navigator.clipboard) { return; }
+            var label = btn.querySelector('span');
+            if (!el || !navigator.clipboard || !label) {
+                if (label) label.textContent = 'Copy unavailable';
+                return;
+            }
             navigator.clipboard.writeText(el.textContent.trim()).then(function () {
-                btn.textContent = 'Copied';
-                setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+                label.textContent = 'Copied';
+                btn.classList.add('is-copied');
+                btn.setAttribute('aria-label', 'GCash reference copied');
+                setTimeout(function () {
+                    label.textContent = 'Copy';
+                    btn.classList.remove('is-copied');
+                    btn.setAttribute('aria-label', 'Copy GCash reference');
+                }, 1600);
+            }).catch(function () {
+                label.textContent = 'Copy failed';
+                btn.setAttribute('aria-label', 'Could not copy GCash reference');
             });
         });
     });

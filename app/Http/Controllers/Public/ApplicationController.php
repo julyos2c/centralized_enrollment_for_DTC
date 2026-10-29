@@ -668,7 +668,7 @@ class ApplicationController extends Controller
             return redirect()
                 ->route('public.application.success')
                 ->with('application_just_submitted', true)
-                ->with('success', 'Your application has been submitted successfully.');
+                ->with('success', 'Application submitted.');
 
         } catch (\Throwable $exception) {
             /*

@@ -54,7 +54,7 @@ class ResetPasswordController extends Controller
             // the sign-in modal via dtc-app.js if you wire that up, or just
             // show the toast notification.
             return redirect()->route('landing')
-                ->with('success', 'Password reset successfully. You can now sign in.');
+                ->with('success', 'Password reset. You can now sign in.');
         }
 
         return back()

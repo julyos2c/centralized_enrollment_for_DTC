@@ -27,17 +27,17 @@
             $record->last_name,
             $record->suffix,
         ])));
+        $yearLevel = $portalEnrollment?->year_level ?? $record->year_level;
+        $yearLevelLabel = [1 => '1st Year', 2 => '2nd Year', 3 => '3rd Year', 4 => '4th Year', 5 => '5th Year'][$yearLevel] ?? 'Not recorded';
         $details = [
-            'Student Number' => $record->student_number,
-            'Name' => $fullName ?: ($record->user->name ?? 'Not recorded'),
+            'Student ID no.' => $record->student_number,
             'Email' => $record->email ?: 'Not recorded',
             'Program' => $record->program->name ?? 'Not recorded',
-            'Year Level' => $record->year_level ?: 'Not recorded',
+            'Year Level' => $yearLevelLabel,
             'School Year' => $record->enrolled_ay ?: 'Not recorded',
             'Academic Status' => ucfirst($record->academic_status),
             'Graduation Year' => $record->graduation_year ?: 'Not recorded',
             'Graduation Date' => optional($record->graduation_date)->format('Y-m-d') ?: 'Not recorded',
-            'Portal Account' => $record->user ? 'Linked' : 'No portal account',
         ];
     @endphp
 
@@ -52,8 +52,11 @@
                 $portalState = ! $linkedUser ? 'No portal account' : ($linkedUser->status === 'locked' ? 'Disabled' : ($linkedUser->email_verified_at ? ucfirst($linkedUser->status) : ($invite ? ucfirst(str_replace('_', ' ', $invite->status)) : 'Account pending')));
             @endphp
             <section class="record-portal" aria-labelledby="portal-account-heading">
-                <h2 class="h5" id="portal-account-heading">Portal account</h2>
-                <span class="record-account-state">{{ $portalState }}</span>
+                <div class="record-account-heading">
+                    <span class="record-account-icon" aria-hidden="true"><i data-lucide="shield-check"></i></span>
+                    <h2 class="h5" id="portal-account-heading">Portal account</h2>
+                </div>
+                <span class="record-account-state is-{{ \Illuminate\Support\Str::slug(strtolower($portalState)) }}">{{ $portalState }}</span>
                 @if ($linkedUser)
                     <p class="record-account-email">{{ $linkedUser->email }}</p>
                     <p class="record-account-help">{{ $linkedUser->email_verified_at ? 'Email verified.' : 'The recipient must verify their email before accessing the portal.' }}</p>
@@ -78,12 +81,15 @@
             </section>
             <section class="record-information" aria-labelledby="record-information-heading">
                 <div class="record-person">
-                    <h2 id="record-information-heading">{{ $fullName ?: ($record->user->name ?? 'Not recorded') }}</h2>
-                    <p>Academic details</p>
+                    <div>
+                        <h2 id="record-information-heading">{{ $fullName ?: ($record->user->name ?? 'Not recorded') }}</h2>
+                        <p>Academic details</p>
+                    </div>
+                    <span class="record-academic-status is-{{ \Illuminate\Support\Str::slug($record->academic_status) }}">{{ ucfirst($record->academic_status) }}</span>
                 </div>
             <dl class="ar-record-grid">
                 @foreach ($details as $label => $value)
-                    <div class="ar-record-field">
+                    <div class="ar-record-field ar-record-field--{{ \Illuminate\Support\Str::slug($label) }}">
                         <dt>{{ $label }}</dt>
                         <dd>{{ $value }}</dd>
                     </div>
@@ -95,7 +101,6 @@
                 <section class="ar-history-section">
                     <h2>Enrollment History</h2>
                     <div class="table-responsive">
-                        @include('partials.table-rows', ['tableRecords' => $enrollments, 'tableId' => 'registrar-table-1', 'fixedRows' => true])
 <table id="registrar-table-1" class="rg-record-table dtc-mobile-records table table-sm ar-history-table">
                             <thead><tr><th>School Year</th><th>Semester</th><th>Program</th><th>Status</th></tr></thead>
                             <tbody>
@@ -117,7 +122,6 @@
                 <section class="ar-history-section">
                     <h2>Certificate and Document Requests</h2>
                     <div class="table-responsive">
-                        @include('partials.table-rows', ['tableRecords' => $documentRequests, 'tableId' => 'registrar-table-2', 'fixedRows' => true])
 <table id="registrar-table-2" class="rg-record-table dtc-mobile-records table table-sm ar-history-table">
                             <thead><tr><th>Document</th><th>Requested</th><th>Status</th></tr></thead>
                             <tbody>

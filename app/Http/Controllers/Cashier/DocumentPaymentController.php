@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentPayment;
 use App\Models\DocumentRequest;
 use App\Services\NotificationService;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -97,31 +98,38 @@ class DocumentPaymentController extends Controller
         return view('cashier.document-payments.show', compact('documentRequest', 'bundlePayment', 'documentRequests'));
     }
 
-    public function viewProof(DocumentRequest $documentRequest)
+    public function viewProof(Request $request, DocumentRequest $documentRequest)
     {
         $bundle = $documentRequest->appointment?->payments()
             ->where('is_document_bundle', true)->latest()->first();
         if ($bundle) {
-            return $this->viewBundleProof($bundle);
+            return $this->viewBundleProof($request, $bundle);
         }
         $path = $documentRequest->proof_of_payment;
         abort_unless($path && Storage::disk('local')->exists($path), 404);
 
-        return response()->file(Storage::disk('local')->path($path), [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($path),
+            'Payment proof',
+            route('cashier.document-payments.show', $documentRequest),
+            basename($path)
+        );
     }
 
-    public function viewBundleProof(AppointmentPayment $payment)
+    public function viewBundleProof(Request $request, AppointmentPayment $payment)
     {
         abort_unless($payment->is_document_bundle, 404);
         abort_unless($payment->proof_of_payment && Storage::disk('local')->exists($payment->proof_of_payment), 404);
 
-        return response()->file(Storage::disk('local')->path($payment->proof_of_payment), [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        $documentRequest = $payment->appointment->documentRequests()->firstOrFail();
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($payment->proof_of_payment),
+            'Payment proof',
+            route('cashier.document-payments.show', $documentRequest),
+            basename($payment->proof_of_payment)
+        );
     }
 
     public function verifyBundle(Request $request, AppointmentPayment $payment)
@@ -203,7 +211,7 @@ class DocumentPaymentController extends Controller
         );
 
         return redirect()->route('cashier.document-payments.show', $first)
-            ->with('success', 'Bundled payment verified for all linked document requests.');
+            ->with('success', 'Bundle payment verified.');
     }
 
     public function rejectBundle(Request $request, AppointmentPayment $payment)
@@ -301,13 +309,13 @@ class DocumentPaymentController extends Controller
         NotificationService::emailDocumentRequestSafely($documentRequest->user, $documentRequest, $message);
 
         return redirect()->route('cashier.document-payments.show', $documentRequest)
-            ->with('success', 'GCash payment verified against the received funds.');
+            ->with('success', 'GCash payment verified.');
     }
 
     private function verifyPayment(Request $request, DocumentRequest $documentRequest, string $method, array $validated): void
     {
         if ($documentRequest->usesBundledPayment()) {
-            throw ValidationException::withMessages(['payment' => 'This request is part of a bundled payment. Review or submit payment for the whole booking.']);
+            throw ValidationException::withMessages(['payment' => 'This payment is managed through its appointment. Review or submit payment for the whole booking.']);
         }
 
         DB::transaction(function () use ($request, $documentRequest, $method, $validated) {
@@ -351,7 +359,7 @@ class DocumentPaymentController extends Controller
     public function reject(Request $request, DocumentRequest $documentRequest)
     {
         if ($documentRequest->usesBundledPayment()) {
-            throw ValidationException::withMessages(['payment' => 'This request is part of a bundled payment. Review or submit payment for the whole booking.']);
+            throw ValidationException::withMessages(['payment' => 'This payment is managed through its appointment. Review or submit payment for the whole booking.']);
         }
 
         $validated = $request->validate([

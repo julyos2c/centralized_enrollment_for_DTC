@@ -33,6 +33,6 @@ class PortalActivationController extends Controller
             return back()->withErrors(['token' => 'This account setup link is invalid, expired, or no longer available.']);
         }
 
-        return redirect()->route('login')->with('success', 'Your portal account is active. You may now sign in.');
+        return redirect()->route('login')->with('success', 'Portal account activated. You can sign in now.');
     }
 }

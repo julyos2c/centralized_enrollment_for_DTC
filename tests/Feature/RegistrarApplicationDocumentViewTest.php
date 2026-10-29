@@ -44,9 +44,12 @@ class RegistrarApplicationDocumentViewTest extends TestCase
         $document = $this->document($application, $content);
         $this->actingAs($this->makeUserWithRole('registrar'));
         $preview = $this->get(route('registrar.applications.documents.view', [$application, $document]));
-        $preview->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertHeader('X-Content-Type-Options', 'nosniff');
-        $this->assertStringStartsWith('inline;', $preview->headers->get('Content-Disposition'));
-        $this->assertSame($content, $preview->streamedContent());
+        $preview->assertOk()
+            ->assertSee('Back to details')
+            ->assertSee(route('registrar.applications.show', $application), false)
+            ->assertSee('raw=1', false);
+        $rawPreview = $this->get(route('registrar.applications.documents.view', [$application, $document]).'?raw=1');
+        $rawPreview->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertHeader('X-Content-Type-Options', 'nosniff');
         $download = $this->get(route('registrar.applications.documents.show', [$application, $document]))->assertOk();
         $this->assertStringStartsWith('attachment;', $download->headers->get('Content-Disposition'));
         $this->get(route('registrar.applications.show', $application))->assertOk()

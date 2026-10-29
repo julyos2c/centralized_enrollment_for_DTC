@@ -11,6 +11,7 @@ use App\Services\AppointmentScheduleService;
 use App\Models\User;
 use App\Models\Setting;
 use App\Models\AuditLog;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -234,7 +235,7 @@ class DocumentRequestController extends Controller
             }
 
             return redirect()->route('portal.documents.index')
-                ->with('success', 'Your document requests and pickup appointment were submitted. The Registrar will confirm the pickup after the requests are ready.');
+                ->with('success', 'Document requests submitted. The Registrar will confirm pickup when they are ready.');
         }
 
         $validated['document_type'] = $documents[0]['document_type'];
@@ -360,10 +361,10 @@ class DocumentRequestController extends Controller
     {
         abort_unless($documentRequest->user_id === Auth::id(), 403);
         if ($documentRequest->usesBundledPayment()) {
-            throw ValidationException::withMessages(['payment' => 'This request is part of a bundled payment. Review or submit payment for the whole booking.']);
+            throw ValidationException::withMessages(['payment' => 'This payment is managed through its appointment. Review or submit payment for the whole booking.']);
         }
         if ($documentRequest->paymentNotRequired()) {
-            return redirect()->route('portal.payments.document', $documentRequest)->with('info', 'No Payment Required.');
+            return redirect()->route('portal.payments.document', $documentRequest);
         }
 
         abort_if($documentRequest->paymentNotRequired() || $documentRequest->status === 'cancelled' || $documentRequest->is_paid || $documentRequest->payment_status === 'verified', 403);
@@ -424,14 +425,25 @@ class DocumentRequestController extends Controller
             'We received your updated GCash proof. Your payment is awaiting Cashier verification.'
         );
 
-        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'Payment proof resubmitted and awaiting Cashier verification.');
+        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'Payment proof resubmitted.');
     }
 
-    public function viewProof(DocumentRequest $documentRequest)
+    public function viewProof(Request $request, DocumentRequest $documentRequest)
     {
         abort_unless($documentRequest->user_id === Auth::id(), 403);
+        $path = $documentRequest->proof_of_payment;
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+        $backUrl = $documentRequest->appointment_id
+            ? route('portal.payments.appointment', $documentRequest->appointment)
+            : route('portal.payments.document', $documentRequest);
 
-        return $this->privateProofResponse($documentRequest);
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($path),
+            'Payment proof',
+            $backUrl,
+            basename($path)
+        );
     }
 
     public function showGcashQr()
@@ -449,14 +461,4 @@ class DocumentRequestController extends Controller
         ]);
     }
 
-    private function privateProofResponse(DocumentRequest $documentRequest)
-    {
-        $path = $documentRequest->proof_of_payment;
-        abort_unless($path && Storage::disk('local')->exists($path), 404);
-
-        return response()->file(Storage::disk('local')->path($path), [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
-    }
 }

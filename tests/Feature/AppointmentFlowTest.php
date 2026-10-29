@@ -220,7 +220,7 @@ class AppointmentFlowTest extends TestCase
             ->assertSee('Transcript of Records')
             ->assertSee('Diploma')
             ->assertSee('Certification')
-            ->assertSee('Combined total');
+            ->assertSee('Total due');
     }
 
     /** @test */
@@ -402,10 +402,17 @@ class AppointmentFlowTest extends TestCase
         $this->actingAs($cashier)
             ->get(route('cashier.document-payments.index', ['status' => 'pending_verification']))
             ->assertOk()
-            ->assertSee('Combined appointment payments')
+            ->assertSee('Appointment payments')
             ->assertSee('#' . $appointment->id)
-            ->assertSee('Review bundle');
-        $this->get(route('cashier.document-payments.show', $documentRequest))->assertOk();
+            ->assertSee('Review')
+            ->assertSee('GCash QR')
+            ->assertSee('Pending')
+            ->assertSee('dtc-bundle-requester')
+            ->assertSee('2 documents');
+        $this->get(route('cashier.document-payments.show', $documentRequest))
+            ->assertOk()
+            ->assertSee('Combined document payment')
+            ->assertSee('Verify combined GCash payment');
 
         $this->post(route('cashier.document-payments.bundles.verify', $payment), [
             'amount_received' => '150.00',
@@ -531,14 +538,70 @@ class AppointmentFlowTest extends TestCase
         $this->assertSame('1234567890', $payment->reference_number);
         Storage::disk('local')->assertExists($payment->proof_of_payment);
 
+        $this->actingAs($student)
+            ->get(route('portal.payments.appointment', $appointment))
+            ->assertOk()
+            ->assertSee('Document payment')
+            ->assertDontSee('Combined document payment');
+
         $cashier = $this->makeUserWithRole('cashier');
-        $this->actingAs($cashier)->get(route('cashier.document-payments.show', $documentRequest))->assertOk();
+        $this->actingAs($cashier)
+            ->get(route('cashier.document-payments.index', ['status' => 'pending_verification']))
+            ->assertOk()
+            ->assertSee('Appointment payments')
+            ->assertSee('1 document')
+            ->assertDontSee('Combined appointment payments');
+        $this->get(route('cashier.document-payments.show', $documentRequest))
+            ->assertOk()
+            ->assertSee('Document payment')
+            ->assertSee('Verify GCash payment')
+            ->assertDontSee('combined');
         $this->actingAs($cashier)->post(route('cashier.document-payments.bundles.verify', $payment), [
             'amount_received' => '100.00',
             'receipt_no' => 'DTC-OR-GC-001',
         ])->assertRedirect(route('cashier.document-payments.show', $documentRequest));
         $this->assertSame('verified', $documentRequest->fresh()->payment_status);
         $this->assertTrue($documentRequest->fresh()->is_paid);
+    }
+
+    /** @test */
+    public function cashier_cannot_confirm_a_gcash_appointment_payment_when_its_proof_is_missing()
+    {
+        $student = $this->makeUserWithRole('student');
+        $cashier = $this->makeUserWithRole('cashier');
+        $slot = $this->makeSlot();
+        Storage::disk('local')->put('settings/gcash-qr.png', 'qr');
+        Setting::set('gcash_qr_path', 'settings/gcash-qr.png');
+
+        $this->actingAs($student)->post(route('portal.appointments.store'), [
+            'appointment_slot_id' => $slot->id,
+            'document_type' => 'diploma',
+            'purpose' => 'For employment application',
+            'payment_method' => 'gcash',
+            'reference_number' => 'MISSING-PROOF-001',
+            'proof_of_payment' => $this->fakeProof(),
+        ])->assertRedirect(route('portal.appointments.index'));
+
+        $appointment = Appointment::where('user_id', $student->id)->firstOrFail();
+        $payment = $appointment->payments()->where('is_document_bundle', true)->firstOrFail();
+        $documentRequest = $appointment->documentRequests()->firstOrFail();
+        Storage::disk('local')->delete($payment->proof_of_payment);
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.document-payments.show', $documentRequest))
+            ->assertOk()
+            ->assertSee('The uploaded proof file is unavailable.')
+            ->assertSee('Reject and notify requester')
+            ->assertDontSee('Confirm funds received');
+
+        $this->post(route('cashier.document-payments.bundles.verify', $payment), [
+            'amount_received' => '100.00',
+        ])->assertRedirect(route('cashier.document-payments.show', $documentRequest))
+            ->assertSessionHasErrors('payment');
+        $this->get(route('cashier.document-payments.show', $documentRequest))
+            ->assertOk()
+            ->assertSee('The uploaded proof file is unavailable.')
+            ->assertDontSee('The submitted payment proof is unavailable.');
     }
 
     /** @test */
@@ -651,6 +714,7 @@ class AppointmentFlowTest extends TestCase
     {
         $student     = $this->makeUserWithRole('student');
         $appointment = Appointment::factory()->create(['user_id' => $student->id]);
+        Setting::set('appointment_processing_fee', 50);
 
         $response = $this->actingAs($student)
             ->post(route('portal.appointments.payment.gcash', $appointment), [
@@ -799,7 +863,7 @@ class AppointmentFlowTest extends TestCase
             ->assertSee('Pickup slot no longer available.')
             ->assertSee('Diploma')
             ->assertSee('Certification')
-            ->assertSee('Payment details')
+            ->assertSee('Review payment')
             ->assertSee('data-group="progress"', false)
             ->assertSee('data-groups="progress cancelled"', false);
     }
@@ -985,6 +1049,42 @@ class AppointmentFlowTest extends TestCase
             ->assertDontSee('rg-booking-confirm');
 
         $this->assertFalse($appointment->canBeConfirmed());
+    }
+
+    /** @test */
+    public function registrar_index_hides_confirm_action_when_linked_pickup_payment_is_unpaid()
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $student = $this->makeUserWithRole('student');
+        $slot = $this->makeSlot();
+        $appointment = Appointment::factory()->create([
+            'user_id' => $student->id,
+            'appointment_slot_id' => $slot->id,
+            'status' => 'pending',
+        ]);
+        DocumentRequest::create([
+            'user_id' => $student->id,
+            'appointment_id' => $appointment->id,
+            'document_type' => 'tor',
+            'copies' => 1,
+            'status' => 'ready',
+            'fee' => 50,
+            'is_paid' => false,
+            'payment_method' => 'walk_in',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->actingAs($registrar)
+            ->get(route('registrar.appointments.index'))
+            ->assertOk()
+            ->assertSee('Unavailable')
+            ->assertDontSee('rg-booking-confirm');
+
+        $this->actingAs($registrar)
+            ->post(route('registrar.appointments.confirm', $appointment))
+            ->assertSessionHas('error', 'This appointment can be confirmed while the document request is being processed, or when a ready request has verified payment.');
+
+        $this->assertSame('pending', $appointment->fresh()->status);
     }
 
     /** @test */
@@ -1323,6 +1423,44 @@ class AppointmentFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($payment->reference_number);
+    }
+
+    /** @test */
+    public function registrar_index_marks_bundle_gcash_as_waiting_for_cashier_without_blocking_processing_confirmation()
+    {
+        $registrar = $this->makeUserWithRole('registrar');
+        $student = $this->makeUserWithRole('student');
+        $appointment = Appointment::factory()->create([
+            'user_id' => $student->id,
+            'appointment_slot_id' => $this->makeSlot()->id,
+            'status' => 'pending',
+        ]);
+        DocumentRequest::create([
+            'user_id' => $student->id,
+            'appointment_id' => $appointment->id,
+            'document_type' => 'certification',
+            'copies' => 1,
+            'status' => 'submitted',
+            'fee' => 20,
+            'is_paid' => false,
+            'payment_method' => 'gcash_qr',
+            'payment_status' => 'pending_verification',
+        ]);
+        AppointmentPayment::factory()->create([
+            'appointment_id' => $appointment->id,
+            'is_document_bundle' => true,
+            'payment_method' => 'gcash',
+            'amount' => 20,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($registrar)
+            ->get(route('registrar.appointments.index'))
+            ->assertOk()
+            ->assertSee('Awaiting Cashier')
+            ->assertSee('Total due')
+            ->assertSee('₱20.00')
+            ->assertSee('rg-booking-confirm');
     }
 
     /** @test */

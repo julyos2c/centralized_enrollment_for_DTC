@@ -440,9 +440,7 @@
     window.dtcHandleAjaxError = function (error) {
         var response = error && error.response;
         if (!response) {
-            window.dtcToast.error(
-                "A network error occurred. Please check your connection.",
-            );
+            window.dtcToast.error('Network error. Check your connection.');
             return;
         }
 
@@ -458,26 +456,18 @@
                 : data.message || "Please correct the form errors.";
             window.dtcToast.warning(first);
         } else if (status === 419) {
-            window.dtcToast.error(
-                "This page has expired. Reload before trying again.",
-            );
+            window.dtcToast.error('Page expired. Reload and try again.');
         } else if (status === 401) {
-            window.dtcToast.error(
-                "Your session has expired. Please log in again.",
-            );
+            window.dtcToast.error('Session expired. Sign in again.');
         } else if (status === 403) {
-            window.dtcToast.error(
-                "You do not have permission to perform this action.",
-            );
+            window.dtcToast.error('You do not have permission to do this.');
         } else if (status === 404) {
-            window.dtcToast.error("The requested resource was not found.");
+            window.dtcToast.error('Page not found.');
         } else {
-            var msg =
-                (data && data.message) ||
-                "Something went wrong. Please try again.";
+            var msg = (data && data.message) || 'Something went wrong. Try again.';
             // Never expose stack traces
-            if (msg.length > 200 || msg.indexOf("\n") !== -1) {
-                msg = "Something went wrong. Please try again.";
+            if (msg.length > 200 || msg.indexOf('\n') !== -1) {
+                msg = 'Something went wrong. Try again.';
             }
             window.dtcToast.error(msg);
         }

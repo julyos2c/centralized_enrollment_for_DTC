@@ -323,7 +323,7 @@ class PortalAccountProvisioningTest extends TestCase
     public function test_completed_import_offers_bounded_separate_bulk_invitation_and_retry_is_idempotent(): void
     {
         $registrar = $this->makeUserWithRole('registrar');
-        $csv = "Student Number,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-BULK-1,Iris,,Lopez,,iris.bulk@example.test,,,\n";
+        $csv = "Student ID no.,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-BULK-1,Iris,,Lopez,,iris.bulk@example.test,,,\n";
         $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
             'import_type' => 'students',
             'file' => UploadedFile::fake()->createWithContent('students.csv', $csv),

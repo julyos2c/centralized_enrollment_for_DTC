@@ -35,6 +35,6 @@ class EmailVerificationController extends Controller
                 event(new \Illuminate\Auth\Events\Verified($user));
             }
         });
-        return redirect()->route('login')->with('success', 'Email verified. You can continue using your account.');
+        return redirect()->route('login')->with('success', 'Email verified. You can sign in now.');
     }
 }

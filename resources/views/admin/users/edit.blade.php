@@ -151,7 +151,7 @@
                         @if(session('password_reset_success'))
                             <div class="alert alert-success">
                                 <i data-lucide="check-circle" class="mr-1"></i>
-                                Password reset successfully. The user will be prompted to change it on next login.
+                                Password reset. The user must change it at next login.
                             </div>
                         @endif
 

@@ -78,7 +78,7 @@ class UserController extends Controller
         $user->assignRole($validated['role']);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Staff account created successfully.');
+            ->with('success', 'Staff account created.');
     }
 
     // ── edit ────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ class UserController extends Controller
         }
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', 'User updated.');
     }
 
     // ── resetPassword ────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ class UserController extends Controller
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', "Password for {$user->name} has been reset successfully.");
+            ->with('success', "Password reset for {$user->name}.");
     }
 
     // ── destroy ──────────────────────────────────────────────────────────────

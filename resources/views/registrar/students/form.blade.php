@@ -62,7 +62,12 @@
             </div>
             <fieldset class="record-field-wide record-conditional-fields" data-student-fields @if($alumni) hidden disabled @endif>
                 <div class="record-field-grid">
-                    <div class="form-group"><label for="year_level">Year level</label><input type="number" min="1" max="8" id="year_level" name="year_level" class="form-control" value="{{ old('year_level', $record->year_level) }}">@error('year_level')<div class="record-field-error">{{ $message }}</div>@enderror</div>
+                    <div class="form-group">
+                        <label for="year_level">Year level</label>
+                        <input type="number" min="1" max="{{ \App\Models\StudentProfile::MAX_YEAR_LEVEL }}" step="1" inputmode="numeric" id="year_level" name="year_level" class="form-control @error('year_level') is-invalid @enderror" value="{{ old('year_level', $record->year_level) }}" aria-describedby="year-level-help @error('year_level') year-level-error @enderror">
+                        <small id="year-level-help" class="record-form-help">Enter a whole number from 1 to {{ \App\Models\StudentProfile::MAX_YEAR_LEVEL }}. Leave blank if it is not recorded.</small>
+                        @error('year_level')<div class="record-field-error" id="year-level-error" role="alert">{{ $message }}</div>@enderror
+                    </div>
                     <div class="form-group"><label for="enrolled_ay">School year</label><input id="enrolled_ay" name="enrolled_ay" class="form-control" placeholder="YYYY-YYYY" pattern="[0-9]{4}-[0-9]{4}" maxlength="9" value="{{ old('enrolled_ay', $record->enrolled_ay) }}">@error('enrolled_ay')<div class="record-field-error">{{ $message }}</div>@enderror</div>
                 </div>
             </fieldset>

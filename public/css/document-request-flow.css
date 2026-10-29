@@ -1879,6 +1879,14 @@ body.dtc-dark .dr-change {
 .dr-schedule-notice { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--dtc-border); border-left: 3px solid var(--dtc-primary); border-radius: 10px; background: var(--dtc-surface-soft); font-size: 13px; line-height: 1.6; }
 .dr-schedule-notice strong { font-weight: 600; color: var(--dtc-text); }
 .dr-schedule-notice p { margin: 4px 0 0; color: var(--dtc-text-secondary); }
+.dr-registrar-contact { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 16px; margin-top: 12px; padding: 14px 16px; border: 1px solid var(--dr-line); border-radius: 12px; background: var(--dr-soft); }
+.dr-registrar-contact p { margin: 0; color: var(--dr-ink-2); font-size: 13px; line-height: 1.55; }
+.dr-registrar-contact p strong { display: block; margin-bottom: 2px; color: var(--dr-ink); font-weight: 600; }
+.dr-registrar-contact .dr-btn { min-height: 42px; }
+@media (max-width: 575.98px) {
+    .dr-registrar-contact { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 13px; }
+    .dr-registrar-contact .dr-btn { width: 100%; }
+}
 
 /* Edit booking: contained choices and a compact, readable current schedule. */
 .dr-edit-modal select[data-reschedule-date-select][hidden] { display: none !important; }
@@ -1935,8 +1943,12 @@ body.dtc-dark .dr-change {
 .dr-edit-modal .modal-footer { display: block; }
 .dr-edit-modal .modal-footer > div:last-child { display: flex; justify-content: flex-end; margin: 14px 0 0; }
 .dr-edit-modal .modal-footer .btn { min-height: 44px; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+[data-registrar-contact] .modal-footer { display: flex; align-items: center; justify-content: flex-end; }
+[data-registrar-contact] .modal-footer > div:last-child { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%; margin: 0; }
+[data-registrar-contact] .modal-footer .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; margin: 0; line-height: 1.2; white-space: nowrap; }
 @media (max-width: 575.98px) {
     .dr-edit-modal .modal-dialog { margin: 12px; }
     .dr-edit-modal .modal-header, .dr-edit-modal .modal-body, .dr-edit-modal .modal-footer { padding: 16px; }
     .dr-edit-modal .modal-footer .btn { flex: 1; }
+    [data-registrar-contact] .modal-footer > div:last-child { gap: 8px; }
 }

@@ -674,16 +674,22 @@ aside.main-sidebar::after { display: none; }
     position: absolute !important;
     top: 2px !important;
     right: 2px !important;
-    min-width: 17px !important;
-    height: 17px !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0 4px !important;
-    border-radius: 999px !important;
-    font-size: 10px !important;
-    font-weight: 700 !important;
+    box-sizing: border-box !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    border: 2px solid var(--dtc-surface) !important;
+    border-radius: 50% !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
     line-height: 1 !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 /* ============================================================
@@ -3156,21 +3162,26 @@ textarea.dtc-form-control {
     position: absolute;
     top: 1px;
     right: 1px;
-    min-width: 17px;
-    height: 17px;
-    padding: 0 4px;
+    box-sizing: border-box;
+    width: 22px;
+    min-width: 22px;
+    max-width: 22px;
+    height: 22px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
     border: 2px solid var(--dtc-surface);
     border-radius: 50%;
-    color: #ffffff;
-    background: var(--dtc-danger);
+    color: #FFFFFF;
+    background: #991b1b;
     font-family: inherit;
-    font-size: 8.5px;
-    font-weight: 700;
+    font-size: 9px;
+    font-weight: 600;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .notify-dropdown {
@@ -4572,31 +4583,12 @@ body.dtc-dark .alert-info {
     font-weight: 500;
 }
 
-/* Chevron replaces the 3-dot; rotates when menu is open */
-.dtc-sidebar-profile-chevron {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--dtc-text-muted);
-    pointer-events: none;
-    transition:
-        transform 0.2s ease,
-        color 0.2s ease;
-}
-.dtc-sidebar-user-main[aria-expanded="true"] .dtc-sidebar-profile-chevron {
-    transform: rotate(180deg);
-    color: var(--dtc-primary);
-}
-
 /* ── Collapsed sidebar (desktop burger toggle) ───────────────────────────
    AdminLTE's sidebar-mini toggle shrinks .main-sidebar to 4.6rem and widens
    it back to 250px on hover/focus (see adminlte.css ~L14249). The user panel
    lives outside .sidebar (see left-sidebar.blade.php note on why) so it
-   shrinks along with .main-sidebar, but its row (40px avatar + name/role +
-   chevron) never had a collapsed layout — the row just overflowed past the
+   shrinks along with .main-sidebar, but its row (40px avatar + name/role)
+   never had a collapsed layout — the row just overflowed past the
    4.6rem rail. This mirrors AdminLTE's own hover-to-expand pattern instead
    of introducing a new interaction. */
 @media (min-width:992px) {
@@ -4620,11 +4612,8 @@ body.dtc-dark .alert-info {
         gap: 0;
     }
     body.sidebar-mini.sidebar-collapse .dtc-sidebar-user-copy,
-    body.sidebar-mini.sidebar-collapse .dtc-sidebar-profile-chevron,
     body.sidebar-mini-md.sidebar-collapse .dtc-sidebar-user-copy,
-    body.sidebar-mini-md.sidebar-collapse .dtc-sidebar-profile-chevron,
-    body.sidebar-mini-xs.sidebar-collapse .dtc-sidebar-user-copy,
-    body.sidebar-mini-xs.sidebar-collapse .dtc-sidebar-profile-chevron {
+    body.sidebar-mini-xs.sidebar-collapse .dtc-sidebar-user-copy {
         display: none;
     }
     /* Ring around the collapsed avatar so a light-mode photo (or the blue
@@ -4701,26 +4690,6 @@ body.dtc-dark .alert-info {
         .main-sidebar.sidebar-focused
         .dtc-sidebar-user-copy {
         display: block;
-    }
-    body.sidebar-mini.sidebar-collapse
-        .main-sidebar:not(.sidebar-no-expand):hover
-        .dtc-sidebar-profile-chevron,
-    body.sidebar-mini.sidebar-collapse
-        .main-sidebar.sidebar-focused
-        .dtc-sidebar-profile-chevron,
-    body.sidebar-mini-md.sidebar-collapse
-        .main-sidebar:not(.sidebar-no-expand):hover
-        .dtc-sidebar-profile-chevron,
-    body.sidebar-mini-md.sidebar-collapse
-        .main-sidebar.sidebar-focused
-        .dtc-sidebar-profile-chevron,
-    body.sidebar-mini-xs.sidebar-collapse
-        .main-sidebar:not(.sidebar-no-expand):hover
-        .dtc-sidebar-profile-chevron,
-    body.sidebar-mini-xs.sidebar-collapse
-        .main-sidebar.sidebar-focused
-        .dtc-sidebar-profile-chevron {
-        display: flex;
     }
 }
 
@@ -9934,6 +9903,50 @@ body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-treeview { ma
 body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-treeview .nav-link { min-height: 44px; padding: 10px !important; }
 body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .dtc-sidebar-menu-label { font-size: 12.5px; font-weight: 500; }
 body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-link.active .dtc-sidebar-menu-label { font-weight: 600; }
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview.menu-open > .nav-link {
+    background: var(--dtc-primary-soft) !important;
+    color: var(--dtc-primary) !important;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview.menu-open > .nav-link .nav-icon {
+    color: var(--dtc-primary) !important;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview.menu-open > .nav-link .dtc-sidebar-menu-label {
+    font-weight: 600;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview > .nav-treeview {
+    margin: 4px 0 8px 12px;
+    padding: 3px 0 3px 10px;
+    border-left: 1px solid var(--dtc-border);
+    background: transparent !important;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview .nav-treeview .nav-link {
+    min-height: 42px;
+    padding: 9px 10px !important;
+    gap: 10px;
+    border-radius: 8px !important;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview .nav-treeview .nav-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    flex-basis: 18px !important;
+}
+body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview .nav-treeview .nav-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+body.dtc-dark:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview.menu-open > .nav-link {
+    background: color-mix(in srgb, var(--dtc-primary) 14%, var(--dtc-surface)) !important;
+    color: #BFDBFE !important;
+}
+body.dtc-dark:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview.menu-open > .nav-link .nav-icon {
+    color: #BFDBFE !important;
+}
+body.dtc-dark:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview .nav-treeview .nav-link:hover,
+body.dtc-dark:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .nav-item.has-treeview .nav-treeview .nav-link.active {
+    background: color-mix(in srgb, var(--dtc-primary) 16%, var(--dtc-surface)) !important;
+    color: #DBEAFE !important;
+}
 body:is(:not(.sidebar-collapse), .sidebar-open) .main-sidebar .dtc-sidebar-menu-copy > .dtc-menu-badge { height: 20px; min-width: 24px; width: 24px; font-weight: 600; }
 aside.main-sidebar > .dtc-sidebar-user-panel { box-shadow: none; border-radius: 12px; }
 .main-sidebar .dtc-sidebar-user-name { font-weight: 600; }
@@ -9963,7 +9976,6 @@ aside.main-sidebar > .dtc-sidebar-user-panel { box-shadow: none; border-radius: 
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-user-panel { left:0 !important; right:0 !important; padding:7px !important; margin:0 7px 14px !important; width:calc(100% - 14px) !important; border-radius:16px; }
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-user-main { justify-content:center !important; gap:0 !important; min-height:40px; }
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-user-copy,
-    body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-profile-chevron { display:none !important; }
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-avatar { box-shadow:none !important; }
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-sidebar-profile-menu { left:calc(100% + 12px); right:auto; bottom:0; width:230px; }
     body.sidebar-collapse .main-sidebar.sidebar-no-expand .dtc-menu-badge { top:3px !important; left:auto !important; right:-5px !important; min-width:17px !important; height:17px !important; min-height:17px !important; font-size:9px !important; }

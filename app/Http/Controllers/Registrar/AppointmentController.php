@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\AppointmentScheduleService;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,7 @@ class AppointmentController extends Controller
         AppointmentSlot::create($validated);
 
         return redirect()->route('registrar.appointments.slots')
-            ->with('success', 'Appointment slot added successfully.');
+            ->with('success', 'Appointment slot added.');
     }
 
     public function updateSlot(Request $request, AppointmentSlot $slot)
@@ -93,7 +94,7 @@ class AppointmentController extends Controller
         $slot->update(array_merge($validated, ['source' => 'manual']));
 
         return redirect()->route('registrar.appointments.slots')
-            ->with('success', 'Appointment slot updated successfully.');
+            ->with('success', 'Appointment slot updated.');
     }
 
     public function deleteSlot(AppointmentSlot $slot)
@@ -409,12 +410,18 @@ class AppointmentController extends Controller
             ->with('success', 'Payment rejected.' . ($notified ? ' The applicant was notified.' : ' The applicant notification could not be delivered; the failure was logged.'));
     }
 
-    public function viewProof(AppointmentPayment $payment)
+    public function viewProof(Request $request, AppointmentPayment $payment)
     {
         if (! $payment->proof_of_payment || ! Storage::disk('local')->exists($payment->proof_of_payment)) {
             abort(404, 'Proof not found.');
         }
 
-        return response()->file(Storage::disk('local')->path($payment->proof_of_payment));
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($payment->proof_of_payment),
+            'Payment proof',
+            route('registrar.appointments.index'),
+            basename($payment->proof_of_payment)
+        );
     }
 }

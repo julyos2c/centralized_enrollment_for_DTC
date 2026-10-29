@@ -13,6 +13,7 @@ use App\Models\Program;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\ApplicationCancellationService;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\DB;
@@ -444,7 +445,7 @@ class ApplicationController extends Controller
         );
     }
 
-    public function viewDocument(Application $application, ApplicationDocument $document)
+    public function viewDocument(Request $request, Application $application, ApplicationDocument $document)
     {
         abort_unless($document->application_id === $application->id, 404);
         $disk = Storage::disk('local');
@@ -453,10 +454,12 @@ class ApplicationController extends Controller
         abort_unless(in_array($mime, ['application/pdf', 'image/jpeg', 'image/png'], true), 415,
             'This file cannot be previewed. Use Download instead.');
 
-        return $disk->response($document->file_path, $document->original_name, [
-            'Content-Type' => $mime,
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ], 'inline');
+        return PrivateFilePreview::respond(
+            $request,
+            $disk->path($document->file_path),
+            'Application document',
+            route('registrar.applications.show', $application),
+            $document->original_name
+        );
     }
 }

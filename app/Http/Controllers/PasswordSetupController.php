@@ -68,7 +68,7 @@ class PasswordSetupController extends Controller
         if ($status === Password::PASSWORD_RESET) {
             return redirect()
                 ->route('login')
-                ->with('success', 'Your password has been set. You may now sign in.');
+                ->with('success', 'Password set. You can sign in now.');
         }
 
         return back()

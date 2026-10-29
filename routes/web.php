@@ -286,6 +286,8 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::middleware('role:student|alumni')->group(function () {
     Route::get('/payments/documents/{documentRequest}', [\App\Http\Controllers\PortalPaymentController::class, 'document'])->name('payments.document');
     Route::get('/payments/appointments/{appointment}', [\App\Http\Controllers\PortalPaymentController::class, 'appointment'])->name('payments.appointment');
+    Route::post('/payments/appointments/{appointment}/switch-to-gcash', [\App\Http\Controllers\PortalPaymentController::class, 'switchBundleToGcash'])->name('payments.appointments.switch-to-gcash');
+    Route::post('/payments/appointments/{appointment}/back-to-requests', [\App\Http\Controllers\PortalPaymentController::class, 'backToRequests'])->name('payments.appointments.back-to-requests');
     });
     Route::get('/programs/{program}/subjects', [EnrollmentController::class, 'getSubjects'])->name('enrollment.subjects');
     

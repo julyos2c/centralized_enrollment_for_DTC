@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Setting;
 
@@ -102,7 +103,7 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.index')
-            ->with('status', 'General settings saved successfully.');
+            ->with('status', 'General settings saved.');
     }
 
     /** DELETE /admin/settings/logo */
@@ -172,7 +173,7 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.academic')
-            ->with('status', 'Academic settings saved successfully.');
+            ->with('status', 'Academic settings saved.');
     }
 
     // ── Payment Settings ──────────────────────────────────────────────────────
@@ -217,7 +218,7 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.payment')
-            ->with('status', 'Payment settings saved successfully.');
+            ->with('status', 'Payment settings saved.');
     }
 
     /** POST /admin/settings/payment/qr */
@@ -238,7 +239,7 @@ class SettingsController extends Controller
         Setting::updateOrCreate(['key' => 'gcash_qr_path'], ['value' => $path]);
 
         return redirect()->route('admin.settings.payment')
-            ->with('status', 'GCash QR code updated successfully.');
+            ->with('status', 'GCash QR code updated.');
     }
 
     // ── Notification Settings ─────────────────────────────────────────────────
@@ -268,7 +269,7 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.notifications')
-            ->with('status', 'Notification settings saved successfully.');
+            ->with('status', 'Notification settings saved.');
     }
 
     // ── System Security ───────────────────────────────────────────────────────
@@ -306,7 +307,7 @@ class SettingsController extends Controller
         ]);
 
         return redirect()->route('admin.settings.security')
-            ->with('status', 'Security settings saved successfully.');
+            ->with('status', 'Security settings saved.');
     }
 
     // ── Backup & Restore ──────────────────────────────────────────────────────
@@ -336,12 +337,13 @@ class SettingsController extends Controller
         try {
             Artisan::call('backup:run');
         } catch (\Exception $e) {
+            Log::error('Scheduled backup command failed.', ['exception' => $e]);
             return redirect()->route('admin.settings.backup')
-                ->with('error', 'Backup failed: ' . $e->getMessage());
+                ->with('error', 'Backup failed. Check the system logs for details.');
         }
 
         return redirect()->route('admin.settings.backup')
-            ->with('status', 'Backup completed successfully.');
+            ->with('status', 'Backup completed.');
     }
 
     /** POST /admin/settings/restore */

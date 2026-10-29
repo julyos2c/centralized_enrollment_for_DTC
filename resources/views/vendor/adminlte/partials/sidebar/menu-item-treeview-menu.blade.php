@@ -8,8 +8,6 @@
 
         <p class="dtc-sidebar-menu-copy">
             <span class="dtc-sidebar-menu-label">{{ $item['text'] }}</span>
-            <i data-lucide="chevron-left" class="right" style="width:1em;height:1em"></i>
-
         </p>
 
     </a>

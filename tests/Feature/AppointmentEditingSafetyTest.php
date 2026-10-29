@@ -126,6 +126,10 @@ class AppointmentEditingSafetyTest extends TestCase
             $appointment->update(['status' => 'confirmed']);
             $this->get(route('portal.appointments.index'))->assertOk()
                 ->assertSee('Scheduled time passed — contact the Registrar')
+                ->assertSee('dr-registrar-contact', false)
+                ->assertSee('Need to reschedule or cancel?')
+                ->assertSee('Contact Registrar')
+                ->assertDontSee('Contact the Registrar to change or cancel this confirmed booking.')
                 ->assertDontSee('data-target="#editModal'.$appointment->id.'"', false);
 
             $appointment->update(['status' => 'cancelled']);
@@ -149,11 +153,50 @@ class AppointmentEditingSafetyTest extends TestCase
         }
     }
 
+    public function test_payment_action_is_only_shown_when_payment_needs_attention(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-10-28 09:00:00'));
+        try {
+            [$overdue] = $this->booking('unpaid');
+            $overdue->update(['status' => 'confirmed']);
+            $overdue->slot->update(['date' => '2026-10-27', 'start_time' => '08:00:00', 'end_time' => '08:30:00']);
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertSee('Review payment')
+                ->assertDontSee('>Payment details</a>', false);
+
+            [$cancelled, $cancelledDocument] = $this->booking('unpaid');
+            $cancelled->update(['status' => 'cancelled']);
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertSee('Review payment');
+
+            $cancelledDocument->update(['fee' => 0]);
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertSee('No Payment Required')
+                ->assertDontSee('>Review payment</a>', false)
+                ->assertDontSee('>Payment details</a>', false);
+
+            [$paidCancelled] = $this->booking('verified');
+            $paidCancelled->update(['status' => 'cancelled']);
+            $this->get(route('portal.appointments.index'))->assertOk()
+                ->assertDontSee('>Review payment</a>', false)
+                ->assertDontSee('>Payment details</a>', false);
+        } finally {
+            $this->travelBack();
+        }
+    }
+
     public function test_registrar_contact_uses_configured_details_and_falls_back_without_email(): void
     {
         [$appointment] = $this->booking();
         $this->get(route('portal.appointments.index'))->assertOk()
+            ->assertDontSee('data-booking-reference', false);
+
+        $appointment->update(['status' => 'confirmed']);
+        $this->get(route('portal.appointments.index'))->assertOk()
             ->assertSee('Contact Registrar')
+            ->assertSee('Need to change or cancel?')
+            ->assertSee('dr-registrar-contact', false)
+            ->assertDontSee('Appointment confirmed')
             ->assertSee('Visit the Registrar’s Office to arrange another pickup time.')
             ->assertDontSee('data-contact-email', false);
 

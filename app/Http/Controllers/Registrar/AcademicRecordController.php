@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\DocumentRequest;
 use App\Models\Enrollment;
 use App\Models\Program;
+use App\Models\Setting;
 use App\Models\StudentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,8 +59,21 @@ class AcademicRecordController extends Controller
         if ($invitation && $invitation->status === 'pending' && $invitation->expires_at && $invitation->expires_at->isPast()) {
             $invitation->update(['status' => 'expired', 'token_hash' => null]);
         }
+        $currentSchoolYear = Setting::get('current_school_year');
+        $currentSemester = Setting::get('current_semester');
+        $semesterNumbers = ['1st' => 1, '2nd' => 2, 'Summer' => 3];
+        $hasConfiguredTerm = $currentSchoolYear && isset($semesterNumbers[$currentSemester]);
+        $portalEnrollment = $student->user
+            ? Enrollment::where('user_id', $student->user_id)
+                ->when($hasConfiguredTerm, fn ($query) => $query
+                    ->where('school_year', $currentSchoolYear)
+                    ->where('semester', $semesterNumbers[$currentSemester]))
+                ->latest()->orderByDesc('id')->first()
+            : null;
+
         return view('registrar.students.show', [
             'record' => $student,
+            'portalEnrollment' => $portalEnrollment,
             'enrollments' => $student->user ? Enrollment::with('program')->where('user_id', $student->user_id)->latest('id')->get() : collect(),
             'documentRequests' => $student->user ? DocumentRequest::where('user_id', $student->user_id)->latest('id')->get() : collect(),
         ]);
@@ -102,9 +116,12 @@ class AcademicRecordController extends Controller
             'first_name' => ['required', 'string', 'max:100'], 'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'], 'suffix' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'], 'program_id' => ['nullable', 'exists:programs,id'],
-            'year_level' => ['nullable', 'integer', 'between:1,8'], 'enrolled_ay' => ['nullable', 'string', 'regex:/^\d{4}-\d{4}$/'],
+            'year_level' => ['nullable', 'bail', 'integer', 'between:1,'.StudentProfile::MAX_YEAR_LEVEL], 'enrolled_ay' => ['nullable', 'string', 'regex:/^\d{4}-\d{4}$/'],
             'graduation_year' => ['nullable', 'integer', 'between:1900,'.(date('Y') + 1)], 'graduation_date' => ['nullable', 'date'],
             'academic_status' => ['required', Rule::in(['active', 'inactive', 'alumni'])],
+        ], [
+            'year_level.integer' => 'Enter a whole-number year level.',
+            'year_level.between' => 'Year level must be between 1 and '.StudentProfile::MAX_YEAR_LEVEL.'.',
         ]);
         if (!empty($data['enrolled_ay'])) {
             [$start, $end] = array_map('intval', explode('-', $data['enrolled_ay']));

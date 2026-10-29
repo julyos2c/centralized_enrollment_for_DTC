@@ -250,67 +250,69 @@
                     @php $pay = $appointment->latestPayment; @endphp
                     <tr>
                         <td data-reg-label="Student">
-                            <div class="u-flex-center-gap-10">
+                            <div class="u-flex-center-gap-10 rg-appointment-student">
                                 <x-dtc.user-avatar :user="$appointment->user" style="width:34px;height:34px;border-radius:50%;
                                             background:linear-gradient(135deg,#0F4CDB,#1a5feb);
                                             display:flex;align-items:center;justify-content:center;
                                             color:#fff;font-weight:700;font-size:12px;flex-shrink:0;" />
-                                <div>
-                                    <div class="u-text-sm-bold-primary">{{ $appointment->user->name }}</div>
-                                    <div class="u-text-xs-secondary">{{ $appointment->user->email }}</div>
-                                    <div class="u-text-xs-secondary">{{ $appointment->user->hasRole('alumni') ? 'Alumni' : ($appointment->user->hasRole('student') ? 'Student' : 'Applicant') }}</div>
+                                <div class="rg-appointment-student-info">
+                                    <div class="u-text-sm-bold-primary rg-appointment-student-name">{{ $appointment->user->name }}</div>
+                                    <div class="u-text-xs-secondary rg-appointment-student-email">{{ $appointment->user->email }}</div>
+                                    <div class="u-text-xs-secondary rg-appointment-student-role">{{ $appointment->user->hasRole('alumni') ? 'Alumni' : ($appointment->user->hasRole('student') ? 'Student' : 'Applicant') }}</div>
                                 </div>
                             </div>
                         </td>
                         <td data-reg-label="Document">
                             @if ($appointment->documentRequests->isNotEmpty())
                                 @foreach ($appointment->documentRequests as $documentRequest)
-                                    <div class="mb-1">
-                                        <span class="dtc-status-badge is-info" style="font-weight:600;">{{ $documentRequest->document_label }} × {{ $documentRequest->copies }}</span>
-                                        <span class="u-text-xs-secondary">{{ ucfirst($documentRequest->status) }} · ₱{{ number_format($documentRequest->fee, 2) }}</span>
+                                    <div class="rg-document-entry">
+                                        <span class="dtc-status-badge is-info rg-document-name">{{ $documentRequest->document_label }} × {{ $documentRequest->copies }}</span>
+                                        <span class="rg-document-meta">{{ ucfirst($documentRequest->status) }} <span aria-hidden="true">·</span> ₱{{ number_format($documentRequest->fee, 2) }}</span>
                                     </div>
                                 @endforeach
                             @else
-                                <span class="dtc-status-badge is-info" style="font-weight:600;">{{ ucfirst($appointment->document_type) }}</span>
+                                <span class="dtc-status-badge is-info rg-document-name">{{ ucfirst($appointment->document_type) }}</span>
                             @endif
                         </td>
                         <td data-reg-label="Date &amp; Time">
-                            <div style="font-size:13px;font-weight:600;color:var(--dtc-text);">
+                            <div class="rg-appointment-date">
                                 {{ \Carbon\Carbon::parse($appointment->slot->date)->format('M d, Y') }}
                             </div>
-                            <div style="font-size:11px;color:var(--dtc-text-muted);">
+                            <div class="rg-appointment-time">
                                 {{ \Carbon\Carbon::parse($appointment->slot->start_time)->format('h:i A') }}
                             </div>
                         </td>
-                        <td data-reg-label="Purpose" style="font-size:12px;color:var(--dtc-text-secondary);max-width:140px;">
+                        <td data-reg-label="Purpose" class="rg-appointment-purpose">
                             {{ $appointment->purpose ?? '—' }}
                         </td>
                         <td data-reg-label="Payment">
                             @if($appointment->paymentNotRequired())
-                                <span class="dtc-status-badge is-info">No Payment Required</span>
+                                <span class="dtc-status-badge is-info rg-payment-status">No Payment Required</span>
                             @elseif(!$pay)
-                                <span style="font-size:11px;color:var(--dtc-text-muted);">—</span>
-                            @elseif($pay->payment_method === 'walk_in' && $pay->is_document_bundle && $pay->status !== 'verified')
-                                <span class="dtc-status-badge is-warning" style="font-size:10px;">Walk-in unpaid</span>
+                                <span class="rg-payment-empty">—</span>
+                            @elseif($pay->payment_method === 'walk_in' && $pay->status !== 'verified')
+                                <span class="dtc-status-badge is-warning rg-payment-status">Walk-in unpaid</span>
                             @elseif($pay->payment_method === 'walk_in')
-                                <span class="dtc-status-badge is-info" style="font-size:10px;">
-                                    <i data-lucide="building-2" style="width:10px;height:10px;"></i> Walk-in
+                                <span class="dtc-status-badge is-success rg-payment-status">
+                                    <i data-lucide="building-2" aria-hidden="true"></i> Walk-in paid
                                 </span>
                             @elseif($pay->status === 'verified')
-                                <span class="dtc-status-badge is-success" style="font-size:10px;">
-                                    <i data-lucide="check-circle" style="width:10px;height:10px;"></i> GCash Verified
+                                <span class="dtc-status-badge is-success rg-payment-status">
+                                    <i data-lucide="check-circle" aria-hidden="true"></i> GCash verified
                                 </span>
                             @elseif($pay->status === 'pending')
-                                <span class="dtc-status-badge is-warning" style="font-size:10px;">
-                                    <i data-lucide="clock" style="width:10px;height:10px;"></i> GCash Pending
+                                <span class="dtc-status-badge is-warning rg-payment-status">
+                                    <i data-lucide="clock" aria-hidden="true"></i> {{ $pay->is_document_bundle ? 'Awaiting Cashier' : 'GCash pending' }}
                                 </span>
                             @elseif($pay->status === 'rejected')
-                                <span class="dtc-status-badge is-danger" style="font-size:10px;">
-                                    <i data-lucide="x-circle" style="width:10px;height:10px;"></i> GCash Rejected
+                                <span class="dtc-status-badge is-danger rg-payment-status">
+                                    <i data-lucide="x-circle" aria-hidden="true"></i> GCash rejected
                                 </span>
+                            @else
+                                <span class="dtc-status-badge is-neutral rg-payment-status">Payment status unavailable</span>
                             @endif
                             @if($pay && $pay->is_document_bundle)
-                                <div class="u-text-xs-secondary mt-1">Bundle total: ₱{{ number_format($pay->amount, 2) }}</div>
+                                <div class="rg-payment-total"><span>Total due</span><strong>₱{{ number_format($pay->amount, 2) }}</strong></div>
                             @endif
                         </td>
                         <td data-reg-label="Status">
@@ -381,7 +383,7 @@
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
                                                         data-dismiss="modal">Back</button>
-                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Cancel appointment?" data-dtc-confirm-message="The appointment for {subject} will be cancelled with the entered reason." data-dtc-confirm-subject="{{ $appointment->user->name }}" data-dtc-confirm-ok="Cancel" data-dtc-confirm-form="#cancel-appointment-{{ $appointment->id }}">
+                                                <button type="button" class="btn btn-danger" data-dtc-confirm data-dtc-confirm-tone="danger" data-dtc-confirm-title="Cancel appointment?" data-dtc-confirm-message="The appointment for {subject} will be cancelled with the entered reason." data-dtc-confirm-subject="{{ $appointment->user->name }}" data-dtc-confirm-ok="Cancel" data-dtc-confirm-cancel="Keep Appointment" data-dtc-confirm-form="#cancel-appointment-{{ $appointment->id }}">
                                                     Confirm Cancel
                                                 </button>
                                             </div>

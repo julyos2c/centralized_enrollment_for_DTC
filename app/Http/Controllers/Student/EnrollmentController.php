@@ -7,6 +7,7 @@ use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Program;
 use App\Models\Setting;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -218,7 +219,7 @@ class EnrollmentController extends Controller
             'View enrollment status'
         );
 
-        return redirect()->route('portal.enrollment.index')->with('success', 'Enrollment submitted successfully. Await Registrar approval.');
+        return redirect()->route('portal.enrollment.index')->with('success', 'Enrollment submitted. Awaiting Registrar approval.');
     }
 
     /** Resolve the active term from Registrar-managed academic settings. */
@@ -337,7 +338,7 @@ class EnrollmentController extends Controller
             'View payment status'
         );
 
-        return redirect()->route('portal.enrollment.payment-info', $enrollment)->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
+        return redirect()->route('portal.enrollment.payment-info', $enrollment)->with('success', 'GCash proof submitted.');
     }
 
     // ── viewProof() — NEW (student viewing their own proof) ────────
@@ -352,8 +353,12 @@ class EnrollmentController extends Controller
             abort(404);
         }
 
-        return response()->file(
-            Storage::disk('local')->path($payment->proof_of_payment)
+        return PrivateFilePreview::respond(
+            request(),
+            Storage::disk('local')->path($payment->proof_of_payment),
+            'Payment proof',
+            route('portal.enrollment.payment-info', $payment->enrollment),
+            basename($payment->proof_of_payment)
         );
     }
 

@@ -102,9 +102,31 @@ class Appointment extends Model
         $activeBookings = $slot->appointments()->whereIn('status', ['pending', 'confirmed'])->count();
         $schedule = app(\App\Services\AppointmentScheduleService::class);
 
-        return ($slot->status ?? 'open') === 'open'
+        $slotIsAvailable = ($slot->status ?? 'open') === 'open'
             && ! $isPast
             && ! $schedule->isClosed($slot->date, $slot->start_time, $slot->end_time)
             && $activeBookings <= $slot->max_bookings;
+
+        if (! $slotIsAvailable) {
+            return false;
+        }
+
+        $documentRequests = $this->relationLoaded('documentRequests')
+            ? $this->getRelation('documentRequests')
+            : $this->documentRequests()->get();
+        if ($documentRequests->isEmpty()) {
+            return true;
+        }
+
+        $user = $this->relationLoaded('user') ? $this->getRelation('user') : $this->user()->first();
+        $studentBooking = $user?->hasRole(['student', 'new_applicant']) ?? false;
+
+        return $documentRequests->every(function ($documentRequest) use ($studentBooking) {
+            if ($studentBooking && in_array($documentRequest->status, ['submitted', 'processing'], true)) {
+                return true;
+            }
+
+            return $documentRequest->status === 'ready' && $documentRequest->paymentSatisfied();
+        });
     }
 }

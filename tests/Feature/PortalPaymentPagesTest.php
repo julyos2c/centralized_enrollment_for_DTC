@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Appointment;
+use App\Models\AppointmentPayment;
 use App\Models\DocumentRequest;
 use App\Models\Enrollment;
 use App\Models\Setting;
@@ -58,7 +59,10 @@ class PortalPaymentPagesTest extends TestCase
         foreach (['student', 'alumni'] as $role) {
             $user = $this->makeUserWithRole($role);
             $document = $this->document($user);
-            $this->actingAs($user)->get(route('portal.payments.document', $document))->assertViewHas('canSubmit', $role !== 'alumni');
+            $this->actingAs($user)->get(route('portal.payments.document', $document))
+                ->assertViewHas('canSubmit', false)
+                ->assertSee('Walk-in payment')
+                ->assertDontSee('name="proof_of_payment"', false);
             foreach (['pending_verification', 'verified', 'rejected'] as $status) {
                 $document->update(['payment_status' => $status, 'payment_method' => 'gcash_qr']);
                 $response = $this->get(route('portal.payments.document', $document))->assertOk();
@@ -83,11 +87,119 @@ class PortalPaymentPagesTest extends TestCase
         $this->get(route('portal.payments.appointment', $other))->assertViewHas('canSubmit', false)->assertDontSee('name="proof_of_payment"', false);
     }
 
+    public function test_legacy_appointment_payment_details_show_one_valid_payment_state(): void
+    {
+        $user = $this->makeUserWithRole('student');
+        $appointment = Appointment::factory()->create(['user_id' => $user->id]);
+        $url = route('portal.payments.appointment', $appointment);
+
+        Setting::set('appointment_processing_fee', 0);
+        $this->actingAs($user)->get($url)->assertOk()
+            ->assertViewHas('status', 'not_required')
+            ->assertViewHas('canSubmit', false)
+            ->assertSee('No Payment Required')
+            ->assertDontSee('Walk-in payment')
+            ->assertDontSee('GCash payment')
+            ->assertDontSee('name="proof_of_payment"', false);
+        $this->post(route('portal.appointments.payment.gcash', $appointment), [
+            'reference_number' => 'NO-FEE',
+            'proof_of_payment' => UploadedFile::fake()->image('proof.png'),
+        ])->assertRedirect()->assertSessionHas('error');
+        $this->assertSame(0, $appointment->payments()->count());
+
+        Setting::set('appointment_processing_fee', 50);
+        $this->get($url)->assertOk()
+            ->assertViewHas('fee', 50.0)
+            ->assertViewHas('canSubmit', true)
+            ->assertSee('GCash payment')
+            ->assertDontSee('Walk-in payment')
+            ->assertSee('name="proof_of_payment"', false);
+
+        AppointmentPayment::create([
+            'appointment_id' => $appointment->id,
+            'payment_method' => 'walk_in',
+            'status' => 'pending',
+            'amount' => 50,
+        ]);
+        $this->get($url)->assertOk()
+            ->assertViewHas('canSubmit', false)
+            ->assertSee('Walk-in payment')
+            ->assertDontSee('GCash payment')
+            ->assertDontSee('name="proof_of_payment"', false);
+    }
+
+    public function test_unpaid_walk_in_bundle_can_switch_to_gcash_from_payment_details(): void
+    {
+        $user = $this->makeUserWithRole('student');
+        $appointment = Appointment::factory()->create(['user_id' => $user->id]);
+        $document = $this->document($user, ['appointment_id' => $appointment->id]);
+        $payment = AppointmentPayment::create([
+            'appointment_id' => $appointment->id,
+            'is_document_bundle' => true,
+            'payment_method' => 'walk_in',
+            'status' => 'pending',
+            'amount' => 50,
+        ]);
+        $url = route('portal.payments.appointment', $appointment);
+
+        $this->actingAs($user)->get($url)->assertOk()
+            ->assertSee('Walk-in payment')
+            ->assertSee('Prefer to pay online?')
+            ->assertSee('Pay via GCash instead?')
+            ->assertDontSee('name="proof_of_payment"', false);
+
+        $this->post(route('portal.payments.appointments.switch-to-gcash', $appointment))
+            ->assertRedirect($url)
+            ->assertSessionMissing('success')
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('gcash', $payment->fresh()->payment_method);
+        $this->assertSame('gcash_qr', $document->fresh()->payment_method);
+        $this->assertSame('unpaid', $document->fresh()->payment_status);
+        $this->get($url)->assertOk()
+            ->assertSee('GCash payment')
+            ->assertSee('dtc-gcash-account', false)
+            ->assertSee('dtc-gcash-amount', false)
+            ->assertSee('Save QR to phone')
+            ->assertSee('dtc-file-label', false)
+            ->assertSee('name="proof_of_payment"', false)
+            ->assertSee('Back to requests')
+            ->assertDontSee('Return to walk-in payment')
+            ->assertDontSee('Pay via GCash instead');
+
+        $this->post(route('portal.payments.appointments.back-to-requests', $appointment))
+            ->assertRedirect(route('portal.appointments.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('walk_in', $payment->fresh()->payment_method);
+        $this->assertSame('walk_in', $document->fresh()->payment_method);
+        $this->get($url)->assertOk()->assertSee('Walk-in payment')->assertSee('Pay via GCash instead?')
+            ->assertDontSee('name="proof_of_payment"', false);
+
+        $this->post(route('portal.payments.appointments.switch-to-gcash', $appointment))
+            ->assertRedirect($url)
+            ->assertSessionHasNoErrors();
+
+        $this->post(route('portal.appointments.bundle-payment.gcash', $appointment), [
+            'reference_number' => 'SWITCH-TO-GCASH',
+            'proof_of_payment' => UploadedFile::fake()->image('proof.png'),
+        ])->assertRedirect($url)->assertSessionHasNoErrors();
+
+        $this->assertSame('SWITCH-TO-GCASH', $payment->fresh()->reference_number);
+        $this->assertSame('pending', $payment->fresh()->status);
+        $this->assertSame('pending_verification', $document->fresh()->payment_status);
+
+        $this->post(route('portal.payments.appointments.back-to-requests', $appointment))
+            ->assertRedirect(route('portal.appointments.index'))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('gcash', $payment->fresh()->payment_method);
+    }
+
     public function test_missing_qr_and_unapproved_enrollment_do_not_offer_online_payment(): void
     {
         $user = $this->makeUserWithRole('student');
         Storage::disk('local')->delete('qr.png');
-        $document = $this->document($user);
+        $document = $this->document($user, ['payment_method' => 'gcash_qr']);
         $this->actingAs($user)->get(route('portal.payments.document', $document))->assertOk()->assertSee('GCash is currently unavailable.')->assertDontSee('name="proof_of_payment"', false);
         $enrollment = Enrollment::factory()->create(['user_id' => $user->id, 'status' => 'pending']);
         $this->get(route('portal.enrollment.payment-info', $enrollment))->assertOk()->assertSee('Payment is available after')->assertDontSee('name="proof_of_payment"', false);

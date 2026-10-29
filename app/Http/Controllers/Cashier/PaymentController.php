@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\StudentProfile;
 use App\Services\NotificationService;
+use App\Support\PrivateFilePreview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -154,7 +155,7 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('cashier.payments.index')
-            ->with('success', 'Payment recorded successfully. The receipt remains available from the payment list.');
+            ->with('success', 'Payment recorded. Receipt available in the payment list.');
     }
 
     // ── verify() — GCash verification ─────────────────────────────
@@ -163,7 +164,7 @@ class PaymentController extends Controller
     {
         if ($payment->status !== 'pending') {
             return redirect()->route('cashier.payments.show', $payment->enrollment_id)
-                ->with('error', 'This payment has already been processed.');
+                ->with('error', 'Payment already processed.');
         }
 
         $receiptNo = 'OR-' . date('Ymd') . '-' . Str::upper(Str::random(5));
@@ -231,7 +232,7 @@ class PaymentController extends Controller
         );
 
         return redirect()->route('cashier.payments.index')
-            ->with('success', 'GCash payment verified. The receipt remains available from the payment list.');
+            ->with('success', 'GCash payment verified. Receipt available in the payment list.');
     }
 
     // ── reject() ──────────────────────────────────────────────────
@@ -240,7 +241,7 @@ class PaymentController extends Controller
     {
         if ($payment->status !== 'pending') {
             return redirect()->route('cashier.payments.show', $payment->enrollment_id)
-                ->with('error', 'This payment has already been processed.');
+                ->with('error', 'Payment already processed.');
         }
 
         $validated = $request->validate([
@@ -282,14 +283,18 @@ class PaymentController extends Controller
 
     // ── viewProof() ───────────────────────────────────────────────
 
-    public function viewProof(Payment $payment)
+    public function viewProof(Request $request, Payment $payment)
     {
         if (! $payment->proof_of_payment || ! Storage::disk('local')->exists($payment->proof_of_payment)) {
             abort(404);
         }
 
-        return response()->file(
-            Storage::disk('local')->path($payment->proof_of_payment)
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($payment->proof_of_payment),
+            'Payment proof',
+            route('cashier.payments.show', $payment->enrollment),
+            basename($payment->proof_of_payment)
         );
     }
 

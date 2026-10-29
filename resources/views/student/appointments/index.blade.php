@@ -141,6 +141,17 @@
                         : ($pay
                             ? ($pay->status === 'verified' ? 'Paid' : ($pay->status === 'rejected' ? 'Payment not verified' : ($pay->isGcash() ? 'Payment under review' : 'Pay at Cashier')))
                             : 'No payment yet'));
+                    $hasPaymentAction = $bundlePayment
+                        ? (float) $bundlePayment->amount > 0 && in_array($bundlePayment->status, ['pending', 'rejected'], true)
+                        : ($documentRequests->isNotEmpty()
+                            ? $documentRequests->contains(fn ($item) => (float) $item->fee > 0
+                                && !$item->is_paid
+                                && $item->status !== 'cancelled'
+                                && in_array($item->payment_status, ['unpaid', 'pending_verification', 'rejected'], true))
+                            : ($pay
+                                ? (float) $pay->amount > 0 && in_array($pay->status, ['pending', 'rejected'], true)
+                                : $appointmentProcessingFee > 0));
+                    $paymentActionLabel = $cancelled || $schedulePassed ? 'Review payment' : 'Payment details';
                 @endphp
                 @php
                     $docStatus = $docRequest?->status;
@@ -183,8 +194,8 @@
                         @endforeach
                     @endif
 
-                    @if (!$cancelled && !$docRequest && !$schedulePassed)
-                        <p class="dr-step-note">{{ $appointment->status === 'confirmed' ? 'Appointment confirmed' : 'Awaiting appointment confirmation' }}</p>
+                    @if (!$cancelled && !$docRequest && !$schedulePassed && $appointment->status === 'pending')
+                        <p class="dr-step-note">Awaiting appointment confirmation</p>
                     @elseif ($cancelled && $documentRequests->contains(fn ($document) => $document->status !== 'cancelled'))
                         <p class="dr-step-note">The pickup appointment was cancelled, but your document request remains active. Contact the Registrar about the next pickup step.</p>
                     @endif
@@ -201,7 +212,13 @@
                     @if ($schedulePassed)
                         <div class="dr-schedule-notice" role="status">
                             <strong>{{ $appointment->status === 'pending' ? 'Schedule passed — choose a new time' : 'Scheduled time passed — contact the Registrar' }}</strong>
-                            <p>{{ $appointment->status === 'pending' ? 'Use Edit booking to select an available future time. The Registrar will review your updated booking.' : 'Contact the Registrar to arrange the next pickup step.' }} Your document progress and payment records are preserved.</p>
+                            <p>
+                                @if ($appointment->status === 'pending')
+                                    Use Edit booking to select an available future time. The Registrar will review your updated booking. Your document progress and payment records are preserved.
+                                @else
+                                    Your document progress and payment records are preserved.
+                                @endif
+                            </p>
                         </div>
                     @endif
 
@@ -217,9 +234,11 @@
 
                     <div class="dr-pay">
                         <div class="dr-pay-line"><span class="dtc-status-badge is-{{ $payTone }}">{{ $payLabel }}</span></div>
-                        <div class="dr-actions">
-                            <a class="dr-btn dr-btn--primary dr-btn--sm" href="{{ $bundlePayment ? route('portal.payments.appointment', $appointment) : ($docRequest ? route('portal.payments.document', $docRequest) : route('portal.payments.appointment', $appointment)) }}">Payment details</a>
-                        </div>
+                        @if ($hasPaymentAction)
+                            <div class="dr-actions">
+                                <a class="dr-btn dr-btn--primary dr-btn--sm" href="{{ $bundlePayment ? route('portal.payments.appointment', $appointment) : ($docRequest ? route('portal.payments.document', $docRequest) : route('portal.payments.appointment', $appointment)) }}">{{ $paymentActionLabel }}</a>
+                            </div>
+                        @endif
                     </div>
                     @php
                         $canStudentCancel = $appointment->status === 'pending'
@@ -247,10 +266,10 @@
                             @endif
                         </div>
                     @elseif ($appointment->status === 'confirmed')
-                        <p class="dr-req-purpose">Contact the Registrar to change or cancel this confirmed booking.</p>
-                    @endif
-                    @if (in_array($appointment->status, ['pending', 'confirmed'], true))
-                        <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm mt-2" data-toggle="modal" data-target="#registrarContactModal" data-booking-reference="{{ $appointment->id }}">Contact Registrar</button>
+                        <div class="dr-registrar-contact">
+                            <p><strong>{{ $schedulePassed ? 'Need to reschedule or cancel?' : 'Need to change or cancel?' }}</strong>{{ $schedulePassed ? 'Contact the Registrar to arrange the next pickup step.' : 'Contact the Registrar for help with this confirmed booking.' }}</p>
+                            <button type="button" class="dr-btn dr-btn--ghost dr-btn--sm" data-toggle="modal" data-target="#registrarContactModal" data-booking-reference="{{ $appointment->id }}">Contact Registrar</button>
+                        </div>
                     @endif
                 </li>
             @endforeach

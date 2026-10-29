@@ -20,8 +20,8 @@ class AcademicRecordImportService
     public function headers(string $type): array
     {
         return $type === 'alumni'
-            ? ['Student Number', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program Completed', 'Graduation Year', 'Graduation Date']
-            : ['Student Number', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program', 'Year Level', 'School Year'];
+            ? ['Student ID no.', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program Completed', 'Graduation Year', 'Graduation Date']
+            : ['Student ID no.', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program', 'Year Level', 'School Year'];
     }
 
     public function upload(UploadedFile $file, string $type, int $actorId): AcademicImportBatch
@@ -136,13 +136,13 @@ class AcademicRecordImportService
         foreach ($rows as $index => $row) {
             $line = $index + 2; $errors = [];
             if (isset($row['_malformed'])) $errors[] = 'Row has an incorrect number of columns.';
-            $number = $row['Student Number'] ?? '';
+            $number = $row['Student ID no.'] ?? '';
             $first = $row['First Name'] ?? '';
             $last = $row['Last Name'] ?? '';
-            if ($number === '') $errors[] = 'Student Number is required.';
+            if ($number === '') $errors[] = 'Student ID no. is required.';
             if ($first === '') $errors[] = 'First Name is required.';
             if ($last === '') $errors[] = 'Last Name is required.';
-            if (isset($seen[$number]) && $number !== '') $errors[] = 'Student Number is duplicated in this file.';
+            if (isset($seen[$number]) && $number !== '') $errors[] = 'Student ID no. is duplicated in this file.';
             if ($number !== '') $seen[$number] = true;
             $email = $row['Email'] ?? '';
             if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email is not valid.';

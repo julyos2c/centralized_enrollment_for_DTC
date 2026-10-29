@@ -12,6 +12,10 @@
 .portal-payment-account dd { margin-bottom: 12px; font-size: 14px; overflow-wrap: anywhere; }
 .portal-payment-account button { margin-left: 10px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 6px; background: transparent; color: var(--dtc-on-primary-soft, #0f4cdb); font-size: 12px; }
 .portal-payment-page .form-group { margin-bottom: 18px; }
+.portal-payment-page .portal-payment-submit { display: block; width: 100%; min-height: 48px; }
+@media (min-width: 576px) {
+    .portal-payment-page .portal-payment-submit { width: fit-content; min-width: 140px; }
+}
 .portal-payment-page .form-group label { display: block; margin-bottom: 6px; color: var(--dtc-text, #1e293b); font-weight: 600; }
 .portal-payment-page .form-control { min-height: 44px; border-color: var(--dtc-border, #cbd5e1); border-radius: 9px; background: var(--dtc-surface-soft, #f8fafc); color: var(--dtc-text, #1e293b); }
 .portal-payment-page .form-control:focus { border-color: var(--dtc-primary, #0f4cdb); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dtc-primary, #0f4cdb) 18%, transparent); }
@@ -40,3 +44,13 @@ body.dtc-dark .portal-payment-page .form-control,
 body.dtc-dark .portal-payment-page input[type="file"].form-control-file { background: var(--dtc-surface-soft, #1e293b); color: var(--dtc-text, #f8fafc); }
 
 .portal-payment-save { display:flex; align-items:center; justify-content:center; min-height:44px; width:fit-content; margin-top:12px; padding:9px 14px; border:1px solid var(--dtc-border); border-radius:8px; color:var(--dtc-on-primary-soft,var(--dtc-primary)); font-size:12px; font-weight:500; }
+.portal-payment-switch-prompt { margin-top: 18px; padding: 16px; border: 1px solid var(--dtc-border, #cbd5e1); border-radius: 12px; background: var(--dtc-surface-soft, #f8fafc); }
+.portal-payment-switch-prompt p { margin: 0 0 12px; color: var(--dtc-text-secondary, #64748b); }
+.portal-payment-page form.portal-payment-switch { margin: 0; }
+.portal-payment-page .portal-payment-switch-button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--dtc-primary, #0f4cdb); border-radius: 9px; background: var(--dtc-primary, #0f4cdb); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.portal-payment-page .portal-payment-switch-button { width: 100%; }
+.portal-payment-page .portal-payment-switch-button:hover { background: var(--dtc-primary-hover, #0b43c1); border-color: var(--dtc-primary-hover, #0b43c1); }
+.portal-payment-page .portal-payment-switch-button:focus-visible,
+.portal-payment-page .portal-payment-back:focus-visible { outline: 3px solid color-mix(in srgb, var(--dtc-primary, #0f4cdb) 35%, transparent); outline-offset: 2px; }
+.portal-payment-back-form { margin: 0 0 12px; }
+.portal-payment-page button.portal-payment-back { border: 0; background: transparent; cursor: pointer; font-family: inherit; }

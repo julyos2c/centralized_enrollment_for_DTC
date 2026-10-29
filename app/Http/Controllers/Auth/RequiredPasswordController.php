@@ -29,6 +29,6 @@ class RequiredPasswordController extends Controller
         });
         $request->session()->regenerate();
         $request->session()->put('auth_session_token', $user->auth_session_token);
-        return redirect()->route('login')->with('success', 'Password changed successfully.');
+        return redirect()->route('login')->with('success', 'Password changed.');
     }
 }

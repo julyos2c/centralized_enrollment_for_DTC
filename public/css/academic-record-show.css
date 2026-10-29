@@ -3,10 +3,19 @@
 .content-wrapper .academic-record-heading > .btn { width: auto; min-height: 44px; padding: 10px 18px; border-radius: 9px; box-shadow: none; font-size: 12px; }
 .academic-record-page .ar-record-card { border: 0; background: transparent; box-shadow: none; }
 .academic-record-page .ar-record-card > .card-body { padding: 0; }
-.record-portal, .record-information { padding: 22px; border: 1px solid var(--dtc-border); border-radius: 12px; background: var(--dtc-surface); margin-bottom: 16px; }
+.record-portal, .record-information { padding: 22px; border: 1px solid var(--dtc-border); border-radius: 14px; background: var(--dtc-surface); margin-bottom: 16px; }
 .record-portal { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; }
-.record-portal h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--dtc-text); align-self: center; }
-.record-account-state { padding: 4px 10px; border-radius: 6px; background: var(--dtc-surface-soft); border: 1px solid var(--dtc-border); color: var(--dtc-text-secondary); font-size: 11px; }
+.record-account-heading { display:flex; align-items:center; gap:10px; min-width:0; }
+.record-account-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; flex:0 0 34px; border:1px solid var(--dtc-border); border-radius:10px; background:var(--dtc-surface-soft); color:var(--dtc-primary); }
+.record-account-icon svg { width:17px; height:17px; }
+.record-portal h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--dtc-text); align-self: center; }
+.record-account-state,.record-academic-status { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 10px; border-radius:999px; background:var(--dtc-surface-soft); border:1px solid var(--dtc-border); color:var(--dtc-text-secondary); font-size:10px; font-weight:700; white-space:nowrap; }
+.record-account-state.is-active,.record-academic-status.is-active { border-color:rgba(22,163,74,.22); background:rgba(22,163,74,.12); color:#15803D; }
+.record-account-state.is-pending,.record-account-state.is-sending { border-color:rgba(217,119,6,.25); background:rgba(217,119,6,.12); color:#B45309; }
+.record-account-state.is-disabled,.record-account-state.is-locked,.record-account-state.is-revoked,.record-account-state.is-delivery-failed { border-color:rgba(220,53,69,.22); background:rgba(220,53,69,.1); color:#B91C1C; }
+.record-account-state.is-no-portal-account { border-color:var(--dtc-border); background:var(--dtc-surface-soft); color:var(--dtc-text-secondary); }
+.record-academic-status.is-alumni { border-color:rgba(37,99,235,.22); background:var(--dtc-primary-soft); color:var(--dtc-primary); }
+.record-academic-status.is-inactive { border-color:var(--dtc-border); background:var(--dtc-surface-soft); color:var(--dtc-text-secondary); }
 .record-account-email, .record-account-help { grid-column: 1 / -1; margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; color: var(--dtc-text); }
 .record-account-help { color: var(--dtc-text-secondary); font-size: 12px; }
 .record-account-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
@@ -15,7 +24,7 @@
 .academic-record-page .record-account-actions .btn-outline-primary:hover { filter: brightness(1.1); }
 .academic-record-page .record-account-actions .btn-outline-danger { border-color: var(--dtc-border) !important; color: var(--dtc-danger) !important; background: var(--dtc-surface) !important; }
 .academic-record-page .record-account-actions .btn-outline-danger:hover { border-color: var(--dtc-danger) !important; background: var(--dtc-surface-soft) !important; }
-.record-person { padding-bottom: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--dtc-border); }
+.record-person { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:16px; margin-bottom:4px; border-bottom:1px solid var(--dtc-border); }
 .record-person h2 { margin: 0 0 5px; font-size: 17px; line-height: 1.5; font-weight: 600; color: var(--dtc-text); overflow-wrap: anywhere; }
 .record-person p { margin: 0; font-size: 12px; color: var(--dtc-text-secondary); }
 .academic-record-page .ar-record-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 0; }
@@ -28,8 +37,37 @@
 .academic-record-page .btn:focus-visible { outline: 2px solid var(--dtc-primary); outline-offset: 3px; }
 @media (max-width: 575.98px) {
     .content-wrapper .content-header .academic-record-heading { flex-direction: row; align-items: center !important; }
-    .record-portal, .record-information { padding: 18px; }
-    .academic-record-page .ar-record-grid { grid-template-columns: 1fr; }
+    .content-wrapper .content-header .academic-record-heading h1 { font-size:19px; line-height:1.25; }
+    .content-wrapper .content-header .academic-record-heading p { font-size:12px; }
+    .content-wrapper .content-header .academic-record-heading > .btn { flex:0 0 auto; min-height:40px; padding:8px 12px; }
+    .academic-record-page .ar-record-card { margin-bottom:0; }
+    .record-portal, .record-information { padding:16px; border-radius:12px; }
+    .record-portal { gap:9px 10px; }
+    .record-account-heading { gap:8px; }
+    .record-account-icon { width:30px; height:30px; flex-basis:30px; border-radius:9px; }
+    .record-portal h2 { font-size:14px; }
+    .record-account-state { max-width:130px; white-space:normal; text-align:center; line-height:1.25; }
+    .record-account-email { font-size:12px; font-weight:600; }
+    .record-account-help { font-size:11.5px; line-height:1.5; }
+    .record-account-actions { gap:8px; }
+    .record-person { align-items:flex-start; padding-bottom:12px; }
+    .record-person h2 { font-size:15px; }
+    .record-person p { font-size:11px; }
+    .record-academic-status { min-height:25px; padding:3px 8px; }
+    .academic-record-page .ar-record-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 14px; }
+    .academic-record-page .ar-record-field { padding:11px 0; }
+    .academic-record-page .ar-record-field dt { margin-bottom:3px; font-size:10px; }
+    .academic-record-page .ar-record-field dd { font-size:12px; line-height:1.45; }
+    .academic-record-page .ar-record-field--program,
+    .academic-record-page .ar-record-field--graduation-date { grid-column:1/-1; }
+    .academic-record-page .ar-record-field--student-number,
+    .academic-record-page .ar-record-field--year-level,
+    .academic-record-page .ar-record-field--academic-status { grid-column:1; }
+    .academic-record-page .ar-record-field--email,
+    .academic-record-page .ar-record-field--school-year,
+    .academic-record-page .ar-record-field--graduation-year { grid-column:2; }
+    .academic-record-page .ar-history-section { margin-top:20px; }
+    .academic-record-page .ar-history-section h2 { font-size:15px; }
     .record-account-actions > form { flex: 1 1 130px; margin: 0; }
     .record-account-actions > form .btn { width: 100%; }
 }

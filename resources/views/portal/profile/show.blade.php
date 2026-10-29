@@ -197,7 +197,7 @@
         <div class="ps-info-row">
             <div class="ps-info-icon"><i data-lucide="hash" style="width:14px;height:14px;"></i></div>
             <div>
-                <div class="ps-info-label">Student Number</div>
+                <div class="ps-info-label">Student ID no.</div>
                 <div class="ps-info-value">{{ $studentProfile->student_number ?? '—' }}</div>
             </div>
         </div>

@@ -54,6 +54,54 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_alumni_payment_action_matches_booking_payment_attention_rules(): void
+    {
+        $alumni = $this->makeUserWithRole('alumni');
+        $slot = AppointmentSlot::create([
+            'date' => today()->addDay()->toDateString(),
+            'start_time' => '09:00:00',
+            'end_time' => '09:30:00',
+            'max_bookings' => 1,
+            'status' => 'open',
+        ]);
+        $appointment = Appointment::create([
+            'user_id' => $alumni->id,
+            'appointment_slot_id' => $slot->id,
+            'document_type' => 'certification',
+            'status' => 'confirmed',
+        ]);
+        $document = $this->makeDocumentRequest($alumni, [
+            'appointment_id' => $appointment->id,
+            'document_type' => 'certification',
+            'status' => 'ready',
+        ]);
+
+        $this->actingAs($alumni)->get(route('portal.documents.index'))->assertOk()
+            ->assertSee('>Payment details</a>', false)
+            ->assertDontSee('>Review payment</a>', false);
+
+        $appointment->update(['status' => 'cancelled']);
+        $this->get(route('portal.documents.index'))->assertOk()
+            ->assertSee('>Review payment</a>', false)
+            ->assertDontSee('>Payment details</a>', false);
+
+        $document->update(['fee' => 0]);
+        $this->get(route('portal.documents.index'))->assertOk()
+            ->assertSee('No Payment Required')
+            ->assertDontSee('>Review payment</a>', false)
+            ->assertDontSee('>Payment details</a>', false);
+
+        $document->update(['fee' => 50, 'status' => 'cancelled']);
+        $this->get(route('portal.documents.index'))->assertOk()
+            ->assertDontSee('>Review payment</a>', false)
+            ->assertDontSee('>Payment details</a>', false);
+
+        $document->update(['status' => 'ready', 'is_paid' => true, 'payment_status' => 'verified']);
+        $this->get(route('portal.documents.index'))->assertOk()
+            ->assertDontSee('>Review payment</a>', false)
+            ->assertDontSee('>Payment details</a>', false);
+    }
+
     public function test_alumni_can_submit_gcash_proof_as_pending_without_marking_request_paid(): void
     {
         $alumni = $this->makeUserWithRole('alumni');
@@ -493,9 +541,14 @@ class DocumentRequestPaymentTrackingTest extends TestCase
         $proofUrl = route('portal.documents.payment.proof', $documentRequest);
 
         $this->actingAs($otherAlumni)->get($proofUrl)->assertForbidden();
-        $this->actingAs($alumni)->get($proofUrl)->assertOk();
+        $this->actingAs($alumni)->get($proofUrl)->assertOk()
+            ->assertSee('Back to details')
+            ->assertSee(route('portal.payments.document', $documentRequest), false);
+        $this->get($proofUrl.'?raw=1')->assertOk();
         $this->actingAs($registrar)->get(route('cashier.document-payments.proof', $documentRequest))->assertForbidden();
-        $this->actingAs($cashier)->get(route('cashier.document-payments.proof', $documentRequest))->assertOk();
+        $this->actingAs($cashier)->get(route('cashier.document-payments.proof', $documentRequest))->assertOk()
+            ->assertSee('Back to details')
+            ->assertSee(route('cashier.document-payments.show', $documentRequest), false);
     }
 
     public function test_release_is_blocked_until_payment_is_verified_and_allowed_afterward(): void
@@ -756,7 +809,8 @@ class DocumentRequestPaymentTrackingTest extends TestCase
             ->assertSee('This document request was cancelled and is kept here for your records.')
             ->assertSee('Pickup appointment cancelled.')
             ->assertSee('Choose a new pickup time')
-            ->assertSee('Payment details');
+            ->assertDontSee('>Payment details</a>', false)
+            ->assertDontSee('>Review payment</a>', false);
 
         $this->assertSame('cancelled', $request->fresh()->status);
         $this->assertSame('ready', $activeRequest->fresh()->status);

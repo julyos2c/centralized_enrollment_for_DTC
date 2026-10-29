@@ -50,9 +50,6 @@
                     <div class="dtc-sidebar-user-name" title="{{ auth()->user()->name }}">{{ auth()->user()->name }}</div>
                     <div class="dtc-sidebar-user-role">{{ $sidebarRoleLabel }}</div>
                 </div>
-                <span class="dtc-sidebar-profile-chevron" aria-hidden="true">
-                    <i data-lucide="chevron-up"></i>
-                </span>
             </button>
             <div class="dtc-sidebar-profile-menu" id="dtcSidebarProfileMenu" hidden>
                 @if(auth()->user()->hasAnyRole(['student', 'alumni', 'new_applicant']))

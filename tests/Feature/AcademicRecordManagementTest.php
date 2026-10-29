@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\StudentProfile;
+use App\Models\Enrollment;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\SeedsRoles;
@@ -43,6 +45,29 @@ class AcademicRecordManagementTest extends TestCase
         $this->put(route('registrar.students.update', $record), array_replace($payload, ['enrolled_ay' => '2027-2026']))
             ->assertSessionHasErrors('enrolled_ay');
         $this->assertSame('2025-2026', $record->fresh()->enrolled_ay);
+    }
+
+    public function test_year_level_accepts_only_optional_whole_numbers_within_supported_range(): void
+    {
+        $this->actingAs($this->staff('registrar'));
+        $payload = $this->recordPayload();
+        foreach (['0', '5', '8', '1.5', 'first'] as $value) {
+            $this->post(route('registrar.students.store'), array_replace($payload, [
+                'student_number' => 'YEAR-'.str_replace(['.', ' '], '-', $value),
+                'year_level' => $value,
+            ]))->assertSessionHasErrors('year_level');
+        }
+        $this->assertSame(0, StudentProfile::where('student_number', 'like', 'YEAR-%')->count());
+
+        foreach ([null, '1', '4'] as $index => $value) {
+            $this->post(route('registrar.students.store'), array_replace($payload, [
+                'student_number' => 'VALID-YEAR-'.$index,
+                'year_level' => $value,
+            ]))->assertSessionHasNoErrors();
+        }
+        $this->assertDatabaseHas('student_profiles', ['student_number' => 'VALID-YEAR-0', 'year_level' => null]);
+        $this->assertDatabaseHas('student_profiles', ['student_number' => 'VALID-YEAR-1', 'year_level' => 1]);
+        $this->assertDatabaseHas('student_profiles', ['student_number' => 'VALID-YEAR-2', 'year_level' => 4]);
     }
 
     public function test_stale_route_model_cannot_bypass_new_account_link_restrictions(): void
@@ -137,8 +162,47 @@ class AcademicRecordManagementTest extends TestCase
         $this->assertDatabaseHas('student_profiles', ['student_number' => 'DTC-1001', 'user_id' => null, 'first_name' => 'Ana']);
         $this->assertDatabaseCount('users', 1);
         $this->actingAs($registrar)->get(route('registrar.students.index'))->assertOk();
-        $this->actingAs($registrar)->get(route('registrar.students.show', $record))->assertOk();
+        $this->actingAs($registrar)->get(route('registrar.students.show', $record))
+            ->assertOk()
+            ->assertSee('record-academic-status', false)
+            ->assertDontSee('Rows per page');
         $this->actingAs($registrar)->get(route('registrar.students.edit', $record))->assertOk();
+    }
+
+    public function test_academic_record_uses_the_portal_current_term_year_level(): void
+    {
+        $registrar = $this->staff('registrar');
+        $student = $this->makeUserWithRole('student');
+        Setting::set('current_school_year', '2026-2027');
+        Setting::set('current_semester', '1st');
+        $record = StudentProfile::create([
+            'user_id' => $student->id,
+            'student_number' => 'DTC-2002',
+            'first_name' => 'Jose',
+            'last_name' => 'Dela Cruz',
+            'year_level' => 1,
+            'academic_status' => 'active',
+        ]);
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'school_year' => '2025-2026',
+            'semester' => 1,
+            'year_level' => 4,
+        ]);
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'school_year' => '2026-2027',
+            'semester' => 1,
+            'year_level' => 3,
+        ]);
+
+        $this->actingAs($student)->get(route('portal.dashboard'))
+            ->assertOk()
+            ->assertSee('3rd Year');
+        $this->actingAs($registrar)->get(route('registrar.students.show', $record))
+            ->assertOk()
+            ->assertSee('3rd Year')
+            ->assertDontSee('1st Year');
     }
 
     public function test_cashier_cannot_open_academic_management(): void
@@ -150,7 +214,7 @@ class AcademicRecordManagementTest extends TestCase
     public function test_csv_preview_does_not_write_until_confirmed_and_repeated_commit_is_blocked(): void
     {
         $registrar = $this->staff('registrar');
-        $csv = "Student Number,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-2001,Jose,,Dela Cruz,,, ,2,2025-2026\n";
+        $csv = "Student ID no.,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-2001,Jose,,Dela Cruz,,, ,2,2025-2026\n";
         $response = $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
             'import_type' => 'students', 'file' => UploadedFile::fake()->createWithContent('students.csv', $csv),
         ]);
@@ -169,7 +233,7 @@ class AcademicRecordManagementTest extends TestCase
     {
         StudentProfile::create(['student_number' => 'DTC-3001', 'first_name' => 'Existing', 'last_name' => 'Person', 'academic_status' => 'active', 'admission_type' => 'imported']);
         $registrar = $this->staff('registrar');
-        $csv = "Student Number,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-3001,Changed,,Person,,,,,\nDTC-3002,New,,Person,,,,,\nDTC-3002,Duplicate,,Person,,,,,\n";
+        $csv = "Student ID no.,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-3001,Changed,,Person,,,,,\nDTC-3002,New,,Person,,,,,\nDTC-3002,Duplicate,,Person,,,,,\n";
         $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
             'import_type' => 'students', 'file' => UploadedFile::fake()->createWithContent('rows.csv', $csv),
         ])->assertRedirect();
@@ -186,7 +250,7 @@ class AcademicRecordManagementTest extends TestCase
         $registrar = $this->staff('registrar');
         $response = $this->actingAs($registrar)->get(route('registrar.imports.template', 'alumni'));
         $response->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $this->assertSame(['Student Number', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program Completed', 'Graduation Year', 'Graduation Date'], str_getcsv(trim($response->streamedContent())));
+        $this->assertSame(['Student ID no.', 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Email', 'Program Completed', 'Graduation Year', 'Graduation Date'], str_getcsv(trim($response->streamedContent())));
 
         $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
             'import_type' => 'students', 'file' => UploadedFile::fake()->create('rows.xlsx', 2, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
@@ -197,10 +261,10 @@ class AcademicRecordManagementTest extends TestCase
     {
         $registrar = $this->staff('registrar');
         $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
-            'import_type' => 'students', 'file' => UploadedFile::fake()->createWithContent('wrong.csv', "Name,Student Number\nA,1\n"),
+            'import_type' => 'students', 'file' => UploadedFile::fake()->createWithContent('wrong.csv', "Name,Student ID no.\nA,1\n"),
         ])->assertSessionHasErrors('file');
 
-        $csv = "Student Number,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-4001,Lea,,Cruz,,,,,\n";
+        $csv = "Student ID no.,First Name,Middle Name,Last Name,Suffix,Email,Program,Year Level,School Year\nDTC-4001,Lea,,Cruz,,,,,\n";
         $this->actingAs($registrar)->post(route('registrar.imports.upload'), [
             'import_type' => 'students', 'file' => UploadedFile::fake()->createWithContent('rows.csv', $csv),
         ])->assertRedirect();

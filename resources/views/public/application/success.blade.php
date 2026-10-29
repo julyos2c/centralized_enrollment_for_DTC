@@ -192,10 +192,10 @@ try {
         try {
             if (!sessionStorage.getItem(toastKey)) {
                 sessionStorage.setItem(toastKey, '1');
-                window.dtcToast && window.dtcToast.success('Your pre-enrollment application was submitted. Keep your reference number.', { title: 'Application submitted' });
+                window.dtcToast && window.dtcToast.success('Save your reference number for future inquiries.', { title: 'Application submitted' });
             }
         } catch (e) {
-            window.dtcToast && window.dtcToast.success('Your pre-enrollment application was submitted.', { title: 'Application submitted' });
+            window.dtcToast && window.dtcToast.success('Save your reference number for future inquiries.', { title: 'Application submitted' });
         }
         @endif
     });

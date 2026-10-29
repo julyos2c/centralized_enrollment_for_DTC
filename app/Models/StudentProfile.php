@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class StudentProfile extends Model
 {
+    public const MAX_YEAR_LEVEL = 4;
+
     protected $fillable = [
         'user_id',
         'student_number',

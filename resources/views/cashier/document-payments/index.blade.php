@@ -45,11 +45,11 @@
 @if ($bundles->isNotEmpty())
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:8px;">
-        <strong class="u-text">Combined appointment payments</strong><span class="u-text-secondary-sm">{{ $bundles->total() }} payments</span>
+        <strong class="u-text">Appointment payments</strong><span class="u-text-secondary-sm">{{ $bundles->total() }} payments</span>
     </div>
     <div class="card-body p-0 table-responsive">
-        <table class="table dtc-table dtc-docpay-table mb-0">
-            <thead><tr><th>Requester</th><th>Appointment</th><th>Documents</th><th>Method</th><th>Total</th><th>Payment status</th><th></th></tr></thead>
+        <table class="table dtc-table dtc-docpay-table dtc-docpay-bundle-table mb-0">
+            <thead><tr><th>Requester</th><th>Appointment</th><th>Method</th><th>Documents</th><th>Total</th><th>Payment status</th><th></th></tr></thead>
             <tbody>
             @foreach ($bundles as $bundle)
                 @php
@@ -58,17 +58,23 @@
                         : $bundle->status;
                     $bundleTone = ['unpaid' => 'warning', 'pending_verification' => 'info', 'verified' => 'success', 'rejected' => 'danger'][$bundleStatus] ?? 'neutral';
                     $firstRequest = $bundle->appointment->documentRequests->first();
+                    $documentCount = $bundle->appointment->documentRequests->count();
                 @endphp
                 <tr>
-                    <td>{{ $bundle->appointment->user->name }}</td>
+                    <td>
+                        <div class="u-flex-center-gap-10 dtc-bundle-requester">
+                            <x-dtc.user-avatar :user="$bundle->appointment->user" class="dtc-pay-avatar" />
+                            <div class="dtc-bundle-requester-name">{{ $bundle->appointment->user->name }}</div>
+                        </div>
+                    </td>
                     <td>#{{ $bundle->appointment_id }} · {{ optional($bundle->appointment->slot)->date }}</td>
-                    <td>{{ $bundle->appointment->documentRequests->count() }} documents</td>
                     <td>{{ $bundle->payment_method === 'gcash' ? 'GCash QR' : 'Walk-in' }}</td>
+                    <td class="dtc-bundle-document-count">{{ $documentCount }} {{ $documentCount === 1 ? 'document' : 'documents' }}</td>
                     <td class="dtc-pay-fee">₱{{ number_format($bundle->amount, 2) }}</td>
-                    <td><span class="dtc-status-badge is-{{ $bundleTone }}">{{ ucfirst(str_replace('_', ' ', $bundleStatus)) }}</span></td>
+                    <td><span class="dtc-status-badge is-{{ $bundleTone }}"><span class="dtc-status-dot"></span>{{ $bundleStatus === 'pending_verification' ? 'Pending' : ucfirst($bundleStatus) }}</span></td>
                     <td>
                         @if ($firstRequest)
-                            <a class="btn btn-sm btn-primary dtc-docpay-action" href="{{ route('cashier.document-payments.show', $firstRequest) }}">Review bundle</a>
+                            <a class="btn btn-sm btn-primary dtc-docpay-action" href="{{ route('cashier.document-payments.show', $firstRequest) }}">{{ $bundleStatus === 'verified' ? 'Details' : ($bundleStatus === 'unpaid' ? 'Record' : 'Review') }}</a>
                         @else
                             <span class="u-text-muted">No linked requests</span>
                         @endif

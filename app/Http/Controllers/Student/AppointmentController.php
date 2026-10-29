@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Services\AppointmentScheduleService;
+use App\Support\PrivateFilePreview;
 
 class AppointmentController extends Controller
 {
@@ -36,8 +37,9 @@ class AppointmentController extends Controller
 
         $gcashQrPath = Setting::get('gcash_qr_path');
         $gcashQrReady = $gcashQrPath && Storage::disk('local')->exists($gcashQrPath);
+        $appointmentProcessingFee = (float) Setting::get('appointment_processing_fee', 0);
 
-        return view('student.appointments.index', compact('appointments', 'slots', 'gcashQrReady'));
+        return view('student.appointments.index', compact('appointments', 'slots', 'gcashQrReady', 'appointmentProcessingFee'));
     }
 
     public function create()
@@ -125,6 +127,15 @@ class AppointmentController extends Controller
         $proofPath = $validated['payment_method'] === 'gcash'
             ? $request->file('proof_of_payment')->store('document-request-proofs', 'local')
             : null;
+        if ($validated['payment_method'] === 'gcash'
+            && (! $proofPath || ! Storage::disk('local')->exists($proofPath))) {
+            if ($proofPath) {
+                Storage::disk('local')->delete($proofPath);
+            }
+            throw ValidationException::withMessages([
+                'proof_of_payment' => 'The proof could not be saved. Please try uploading it again.',
+            ]);
+        }
 
         try {
             $appointment = app(\App\Services\DocumentAppointmentBookingService::class)->book(
@@ -188,7 +199,7 @@ class AppointmentController extends Controller
         );
 
         return redirect()->route('portal.appointments.index')
-            ->with('success', 'Appointment booked successfully! Please wait for the Registrar to confirm.');
+            ->with('success', 'Appointment requested. Await Registrar confirmation.');
     }
 
     public function edit(Appointment $appointment)
@@ -302,7 +313,7 @@ class AppointmentController extends Controller
         }
 
         return redirect()->route('portal.appointments.index')
-            ->with('success', 'Appointment updated successfully. The Registrar has been notified.');
+            ->with('success', 'Appointment updated. The Registrar has been notified.');
     }
 
     public function cancel(Appointment $appointment)
@@ -312,7 +323,7 @@ class AppointmentController extends Controller
             ->cancel($appointment, Auth::user(), request());
 
         return match ($result['result']) {
-            'already_cancelled' => back()->with('error', 'This appointment has already been cancelled.'),
+            'already_cancelled' => back()->with('error', 'Appointment is already cancelled.'),
             'invalid_status' => back()->withErrors(['error' => 'Only pending appointments can be cancelled here. Contact the Registrar to change a confirmed booking.']),
             'verified_legacy_payment' => back()->withErrors(['error' => 'This appointment has a verified payment. Contact the Registrar to resolve it before cancellation.']),
             'resolved_request' => back()->withErrors(['error' => 'This booking can no longer be cancelled because one of the linked documents is already in progress or has been released.']),
@@ -336,6 +347,9 @@ class AppointmentController extends Controller
             'proof_of_payment' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
         $fee = (float) Setting::get('appointment_processing_fee', 0);
+        if ($fee <= 0) {
+            return back()->with('error', 'No payment is required for this appointment.');
+        }
 
         $result = DB::transaction(function () use ($appointment, $request, $validated, $fee) {
             $lockedAppointment = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
@@ -387,7 +401,7 @@ class AppointmentController extends Controller
             'View payment status'
         );
 
-        return redirect()->route('portal.payments.appointment', $appointment)->with('success', 'GCash payment proof submitted. The Cashier will verify your payment shortly.');
+        return redirect()->route('portal.payments.appointment', $appointment)->with('success', 'GCash proof submitted.');
     }
 
     public function submitBundleGcash(Request $request, Appointment $appointment)
@@ -402,6 +416,14 @@ class AppointmentController extends Controller
             throw ValidationException::withMessages(['payment' => 'GCash payment is unavailable. Please pay at the Cashier.']);
         }
         $proofPath = $request->file('proof_of_payment')->store('document-request-proofs', 'local');
+        if (! $proofPath || ! Storage::disk('local')->exists($proofPath)) {
+            if ($proofPath) {
+                Storage::disk('local')->delete($proofPath);
+            }
+            throw ValidationException::withMessages([
+                'proof_of_payment' => 'The proof could not be saved. Please try uploading it again.',
+            ]);
+        }
 
         try {
             $previousProof = DB::transaction(function () use ($appointment, $validated, $proofPath, $request) {
@@ -414,8 +436,11 @@ class AppointmentController extends Controller
                     ->lockForUpdate()
                     ->latest()
                     ->firstOrFail();
-                if ($payment->status !== 'rejected'
-                    || $payment->payment_method !== 'gcash'
+                $firstSubmission = $payment->status === 'pending'
+                    && $payment->payment_method === 'gcash'
+                    && ! $payment->proof_of_payment
+                    && ! $payment->reference_number;
+                if ((! $firstSubmission && ($payment->status !== 'rejected' || $payment->payment_method !== 'gcash'))
                     || $lockedAppointment->documentRequests()->where(function ($query) {
                         $query->where('is_paid', true)->orWhere('payment_status', 'verified');
                     })->exists()) {
@@ -479,7 +504,7 @@ class AppointmentController extends Controller
         }
 
         return redirect()->route('portal.payments.appointment', $appointment)
-            ->with('success', 'GCash proof submitted for the combined document payment.');
+            ->with('success', 'GCash proof submitted.');
     }
 
     public function viewProof(AppointmentPayment $payment)
@@ -490,17 +515,23 @@ class AppointmentController extends Controller
             abort(404, 'Proof not found.');
         }
 
-        return response()->file(Storage::disk('local')->path($payment->proof_of_payment));
+        return PrivateFilePreview::respond(
+            request(),
+            Storage::disk('local')->path($payment->proof_of_payment),
+            'Payment proof',
+            route('portal.payments.appointment', $payment->appointment),
+            basename($payment->proof_of_payment)
+        );
     }
 
     public function submitDocumentGcash(Request $request, DocumentRequest $documentRequest)
     {
         abort_if($documentRequest->user_id !== Auth::id(), 403);
         if ($documentRequest->usesBundledPayment()) {
-            throw ValidationException::withMessages(['payment' => 'This request is part of a bundled payment. Review or submit payment for the whole booking.']);
+            throw ValidationException::withMessages(['payment' => 'This payment is managed through its appointment. Review or submit payment for the whole booking.']);
         }
         if ($documentRequest->paymentNotRequired()) {
-            return redirect()->route('portal.payments.document', $documentRequest)->with('info', 'No Payment Required.');
+            return redirect()->route('portal.payments.document', $documentRequest);
         }
 
 
@@ -586,18 +617,21 @@ class AppointmentController extends Controller
             'Your GCash payment proof was submitted. The Cashier will verify it against the received funds.'
         );
 
-        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'GCash proof submitted. The Cashier will verify it.');
+        return redirect()->route('portal.payments.document', $documentRequest)->with('success', 'GCash proof submitted.');
     }
 
-    public function viewDocumentProof(DocumentRequest $documentRequest)
+    public function viewDocumentProof(Request $request, DocumentRequest $documentRequest)
     {
         abort_if($documentRequest->user_id !== Auth::id(), 403);
         abort_unless($documentRequest->proof_of_payment && Storage::disk('local')->exists($documentRequest->proof_of_payment), 404);
 
-        return response()->file(Storage::disk('local')->path($documentRequest->proof_of_payment), [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        return PrivateFilePreview::respond(
+            $request,
+            Storage::disk('local')->path($documentRequest->proof_of_payment),
+            'Payment proof',
+            route('portal.payments.document', $documentRequest),
+            basename($documentRequest->proof_of_payment)
+        );
     }
 
     public function showGcashQr()

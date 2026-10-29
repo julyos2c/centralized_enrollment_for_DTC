@@ -58,7 +58,7 @@ class ProfileController extends Controller
                 : $this->routePrefix($user) . '.show';
 
         return redirect()->route($redirectRoute)
-            ->with('success', 'Profile updated successfully.');
+            ->with('success', 'Profile updated.');
     }
 
     /**
@@ -85,7 +85,7 @@ class ProfileController extends Controller
         $request->session()->put('auth_session_token', $user->auth_session_token);
 
         return redirect()->route($this->routePrefix($user) . '.show')
-            ->with('success', 'Password changed successfully.');
+            ->with('success', 'Password changed.');
     }
 
     /**

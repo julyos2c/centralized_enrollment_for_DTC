@@ -4,7 +4,7 @@ The Registrar and Admin role group can manage academic-only student/alumni recor
 
 ## Import format and limits
 
-The import center provides header-only CSV templates. Student rows use `Student Number, First Name, Middle Name, Last Name, Suffix, Email, Program, Year Level, School Year`. Alumni rows use `Student Number, First Name, Middle Name, Last Name, Suffix, Email, Program Completed, Graduation Year, Graduation Date`. Student ID no. and first/last names are required. Program must exactly identify one existing program when provided. School year is `YYYY-YYYY`; graduation date is `YYYY-MM-DD`.
+The import center provides header-only CSV templates. Student rows use `Student ID no., First Name, Middle Name, Last Name, Suffix, Email, Program, Year Level, School Year`. Alumni rows use `Student ID no., First Name, Middle Name, Last Name, Suffix, Email, Program Completed, Graduation Year, Graduation Date`. Student ID no. and first/last names are required. Program must exactly identify one existing program when provided. School year is `YYYY-YYYY`; graduation date is `YYYY-MM-DD`.
 
 Uploads default to 5 MB and 1,000 data rows and are kept on the private local disk under `storage/app/private/academic-imports`. Set `ACADEMIC_IMPORT_MAX_KB`, `ACADEMIC_IMPORT_MAX_ROWS`, and `ACADEMIC_IMPORT_PREVIEW_TTL_HOURS` in the runtime environment to change those limits. Preview data defaults to 24 hours. Configure Laravel's scheduler on the host to run `php artisan schedule:run` every minute so `academic-imports:cleanup` removes expired upload and report files. A confirmed import keeps only a row-number/error report; it deletes the source file. The report route remains behind the Registrar/Admin middleware.
 

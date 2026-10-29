@@ -96,6 +96,15 @@
                     $copiesTx = $req->copies.($req->copies > 1 ? ' copies' : ' copy');
                     $bundlePayment = $req->appointment?->payments->first(fn ($payment) => $payment->is_document_bundle);
                     $cancelled = $req->status === 'cancelled';
+                    $schedulePassed = $req->appointment?->scheduleHasPassed() ?? false;
+                    $hasPaymentAction = !$cancelled
+                        && !$req->paymentNotRequired()
+                        && !$req->is_paid
+                        && (float) $req->fee > 0
+                        && in_array($req->payment_status, ['unpaid', 'pending_verification', 'rejected'], true);
+                    $paymentActionLabel = $req->appointment?->status === 'cancelled' || $schedulePassed
+                        ? 'Review payment'
+                        : 'Payment details';
                 @endphp
                 <li class="dr-req {{ $cancelled ? 'is-muted' : ($rejected ? 'needs-fix' : ($collect ? 'needs-action' : '')) }}" data-group="{{ $groupOf($req) }}">
                     <div class="dr-req-top">
@@ -205,7 +214,9 @@
 
                     <div class="dr-pay">
                         <div class="dr-pay-line"><span class="dtc-status-badge is-{{ $payTone[$req->payment_status] ?? 'neutral' }}">{{ $req->paymentNotRequired() ? 'No Payment Required' : ($payLabel[$req->payment_status] ?? ucfirst(str_replace('_', ' ', $req->payment_status))) }}</span></div>
-                        <div class="dr-actions"><a href="{{ route('portal.payments.document', $req) }}" class="dr-btn dr-btn--primary dr-btn--sm">Payment details</a></div>
+                        @if ($hasPaymentAction)
+                            <div class="dr-actions"><a href="{{ route('portal.payments.document', $req) }}" class="dr-btn dr-btn--primary dr-btn--sm">{{ $paymentActionLabel }}</a></div>
+                        @endif
                     </div>
                 </li>
             @endforeach

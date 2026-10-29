@@ -1,0 +1,18 @@
+.private-file-preview { display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 180px); padding:0 0 24px; }
+.private-file-preview-header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 18px; border:1px solid var(--dtc-border); border-radius:12px; background:var(--dtc-surface); }
+.private-file-preview-header h1 { margin:0; color:var(--dtc-text); font-size:18px; font-weight:700; }
+.private-file-preview-header p { margin:4px 0 0; color:var(--dtc-text-secondary); font-size:12px; overflow-wrap:anywhere; }
+.private-file-preview-header nav { display:flex; flex-wrap:wrap; gap:8px; }
+.private-file-preview-back,.private-file-preview-download { display:inline-flex; align-items:center; justify-content:center; min-height:40px; padding:8px 12px; border:1px solid var(--dtc-border); border-radius:8px; background:var(--dtc-surface); color:var(--dtc-text); font-size:12px; font-weight:600; text-decoration:none; }
+.private-file-preview-back:hover,.private-file-preview-download:hover { background:var(--dtc-surface-muted,var(--dtc-surface)); color:var(--dtc-text); text-decoration:none; }
+.private-file-preview-frame { flex:1 1 auto; width:100%; min-height:65vh; border:1px solid var(--dtc-border); border-radius:12px; background:var(--dtc-surface); }
+.private-file-preview-image-frame { display:flex; align-items:center; justify-content:center; width:100%; min-height:40vh; padding:12px; overflow:auto; border:1px solid var(--dtc-border); border-radius:12px; background:var(--dtc-surface); }
+.private-file-preview-image { display:block; width:auto; height:auto; max-width:100%; max-height:calc(100vh - 260px); object-fit:contain; object-position:center; }
+@media (max-width:575.98px) {
+    .private-file-preview-header { align-items:stretch; flex-direction:column; padding:14px; }
+    .private-file-preview-header nav { display:grid; grid-template-columns:1fr 1fr; }
+    .private-file-preview-header nav > a { min-width:0; }
+    .private-file-preview-frame { min-height:60vh; }
+    .private-file-preview-image-frame { min-height:30vh; padding:8px; }
+    .private-file-preview-image { max-height:calc(100vh - 300px); }
+}

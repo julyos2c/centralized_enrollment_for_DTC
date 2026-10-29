@@ -34,6 +34,8 @@ class SidebarNavigationTest extends TestCase
             $this->assertSame('button', $parent->getAttribute('role'));
             $this->assertContains($parent->getAttribute('aria-expanded'), ['true', 'false']);
         }
+        $this->assertSame(0, $xpath->query('//aside//li[contains(@class,"has-treeview")]/a//i[@data-lucide="chevron-left"]')->length);
+        $this->assertSame(0, $xpath->query('//aside//button[@id="dtcSidebarProfileToggle"]//span[contains(@class,"dtc-sidebar-profile-chevron")]')->length);
         $this->assertSame(0, $xpath->query('//aside//p[contains(@class,"dtc-sidebar-menu-copy")]/span[@data-sidebar-unread]')->length);
         $badge = $xpath->query('//aside//span[@class="dtc-sidebar-icon-slot"]/span[@data-sidebar-unread]')->item(0);
         $this->assertNotNull($badge);

@@ -7,6 +7,7 @@ use App\Models\BackupLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BackupController extends Controller
 {
@@ -62,6 +63,7 @@ class BackupController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Database backup failed.', ['exception' => $e]);
             BackupLog::create([
                 'filename'   => 'failed_' . now()->format('Ymd_His') . '.sql',
                 'size'       => 0,
@@ -70,7 +72,7 @@ class BackupController extends Controller
             ]);
 
             return redirect()->route('admin.settings.backup')
-                ->with('error', 'Backup failed: ' . $e->getMessage());
+                ->with('error', 'Backup failed. Check the system logs for details.');
         }
     }
 
