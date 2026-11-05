@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\CourseSubject;
 use App\Models\Enrollment;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CorController extends Controller
 {
     /**
-     * Resolve the student's current officially-enrolled record and its
-     * subjects (with schedule) as a ready-to-render collection.
+     * Resolve a requested paid enrollment, or the student's current paid
+     * enrollment when no specific record was requested.
      *
      * Mirrors the subject_ids resolution already used in
      * Student\EnrollmentController@index, but scoped to the enrollment
@@ -24,27 +25,37 @@ class CorController extends Controller
      * the most recent approved+paid row for older records created
      * before the school_year column existed.
      */
-    private function resolveActiveEnrollment()
+    private function resolveActiveEnrollment(?int $requestedEnrollmentId = null)
     {
         $user = Auth::user();
-        $currentSchoolYear = \App\Models\Setting::get('current_school_year');
 
-        $enrollment = Enrollment::where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->where('is_paid', true)
-            ->where('school_year', $currentSchoolYear)
-            ->with('program', 'user')
-            ->latest()
-            ->first();
-
-        if (! $enrollment) {
-            // Fall back for legacy rows with no school_year recorded.
+        if ($requestedEnrollmentId !== null) {
             $enrollment = Enrollment::where('user_id', $user->id)
                 ->where('status', 'approved')
                 ->where('is_paid', true)
+                ->whereKey($requestedEnrollmentId)
+                ->with('program', 'user')
+                ->first();
+        } else {
+            $currentSchoolYear = \App\Models\Setting::get('current_school_year');
+
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->where('is_paid', true)
+                ->where('school_year', $currentSchoolYear)
                 ->with('program', 'user')
                 ->latest()
                 ->first();
+
+            if (! $enrollment) {
+                // Fall back for legacy rows with no school_year recorded.
+                $enrollment = Enrollment::where('user_id', $user->id)
+                    ->where('status', 'approved')
+                    ->where('is_paid', true)
+                    ->with('program', 'user')
+                    ->latest()
+                    ->first();
+            }
         }
 
         if (! $enrollment) {
@@ -59,9 +70,12 @@ class CorController extends Controller
         return [$enrollment, $subjects];
     }
 
-    public function show()
+    public function show(Request $request)
     {
-        $resolved = $this->resolveActiveEnrollment();
+        $validated = $request->validate([
+            'enrollment' => ['sometimes', 'integer', 'min:1'],
+        ]);
+        $resolved = $this->resolveActiveEnrollment($validated['enrollment'] ?? null);
 
         if (! $resolved) {
             return redirect()->route('portal.dashboard')
@@ -74,9 +88,12 @@ class CorController extends Controller
         return view('student.cor.show', compact('enrollment', 'subjects', 'totalUnits'));
     }
 
-    public function download()
+    public function download(Request $request)
     {
-        $resolved = $this->resolveActiveEnrollment();
+        $validated = $request->validate([
+            'enrollment' => ['sometimes', 'integer', 'min:1'],
+        ]);
+        $resolved = $this->resolveActiveEnrollment($validated['enrollment'] ?? null);
 
         if (! $resolved) {
             return redirect()->route('portal.dashboard')

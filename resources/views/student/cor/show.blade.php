@@ -28,7 +28,7 @@
                     <i data-lucide="download" class="mr-1"></i> Download PDF
                 </a>
             @else
-                <a href="{{ route('portal.cor.download') }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('portal.cor.download', ['enrollment' => $enrollment->id]) }}" class="btn btn-primary btn-sm">
                     <i data-lucide="download" class="mr-1"></i> Download PDF
                 </a>
             @endif

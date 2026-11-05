@@ -1,39 +1,110 @@
-.enrollment-status-page .dtc-enrollment-status-card { border:1px solid var(--dtc-border) !important; border-radius:14px; box-shadow:none; }
-.enrollment-status-page .dtc-enrollment-status-body { padding:20px; }
-.enrollment-status-page .enrollment-academic-meta { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; color:var(--dtc-text-secondary); font-size:12px; line-height:1.6; }
-.enrollment-status-page .enrollment-submitted { margin:5px 0 0; color:var(--dtc-text-muted); font-size:11px; }
-.enrollment-status-page .dtc-enrollment-status-action a { min-height:44px; padding:10px 16px; border-radius:9px; box-shadow:none; font-size:13px; }
-.enrollment-status-page .enrollment-payment-hint { margin:12px 0 0; color:var(--dtc-text-secondary); font-size:12px; line-height:1.6; }
-.enrollment-status-page .enrollment-verification-note { margin-top:16px; padding-top:14px; border-top:1px solid var(--dtc-border); }
-.enrollment-status-page .enrollment-verification-note p { margin:0; font-size:12px; line-height:1.7; color:var(--dtc-text-secondary); }
-.enrollment-status-page .enrollment-proof-link { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; margin-top:12px; padding:10px 14px; border:1px solid var(--dtc-border); border-radius:8px; background:transparent; color:var(--dtc-text); font-size:12px; font-weight:600; text-decoration:none; }
-.enrollment-status-page .enrollment-proof-link svg { width:16px; height:16px; flex-shrink:0; color:var(--dtc-primary); }
-.enrollment-status-page .enrollment-proof-link:hover { border-color:var(--dtc-primary); color:var(--dtc-primary); }
-.enrollment-status-page .enrollment-proof-link:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
-.enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-icon { display:none; }
-.enrollment-status-page .enrollment-rejection-note { margin-top:18px; padding:14px 16px; border:1px solid var(--dtc-border); border-radius:9px; background:var(--dtc-surface-soft); }
-.enrollment-status-page .enrollment-rejection-note h2 { margin:0 0 6px; font-size:11px; font-weight:600; color:var(--dtc-text-secondary); }
-.enrollment-status-page .enrollment-rejection-note p { margin:0; font-size:13px; line-height:1.7; color:var(--dtc-text); white-space:pre-line; overflow-wrap:anywhere; }
-.enrollment-status-page .enrollment-rejection-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 20px; margin-top:16px; }
-.enrollment-status-page .enrollment-rejection-actions p { flex:1 1 220px; margin:0; font-size:12px; line-height:1.7; color:var(--dtc-text-secondary); }
-.enrollment-status-page .enrollment-rejection-actions a { min-height:42px; display:inline-flex; align-items:center; justify-content:center; padding:10px 16px; font-size:12px; box-shadow:none; }
-.enrollment-status-page .enrollment-rejection-actions a:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
-@media(max-width:767.98px) {
-    .enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-summary { grid-template-columns:minmax(0,1fr); gap:10px; }
-    .enrollment-status-page .enrollment-is-rejected .dtc-enrollment-status-details { grid-column:1; }
-    .enrollment-status-page .enrollment-rejection-actions p { flex-basis:100%; }
-    .enrollment-status-page .enrollment-rejection-actions a { width:100%; }
+.dtc-enrollment-status-page { width:100%; }
+.dtc-enrollment-index-header { width:100%; margin-bottom:16px; }
+.dtc-enrollment-index-heading h1 { margin:0; color:var(--dtc-text); font-size:22px; font-weight:700; line-height:1.3; }
+.dtc-enrollment-index-heading p { margin:4px 0 0; color:var(--dtc-text-secondary); font-size:13px; line-height:1.5; }
+
+.dtc-enrollment-empty,
+.dtc-enrollment-status-card {
+    overflow:hidden;
+    border:1px solid var(--dtc-border) !important;
+    border-radius:var(--dtc-radius-xl) !important;
+    background:var(--dtc-surface);
+    box-shadow:none !important;
 }
-@media(max-width:767.98px) { .enrollment-status-page .enrollment-proof-link { display:flex; width:100%; } }
-@media(max-width:767.98px) {
-    .enrollment-status-page .dtc-enrollment-status-summary { display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; margin:0; align-items:start !important; }
-    .enrollment-status-page .dtc-enrollment-status-summary > div { padding:0; width:auto; max-width:none; }
-    .enrollment-status-page .dtc-enrollment-status-icon { grid-column:1; grid-row:1; }
-    .enrollment-status-page .dtc-enrollment-status-icon .dtc-icon-swatch { width:38px !important; height:38px !important; border-radius:10px !important; }
-    .enrollment-status-page .dtc-enrollment-status-details { grid-column:2; grid-row:1; min-width:0; }
-    .enrollment-status-page .dtc-enrollment-status-badge { grid-column:1/-1; margin:0 !important; }
-    .enrollment-status-page .dtc-enrollment-status-badge .dtc-status-badge { font-size:11px !important; padding:5px 10px !important; }
-    .enrollment-status-page .dtc-enrollment-status-action { grid-column:1/-1; margin:2px 0 0 !important; }
-    .enrollment-status-page .dtc-enrollment-status-action a { display:flex; align-items:center; justify-content:center; width:100%; min-height:46px; }
-    .enrollment-status-page .dtc-enrollment-status-body { padding:18px; }
+.dtc-enrollment-empty:hover,
+.dtc-enrollment-status-card:hover { box-shadow:none !important; }
+.dtc-enrollment-empty .card-body { padding:28px 20px !important; }
+.dtc-enrollment-empty-icon { width:40px; height:40px; color:var(--dtc-text-secondary); }
+.dtc-enrollment-empty h2 { margin:0 0 8px; color:var(--dtc-text); font-size:16px; font-weight:700; }
+.dtc-enrollment-empty p { max-width:360px; margin:0 auto 18px; color:var(--dtc-text-secondary); font-size:13px; line-height:1.6; }
+.dtc-enrollment-empty-action { min-height:44px; }
+
+.dtc-enrollment-program-zone,
+.dtc-enrollment-progress-zone,
+.dtc-enrollment-callout-zone { padding:18px; }
+.dtc-enrollment-program-zone,
+.dtc-enrollment-progress-zone { border-bottom:1px solid var(--dtc-border); }
+.dtc-enrollment-program-zone { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:12px; }
+.dtc-enrollment-program { display:flex; min-width:0; align-items:center; gap:12px; }
+.dtc-enrollment-program-icon {
+    width:48px;
+    height:48px;
+    flex:0 0 48px;
+    border:1px solid color-mix(in srgb,var(--dtc-primary) 24%,var(--dtc-border));
+    border-radius:var(--dtc-radius-lg);
+}
+.dtc-enrollment-program-icon svg { width:22px; height:22px; }
+.dtc-enrollment-program-copy { min-width:0; }
+.dtc-enrollment-eyebrow { display:block; margin:0 0 2px; color:var(--dtc-text-secondary); font-size:9px; font-weight:600; letter-spacing:.1em; line-height:1.4; text-transform:uppercase; }
+.dtc-enrollment-program-copy h2 { margin:0; color:var(--dtc-text); font-size:15px; font-weight:700; line-height:1.4; overflow-wrap:anywhere; }
+.dtc-enrollment-status-pill { align-self:start; justify-self:end; gap:6px; padding:5px 9px; border:1px solid var(--dtc-border); font-size:10px; white-space:nowrap; }
+.dtc-enrollment-status-pill.is-success { border-color:color-mix(in srgb,var(--dtc-success) 35%,var(--dtc-border)); }
+.dtc-enrollment-status-pill.is-warning { border-color:color-mix(in srgb,var(--dtc-warning) 35%,var(--dtc-border)); }
+.dtc-enrollment-status-pill.is-info { border-color:color-mix(in srgb,var(--dtc-primary) 35%,var(--dtc-border)); }
+.dtc-enrollment-status-pill.is-danger { border-color:color-mix(in srgb,var(--dtc-danger) 35%,var(--dtc-border)); }
+.dtc-enrollment-status-pill .dtc-status-dot { width:6px; height:6px; flex:0 0 6px; }
+.dtc-enrollment-chips { display:flex; grid-column:1 / -1; flex-wrap:wrap; gap:6px; }
+.dtc-enrollment-chip { display:inline-flex; min-height:24px; align-items:center; padding:3px 8px; border:1px solid var(--dtc-border); border-radius:var(--dtc-radius-sm); background:var(--dtc-surface-soft); color:var(--dtc-text-secondary); font-size:10px; font-weight:500; line-height:1.4; }
+
+.dtc-enrollment-zone-label { margin:0 0 14px; color:var(--dtc-text-secondary); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
+.dtc-enrollment-progress { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:0; padding:0; list-style:none; }
+.dtc-enrollment-progress-step { position:relative; display:flex; min-width:0; flex-direction:column; align-items:center; text-align:center; }
+.dtc-enrollment-progress-step:not(:last-child)::after { position:absolute; top:13px; left:calc(50% + 15px); right:calc(-50% + 15px); z-index:0; height:2px; background:var(--dtc-border); content:""; }
+.dtc-enrollment-progress-step.has-complete-connector::after { background:var(--dtc-success); }
+.dtc-enrollment-progress-marker { position:relative; z-index:1; display:flex; width:28px; height:28px; align-items:center; justify-content:center; border:1px solid var(--dtc-border); border-radius:50%; background:var(--dtc-surface); color:var(--dtc-text-secondary); }
+.dtc-enrollment-progress-marker svg { width:14px; height:14px; }
+.dtc-enrollment-progress-step.is-done .dtc-enrollment-progress-marker { border-color:var(--dtc-success); background:var(--dtc-success); color:var(--dtc-surface); }
+.dtc-enrollment-progress-step.is-current .dtc-enrollment-progress-marker { border:2px solid var(--dtc-warning); background:color-mix(in srgb,var(--dtc-warning) 12%,var(--dtc-surface)); }
+.dtc-enrollment-progress-step.is-current .dtc-enrollment-progress-marker > span { width:8px; height:8px; border-radius:50%; background:var(--dtc-warning); }
+.dtc-enrollment-progress-copy { display:grid; max-width:100%; gap:2px; margin-top:7px; }
+.dtc-enrollment-progress-copy strong { color:var(--dtc-text); font-size:11px; font-weight:600; line-height:1.4; white-space:nowrap; }
+.dtc-enrollment-progress-copy > span { color:var(--dtc-text-secondary); font-size:10px; line-height:1.4; white-space:nowrap; }
+.dtc-enrollment-progress-step.is-upcoming .dtc-enrollment-progress-copy strong { color:var(--dtc-text-secondary); }
+
+.dtc-enrollment-callout { display:grid; grid-template-columns:32px minmax(0,1fr); align-items:center; gap:10px; padding:12px; border:1px solid var(--dtc-border); border-radius:var(--dtc-radius-md); background:var(--dtc-surface-soft); }
+.dtc-enrollment-callout.is-success { border-color:color-mix(in srgb,var(--dtc-success) 38%,var(--dtc-border)); background:color-mix(in srgb,var(--dtc-success) 13%,var(--dtc-surface)); }
+.dtc-enrollment-callout.is-enrolled { grid-template-columns:minmax(0,1fr); border-left:3px solid var(--dtc-success); }
+.dtc-enrollment-callout.is-warning { border-color:color-mix(in srgb,var(--dtc-warning) 30%,var(--dtc-border)); background:color-mix(in srgb,var(--dtc-warning) 9%,var(--dtc-surface)); }
+.dtc-enrollment-callout.is-info { border-color:color-mix(in srgb,var(--dtc-primary) 30%,var(--dtc-border)); background:color-mix(in srgb,var(--dtc-primary) 9%,var(--dtc-surface)); }
+.dtc-enrollment-callout.is-danger { border-color:color-mix(in srgb,var(--dtc-danger) 30%,var(--dtc-border)); background:color-mix(in srgb,var(--dtc-danger) 9%,var(--dtc-surface)); }
+.dtc-enrollment-callout.is-neutral { border-color:var(--dtc-border); background:var(--dtc-surface-soft); }
+.dtc-enrollment-callout-icon { width:32px; height:32px; border-radius:var(--dtc-radius-sm); background:color-mix(in srgb,var(--dtc-success) 15%,var(--dtc-surface)); color:var(--dtc-success); }
+.dtc-enrollment-callout.is-warning .dtc-enrollment-callout-icon { background:color-mix(in srgb,var(--dtc-warning) 15%,var(--dtc-surface)); color:var(--dtc-warning); }
+.dtc-enrollment-callout.is-info .dtc-enrollment-callout-icon { background:color-mix(in srgb,var(--dtc-primary) 15%,var(--dtc-surface)); color:var(--dtc-primary); }
+.dtc-enrollment-callout.is-danger .dtc-enrollment-callout-icon { background:color-mix(in srgb,var(--dtc-danger) 15%,var(--dtc-surface)); color:var(--dtc-danger); }
+.dtc-enrollment-callout.is-neutral .dtc-enrollment-callout-icon { background:var(--dtc-surface-soft); color:var(--dtc-text-secondary); }
+.dtc-enrollment-callout-icon svg { width:17px; height:17px; }
+.dtc-enrollment-callout-copy { display:grid; min-width:0; gap:2px; }
+.dtc-enrollment-callout-copy strong { color:var(--dtc-text); font-size:12px; font-weight:700; line-height:1.45; }
+.dtc-enrollment-callout-copy > span { color:var(--dtc-text-secondary); font-size:11px; line-height:1.55; overflow-wrap:anywhere; }
+.dtc-enrollment-callout-action,
+.dtc-enrollment-proof-link { grid-column:1 / -1; width:100%; min-height:44px; margin-top:2px; }
+.dtc-enrollment-callout-action:focus-visible,
+.dtc-enrollment-proof-link:focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+.dtc-enrollment-proof-link { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 12px; border:1px solid var(--dtc-border); border-radius:var(--dtc-radius-sm); color:var(--dtc-text); font-size:12px; font-weight:600; text-decoration:none; }
+.dtc-enrollment-proof-link svg { width:16px; height:16px; flex:0 0 auto; color:var(--dtc-primary); }
+.dtc-enrollment-proof-link:hover { border-color:var(--dtc-primary); color:var(--dtc-primary); }
+
+.dtc-enrollment-pagination { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:16px; color:var(--dtc-text-secondary); }
+.dtc-enrollment-pagination small { font-size:12px; }
+.dtc-enrollment-pagination strong { color:var(--dtc-text); }
+.dtc-enrollment-pagination nav { max-width:100%; }
+.dtc-enrollment-status-page :is(a,button):focus-visible { outline:2px solid var(--dtc-primary); outline-offset:3px; }
+
+@media (max-width:359.98px) {
+    .dtc-enrollment-program-zone,
+    .dtc-enrollment-progress-zone,
+    .dtc-enrollment-callout-zone { padding:12px; }
+    .dtc-enrollment-program-zone { gap:10px 8px; }
+    .dtc-enrollment-program { gap:9px; }
+    .dtc-enrollment-program-icon { width:42px; height:42px; flex-basis:42px; }
+    .dtc-enrollment-program-copy h2 { font-size:13px; }
+    .dtc-enrollment-status-pill { padding:4px 7px; font-size:9px; }
+    .dtc-enrollment-progress-copy strong { font-size:10px; }
+    .dtc-enrollment-progress-copy > span { font-size:9px; }
+    .dtc-enrollment-callout { gap:8px; padding:10px; }
+}
+@media (max-width:575.98px) {
+    .dtc-enrollment-pagination { align-items:flex-start; flex-direction:column; }
+    .dtc-enrollment-pagination > nav { align-self:stretch; }
 }

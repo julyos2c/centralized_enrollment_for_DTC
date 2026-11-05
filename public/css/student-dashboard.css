@@ -116,12 +116,17 @@ body.dtc-dark .dtc-term-empty {
 }
 .dtc-enrollment-card .dtc-enrollment-card-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
     padding: 28px 28px 0 !important;
     border: 0 !important;
     background: transparent !important;
+}
+.dtc-enrollment-card .dtc-enrollment-card-header::before,
+.dtc-enrollment-card .dtc-enrollment-card-header::after {
+    display: none;
+    content: none;
 }
 .dtc-enrollment-eyebrow { display: block; margin-bottom: 10px; color: var(--dtc-primary); font-size: 10px; font-weight:400; letter-spacing: .13em; text-transform: uppercase; }
 .dtc-enrollment-card .dtc-enrollment-card-header h2 { margin: 0; color: var(--dtc-text); font-size: clamp(19px, 1.7vw, 26px); font-weight:600; letter-spacing: -.025em; line-height: 1.25; }
