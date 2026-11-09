@@ -1,0 +1,474 @@
+/* ==========================================================================
+   DTC Nexus — compact admission application form
+   Loaded after application-wizard.css on /apply only and scoped to
+   .app-wizard-page.app-form, so the status and portal pages that share
+   application-wizard.css keep their current look.
+
+   Layout: a 12-column grid (.wiz-grid) with span classes (.c3–.c12).
+   Tablet collapses to 6 columns, phones to 2 (.m-half = half width).
+   Fields keep the existing outlined floating-label style, at 42px.
+   ========================================================================== */
+
+.app-wizard-page.app-form {
+    --af-gap-x: 14px;
+    --af-gap-y: 14px;
+    --af-control-h: 42px;
+    --af-page-bg: #f8fafc;
+    max-width: 980px;
+    padding-top: 16px;
+    padding-bottom: 32px;
+}
+body.dtc-dark .app-wizard-page.app-form {
+    --af-page-bg: #0b1220;
+}
+
+/* ── Header, tracker, notice ─────────────────────────────────────────── */
+.app-wizard-page.app-form .app-wizard-topbar {
+    margin-bottom: 8px;
+}
+.app-wizard-page.app-form .app-wizard-back {
+    width: 34px;
+    height: 34px;
+}
+.app-wizard-page.app-form .app-wizard-intro {
+    margin: 0 0 12px;
+}
+.app-wizard-page.app-form .app-wizard-intro h1 {
+    font-size: 22px;
+}
+.app-wizard-page.app-form .app-wizard-intro p {
+    margin-top: 2px;
+    font-size: 13px;
+}
+.app-wizard-page.app-form .app-wizard-tracker {
+    margin-bottom: 12px;
+}
+.app-wizard-page.app-form .wiz-step {
+    gap: 4px;
+}
+.app-wizard-page.app-form .wiz-step-dot {
+    width: 30px;
+    height: 30px;
+}
+.app-wizard-page.app-form .wiz-step-dot :is(i, svg) {
+    width: 15px;
+    height: 15px;
+}
+.app-wizard-page.app-form .wiz-step-label {
+    min-height: 0;
+    font-size: 11px;
+}
+.app-wizard-page.app-form .wiz-connector {
+    margin-bottom: 16px;
+}
+.app-wizard-page.app-form .application-screening-notice {
+    margin-bottom: 12px;
+}
+.app-wizard-page.app-form .application-screening-toggle {
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 13px;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────── */
+.app-wizard-page.app-form .wiz-panel {
+    margin-bottom: 12px;
+    border-radius: 12px;
+}
+.app-wizard-page.app-form .wiz-panel-header {
+    gap: 12px;
+    padding: 14px 22px;
+}
+.app-wizard-page.app-form .wiz-panel-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+}
+.app-wizard-page.app-form .wiz-panel-icon :is(i, svg) {
+    width: 16px;
+    height: 16px;
+}
+.app-wizard-page.app-form .wiz-panel-title {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.3;
+}
+.app-wizard-page.app-form .wiz-panel-sub {
+    margin: 1px 0 0;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+.app-wizard-page.app-form .wiz-panel-body {
+    padding: 18px 22px 20px;
+}
+
+/* Section headings inside a step share one compact style. */
+.app-wizard-page.app-form :is(.wiz-name-section-header h3, .wiz-personal-section-title, .wiz-address-heading h3, .wiz-subsection-title) {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+.app-wizard-page.app-form :is(.wiz-name-section, .wiz-personal-section, .wiz-family-section) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.app-wizard-page.app-form .wiz-name-section-header {
+    margin: 0;
+}
+.app-wizard-page.app-form .wiz-personal-section,
+.app-wizard-page.app-form .wiz-personal-disclosure,
+.app-wizard-page.app-form .wiz-address-heading {
+    margin-top: 18px;
+}
+.app-wizard-page.app-form .wiz-address-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 10px;
+    margin-bottom: 10px;
+}
+.app-wizard-page.app-form .wiz-address-heading h3 {
+    margin: 0;
+}
+.app-wizard-page.app-form .wiz-address-heading p {
+    margin: 0;
+    font-size: 12px;
+}
+.app-wizard-page.app-form .wiz-group-label {
+    margin: 18px 0 10px;
+    font-size: 11.5px;
+}
+.app-wizard-page.app-form .wiz-family-section > .wiz-group-label:first-of-type {
+    margin-top: 0;
+}
+.app-wizard-page.app-form .wiz-divider {
+    margin: 18px 0;
+}
+.app-wizard-page.app-form .wiz-step-note {
+    margin: 14px 0 0;
+}
+
+/* ── 12-column field grid ────────────────────────────────────────────── */
+.app-wizard-page.app-form .wiz-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--af-gap-y) var(--af-gap-x);
+    align-items: start;
+}
+.app-wizard-page.app-form .wiz-grid > * {
+    grid-column: span 12;
+    min-width: 0;
+    margin: 0;
+}
+.app-wizard-page.app-form .wiz-grid > .c3 { grid-column: span 3; }
+.app-wizard-page.app-form .wiz-grid > .c4 { grid-column: span 4; }
+.app-wizard-page.app-form .wiz-grid > .c5 { grid-column: span 5; }
+.app-wizard-page.app-form .wiz-grid > .c6 { grid-column: span 6; }
+.app-wizard-page.app-form .wiz-grid > .c7 { grid-column: span 7; }
+.app-wizard-page.app-form .wiz-grid > .c8 { grid-column: span 8; }
+.app-wizard-page.app-form .wiz-grid > .c12 { grid-column: span 12; }
+.app-wizard-page.app-form .wiz-grid > .d-none,
+.app-wizard-page.app-form .wiz-grid > [hidden] {
+    display: none !important;
+}
+.app-wizard-page.app-form .education-section > .wiz-group-label {
+    margin-top: 0;
+}
+
+/* ── Fields: compact outlined controls with floating labels ─────────── */
+.app-wizard-page.app-form .wiz-field {
+    margin: 0;
+}
+.app-wizard-page.app-form .wiz-input {
+    min-height: var(--af-control-h);
+    height: var(--af-control-h);
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.app-wizard-page.app-form .wiz-field:has(> label + .wiz-input) > .wiz-input,
+.app-wizard-page.app-form .wiz-field:has(> label + .wiz-input) > select.wiz-input,
+.app-wizard-page.app-form .wiz-field:has(> label + input[type="date"].wiz-input) > input.wiz-input {
+    padding: 8px 12px;
+}
+/* application-wizard.css sizes step 2 and the birthdate by ID; match them. */
+.app-wizard-page.app-form #step-2 .wiz-input,
+.app-wizard-page.app-form #birthdate {
+    min-height: var(--af-control-h);
+    height: var(--af-control-h);
+    border-radius: 9px;
+}
+.app-wizard-page.app-form #birthdate {
+    padding: 4px 5px 4px 12px;
+}
+.app-wizard-page.app-form #birthdate::-webkit-calendar-picker-indicator {
+    width: 18px;
+    height: 18px;
+    padding: 6px;
+    border-radius: 7px;
+}
+.app-wizard-page.app-form select.wiz-input {
+    padding-right: 34px;
+}
+.app-wizard-page.app-form input[type="date"].wiz-input {
+    padding-right: 8px;
+}
+/* Resting label is vertically centred in the 42px control. */
+.app-wizard-page.app-form .wiz-field:has(> label + .wiz-input) > label {
+    left: 9px;
+    font-size: 12px;
+    transform: translateY(13px);
+}
+.app-wizard-page.app-form .wiz-field:has(> label + .wiz-input:focus) > label,
+.app-wizard-page.app-form .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+.app-wizard-page.app-form .wiz-field:has(> label + select.wiz-input) > label,
+.app-wizard-page.app-form .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+.app-wizard-page.app-form .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label {
+    transform: translateY(-7px) scale(0.9);
+}
+.app-wizard-page.app-form .wiz-field > .wiz-hint,
+.app-wizard-page.app-form .wiz-field > .wiz-err-msg {
+    margin-top: 4px;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+.app-wizard-page.app-form .wiz-hint {
+    font-size: 11.5px;
+}
+
+/* Name row: [Honorific | First] [Last | Suffix] [Middle] */
+.app-wizard-page.app-form .wiz-personal-names {
+    gap: var(--af-gap-y) var(--af-gap-x);
+}
+.app-wizard-page.app-form .wiz-name-composite--first {
+    grid-template-columns: 84px minmax(0, 1fr);
+}
+.app-wizard-page.app-form .wiz-name-composite--last {
+    grid-template-columns: minmax(0, 1fr) 72px;
+}
+
+/* Optional personal details disclosure */
+.app-wizard-page.app-form .wiz-personal-disclosure {
+    border-radius: 10px;
+}
+.app-wizard-page.app-form .wiz-personal-toggle {
+    min-height: 0;
+    padding: 10px 14px;
+}
+.app-wizard-page.app-form .wiz-personal-toggle-hint {
+    font-size: 12px;
+}
+.app-wizard-page.app-form .wiz-personal-content {
+    padding: 14px;
+}
+
+/* Guardian disclosure */
+.app-wizard-page.app-form .wiz-guardian {
+    margin: 12px 0 0;
+}
+.app-wizard-page.app-form .wiz-guardian-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 13px;
+}
+.app-wizard-page.app-form .wiz-guardian[open] > .wiz-grid {
+    margin-top: 10px;
+}
+
+/* Inline notices */
+.app-wizard-page.app-form .wiz-inline-notice {
+    margin: 0 0 12px;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+/* ── Supporting documents: compact two-column upload list ───────────── */
+.app-wizard-page.app-form .doc-tabs {
+    margin-bottom: 12px;
+}
+.app-wizard-page.app-form .doc-tab-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+.app-wizard-page.app-form .document-section:not(.d-none) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.app-wizard-page.app-form .document-section > .wiz-inline-notice {
+    grid-column: 1 / -1;
+    margin: 0 !important;
+}
+.app-wizard-page.app-form .document-input {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+}
+.app-wizard-page.app-form .document-input > label {
+    margin-bottom: 2px;
+    font-size: 13px;
+}
+.app-wizard-page.app-form .document-input .text-muted.small {
+    margin-bottom: 8px !important;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.app-wizard-page.app-form .document-input-control {
+    min-height: 40px;
+    padding: 4px;
+    border-radius: 8px;
+}
+.app-wizard-page.app-form .document-input-btn {
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+.app-wizard-page.app-form .document-input-filename {
+    font-size: 12.5px;
+}
+.app-wizard-page.app-form .document-input small.form-text {
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+.app-wizard-page.app-form #marriageDocument:not(.d-none) {
+    margin-top: 14px !important;
+}
+.app-wizard-page.app-form #marriageDocument .wiz-divider {
+    margin: 0 0 12px;
+}
+.app-wizard-page.app-form #marriageDocument > p {
+    margin: 0 0 10px !important;
+}
+.app-wizard-page.app-form .wiz-reqs-checklist li {
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+
+/* ── Review: two label/value pairs per row on wide screens ──────────── */
+.app-wizard-page.app-form .rev-summary {
+    gap: 10px;
+}
+.app-wizard-page.app-form .rev-section {
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+.app-wizard-page.app-form .rev-section-head {
+    padding: 8px 14px;
+}
+.app-wizard-page.app-form .rev-section-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 2px 0;
+}
+.app-wizard-page.app-form .rev-row {
+    grid-template-columns: minmax(110px, 40%) minmax(0, 1fr);
+    padding: 6px 14px;
+}
+.app-wizard-page.app-form .rev-label {
+    font-size: 12px;
+}
+.app-wizard-page.app-form .rev-value {
+    font-size: 13px;
+}
+.app-wizard-page.app-form .simple-ack-bar {
+    padding: 10px 0 0;
+}
+
+/* ── Navigation stays reachable while long steps scroll ─────────────── */
+.app-wizard-page.app-form .wiz-nav {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 4px -2px 0;
+    padding: 12px 2px;
+    background: linear-gradient(to bottom, transparent, var(--af-page-bg) 16px);
+}
+.app-wizard-page.app-form .wiz-btn {
+    min-height: 40px;
+    padding: 8px 18px;
+    font-size: 14px;
+}
+
+/* ── Tablet: six columns ─────────────────────────────────────────────── */
+@media (max-width: 899px) {
+    .app-wizard-page.app-form .wiz-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .app-wizard-page.app-form .wiz-grid > * { grid-column: span 6; }
+    .app-wizard-page.app-form .wiz-grid > :is(.c3, .c4, .c5, .c6, .c7) { grid-column: span 3; }
+    .app-wizard-page.app-form .wiz-grid > :is(.c8, .c12) { grid-column: span 6; }
+    .app-wizard-page.app-form .rev-section-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ── Phone: one column, short fields side by side ───────────────────── */
+@media (max-width: 599px) {
+    .app-wizard-page.app-form {
+        --af-gap-y: 12px;
+        --af-gap-x: 10px;
+        --af-control-h: 44px;
+        padding-top: 10px;
+    }
+    .app-wizard-page.app-form .app-wizard-intro h1 {
+        font-size: 20px;
+    }
+    .app-wizard-page.app-form .wiz-panel-header {
+        padding: 12px 14px;
+    }
+    .app-wizard-page.app-form .wiz-panel-body {
+        padding: 14px 14px 16px;
+    }
+    .app-wizard-page.app-form .wiz-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .app-wizard-page.app-form .wiz-grid > *,
+    .app-wizard-page.app-form .wiz-grid > :is(.c3, .c4, .c5, .c6, .c7, .c8, .c12) {
+        grid-column: span 2;
+    }
+    .app-wizard-page.app-form .wiz-grid > .m-half {
+        grid-column: span 1;
+    }
+    .app-wizard-page.app-form .wiz-input {
+        font-size: 16px; /* prevents iOS zoom on focus */
+    }
+    .app-wizard-page.app-form .wiz-field:has(> label + .wiz-input) > label {
+        transform: translateY(14px);
+    }
+    .app-wizard-page.app-form .wiz-field:has(> label + .wiz-input:focus) > label,
+    .app-wizard-page.app-form .wiz-field:has(> label + .wiz-input:not(:placeholder-shown)) > label,
+    .app-wizard-page.app-form .wiz-field:has(> label + select.wiz-input) > label,
+    .app-wizard-page.app-form .wiz-field:has(> label + input[type="date"].wiz-input) > label,
+    .app-wizard-page.app-form .wiz-field:has(> label + input.wiz-input:not([placeholder])) > label {
+        transform: translateY(-7px) scale(0.9);
+    }
+    .app-wizard-page.app-form .wiz-personal-names {
+        gap: var(--af-gap-y);
+    }
+    .app-wizard-page.app-form .wiz-personal-content {
+        padding: 12px;
+    }
+    .app-wizard-page.app-form .document-section:not(.d-none) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .app-wizard-page.app-form .rev-row {
+        grid-template-columns: minmax(96px, 38%) minmax(0, 1fr);
+        padding: 6px 12px;
+    }
+    .app-wizard-page.app-form .wiz-nav {
+        margin: 0 -14px;
+        padding: 10px 14px;
+    }
+    .app-wizard-page.app-form .wiz-btn {
+        flex: 1 1 0;
+        justify-content: center;
+    }
+}

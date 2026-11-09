@@ -910,8 +910,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 return p && p !== "—";
             });
             let addr = parts.join(", ");
-            if (postal && postal !== "—") addr += " " + postal;
-            if (country && country !== "—") addr += ", " + country;
+            if (postal && postal !== "—") addr = (addr ? addr + " " : "") + postal;
+            // The country field defaults to "Philippines"; on its own that
+            // default is not an address, so it is shown only with other details.
+            if (country && country !== "—" && (addr || country.toLowerCase() !== "philippines"))
+                addr = addr ? addr + ", " + country : country;
             return addr || "—";
         }
 
