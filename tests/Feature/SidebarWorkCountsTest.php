@@ -52,7 +52,7 @@ class SidebarWorkCountsTest extends TestCase
         $this->document($student, 'processing', 'verified');
         $this->document($student, 'cancelled', 'unpaid');
         $this->document($student, 'released', 'verified');
-        $registrar = ['registrar.applications.index' => 1, 'registrar.enrollments.index' => 1, 'registrar.appointments.index' => 1, 'registrar.documents.index' => 1];
+        $registrar = ['registrar.applications.index' => 1, 'registrar.admissions.dashboard' => 0, 'registrar.exams.index' => 0, 'registrar.enrollments.index' => 1, 'registrar.appointments.index' => 1, 'registrar.documents.index' => 1];
         $cashier = ['cashier.payments.index' => 1, 'cashier.document-payments.index' => 2];
         foreach (['admin' => array_merge($registrar, $cashier), 'registrar' => $registrar, 'cashier' => $cashier, 'student' => [], 'alumni' => [], 'new_applicant' => []] as $role => $expected) {
             $response = $this->actingAs($this->makeUserWithRole($role))->getJson(route('notifications.poll'))->assertOk();

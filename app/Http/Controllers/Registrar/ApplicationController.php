@@ -9,10 +9,17 @@ use App\Mail\ApplicationRevisionRequired;
 use App\Models\Application;
 use App\Models\ApplicationCancellationRequest;
 use App\Models\ApplicationDocument;
+use App\Models\AuditLog;
+use App\Models\EntranceExamSession;
 use App\Models\Program;
 use App\Models\User;
-use App\Services\NotificationService;
+use App\Services\AdmissionNotifier;
+use App\Services\AdmissionRequirementChecklist;
 use App\Services\ApplicationCancellationService;
+use App\Services\BookingException;
+use App\Services\EntranceExamBookingService;
+use App\Services\NotificationService;
+use App\Support\AdmissionSettings;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\DB;
@@ -67,11 +74,94 @@ class ApplicationController extends Controller
         return view('registrar.applications.index', compact('applications', 'programs'));
     }
 
-    public function show(Application $application)
+    public function show(Application $application, AdmissionRequirementChecklist $checklist)
     {
-        $application->load(['program', 'user', 'reviewer', 'documents', 'cancellationRequests.requester', 'cancellationRequests.reviewer']);
+        $application->load(['program', 'user', 'reviewer', 'documents.reviewer', 'cancellationRequests.requester', 'cancellationRequests.reviewer', 'examBookings.session', 'activeExamBooking.session']);
 
-        return view('registrar.applications.show', compact('application'));
+        $requirements = $checklist->forApplication($application, true);
+        $requirementSummary = $checklist->summary($requirements);
+        $examSessions = AdmissionSettings::examEnabled() || $application->examBookings->isNotEmpty()
+            ? EntranceExamSession::where('status', 'open')->upcoming()->withCount('seatedBookings')
+                ->orderBy('exam_date')->orderBy('start_time')->get()->filter(fn ($session) => $session->isBookable())->values()
+            : collect();
+
+        return view('registrar.applications.show', [
+            'application' => $application,
+            'requirements' => $requirements,
+            'requirementSummary' => $requirementSummary,
+            'examMode' => AdmissionSettings::examMode(),
+            'examSessions' => $examSessions,
+            'approvalBlocker' => $this->approvalBlocker($application, $requirementSummary),
+        ]);
+    }
+
+    /** Return a revision-required application to the review queue. */
+    public function resumeReview(Application $application)
+    {
+        $updated = DB::transaction(function () use ($application) {
+            $locked = Application::whereKey($application->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'revision_required' || $locked->pendingCancellationRequest()->exists()) {
+                return false;
+            }
+            $locked->update(['status' => 'under_review', 'reviewed_by' => auth()->id(), 'reviewed_at' => now()]);
+            return true;
+        });
+
+        if (! $updated) {
+            return redirect()->route('registrar.applications.show', $application)
+                ->with('error', 'Only applications awaiting revision can return to review.');
+        }
+        \App\Models\AuditLog::record('application.review_resumed', "Returned application {$application->reference_no} to review.", ['application_id' => $application->id]);
+
+        return redirect()->route('registrar.applications.show', $application)
+            ->with('success', 'The application is back under review.');
+    }
+
+    /** Book an exam session on the applicant's behalf (e.g. walk-in or phone request). */
+    public function bookExam(Request $request, Application $application, EntranceExamBookingService $bookings, AdmissionNotifier $notifier)
+    {
+        $data = $request->validate(['session_id' => ['required', 'integer', 'exists:entrance_exam_sessions,id']]);
+        if (! $application->isOpenForAdmissionActivity()) {
+            return back()->with('error', 'Exams can only be booked while the application is being processed.');
+        }
+        if ($application->activeExamBooking()->exists()) {
+            return back()->with('error', 'This applicant already has an active exam booking. Reschedule it from the exam roster instead.');
+        }
+
+        try {
+            $booking = $bookings->book($application, (int) $data['session_id'], $request->user());
+        } catch (BookingException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        $booking->load('session');
+        $application->load('user');
+        $notifier->applicant($application, 'Entrance exam schedule confirmed',
+            "The Registrar's Office booked your entrance examination for {$booking->session->scheduleLabel()} at {$booking->session->venue}. Please arrive early and bring a valid ID and your reference number.", 'success');
+        \App\Models\AuditLog::record('admission.exam_booking.staff_booked', "Booked exam session #{$booking->entrance_exam_session_id} for application {$application->reference_no}.", ['booking_id' => $booking->id]);
+
+        return redirect()->to(route('registrar.applications.show', $application) . '#exam')
+            ->with('success', 'Exam booked and the applicant was notified.');
+    }
+
+    /** Why the configured admission policy does not allow approval yet. */
+    private function approvalBlocker(Application $application, ?array $summary = null): ?string
+    {
+        if ($summary === null) {
+            $checklist = app(AdmissionRequirementChecklist::class);
+            $summary = $checklist->summary($checklist->forApplication($application));
+        }
+        if (! $summary['required_complete']) {
+            return 'All required documents must be approved before this application can be approved.';
+        }
+        if (AdmissionSettings::examRequired()) {
+            $passed = $application->examBookings()->where('status', 'attended')->where('result', 'passed')->exists();
+            if (! $passed) {
+                return 'The entrance exam is required: record a passing result before approving.';
+            }
+        }
+
+        return null;
     }
 
     public function startReview(Application $application)
@@ -119,6 +209,12 @@ class ApplicationController extends Controller
         if ($application->user_id !== null || $application->status === 'approved') {
             return redirect()->route('registrar.applications.index')
                 ->with('error', 'This application has already been approved.');
+        }
+
+        // ── Admission policy: required documents and entrance exam ──────
+        if ($blocker = $this->approvalBlocker($application)) {
+            return redirect()->route('registrar.applications.show', $application)
+                ->with('error', $blocker);
         }
 
         // ── Prevent duplicate User by email ─────────────────────────────

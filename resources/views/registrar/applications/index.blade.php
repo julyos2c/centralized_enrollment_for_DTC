@@ -86,6 +86,7 @@
                         'revision_required' => 'Revision Required',
                         'approved'          => 'Approved',
                         'rejected'          => 'Rejected',
+                        'cancelled'         => 'Cancelled',
                     ] as $val => $label)
                         <option value="{{ $val }}" {{ request('status') === $val ? 'selected' : '' }}>
                             {{ $label }}
@@ -125,6 +126,7 @@
                 'revision_required' => 'warning',
                 'approved'          => 'success',
                 'rejected'          => 'danger',
+                'cancelled'         => 'danger',
             ];
         @endphp
 

@@ -57,6 +57,21 @@
                     @endif
                 </div>
 
+                @unless(in_array($application->status, ['cancelled'], true))
+                    <section class="status-portal-link" aria-labelledby="status-portal-title">
+                        <h3 id="status-portal-title">Manage your admission online</h3>
+                        <p>Upload or replace requirements, see document review results, and book your entrance examination. For your privacy we email a secure link to {{ $application->email }}.</p>
+                        <form method="POST" action="{{ route('public.admission.link') }}">
+                            @csrf
+                            <input type="hidden" name="reference_no" value="{{ $application->reference_no }}">
+                            <input type="hidden" name="email" value="{{ $application->email }}">
+                            <button type="submit" class="wiz-btn wiz-btn--primary status-action-link">
+                                <i data-lucide="mail" aria-hidden="true"></i> Email me a secure portal link
+                            </button>
+                        </form>
+                    </section>
+                @endunless
+
                 @if(in_array($application->status, ['revision_required', 'rejected'], true) && filled($application->remarks))
                     <section class="status-remarks" aria-labelledby="status-remarks-title">
                         <h3 id="status-remarks-title">Registrar remarks</h3>

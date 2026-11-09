@@ -200,6 +200,21 @@ The Laravel scheduler generates upcoming slots daily at 00:10 in `Asia/Manila`. 
 
 On Windows local development, run `php artisan schedule:work` in a dedicated terminal. The generator is safe to rerun and leaves existing/manual slots and appointment history intact. Review pending appointments after recording a closure; affected students are notified, and their bookings/payment records are not automatically cancelled or refunded.
 
+## Admissions: requirements, document review, and entrance exams
+
+Applicants still apply without an account. After submitting, the same browser opens the **admission portal** (`/apply/portal`). Later visits use a 24-hour signed link that is emailed from the status page. In the portal, applicants upload or replace requirements, see why a document was rejected, book or change an entrance exam session, and follow a step-by-step tracker. Approved applicants who sign in reach the same page from **My Application**.
+
+Registrar/Admin tools are under **Admissions** in the sidebar:
+
+- **Admissions Overview**: KPIs, pipeline, charts, the document review queue, and upcoming exams. Filter by year, semester, program, status, applicant type, and exam date. Export to CSV or PDF.
+- **Admission Requirements**: add, edit, or deactivate upload requirements per applicant type, and set required/optional, file types, and size limits. Requirements are never deleted; deactivating one keeps the files already submitted.
+- **Entrance Exams**: create sessions (date, time, venue, capacity) and set the exam policy (disabled / optional / required, booking approval, documents-before-booking, applicant changes and cutoff). The roster lets staff approve or decline, reschedule, cancel, mark attendance, record results, and release them.
+- **Application review**: approve or reject each document (a rejection needs a reason, which the applicant sees), or approve all pending documents at once. Approval is blocked until every *required* document is approved and, when the exam is *required*, a passing result is recorded. **Resume Review** returns a revision-required application to review. A corrected upload also does this automatically.
+
+Every default keeps the previous behaviour: the existing upload slots stay optional, and the entrance exam starts **disabled**. Booking capacity is checked under a row lock, and a unique column prevents an applicant from holding two active bookings. Files stay on the private disk and are served only to staff or to the owning applicant's session.
+
+Deployment: back up, then run `php artisan migrate --force` (four additive migrations). Exam-day reminders go out daily at 08:00 through the existing scheduler (`admissions:send-exam-reminders`). Admission emails are sent synchronously after each change is saved; a delivery failure is logged and never undoes the change.
+
 ## Security settings and changed-email verification
 
 Apply migrations before serving the updated application (`php artisan migrate --force` in a backed-up production deployment). The additive `email_verification_required` column preserves existing account activation workflows. Changing an existing user's email clears verification and requires a signed link sent to the new address before normal account access resumes. Profile corrections, verification, required password changes, and logout remain available. Verification links require the recipient's authenticated session; sign in to the matching account before opening the link.

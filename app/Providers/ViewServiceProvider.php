@@ -68,9 +68,14 @@ class ViewServiceProvider extends ServiceProvider
                         ['header' => 'ACADEMIC'],
                         ['text' => 'Programs & Subjects', 'url' => route('admin.programs.index'), 'icon' => 'graduation-cap'],
 
+                        ['header' => 'ADMISSIONS'],
+                        ['text' => 'Admissions Overview',  'url' => route('registrar.admissions.dashboard'), 'icon' => 'chart-pie'],
+                        ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
+                        ['text' => 'Entrance Exams',       'url' => route('registrar.exams.index'),         'icon' => 'clipboard-list', 'active' => ['regex:#^registrar/exams(?:/|$)#']],
+                        ['text' => 'Admission Requirements','url' => route('registrar.admissions.requirements.index'), 'icon' => 'list-checks'],
+
                         ['header' => 'REGISTRAR'],
                         ['text' => 'Registrar Dashboard',  'url' => route('registrar.dashboard'),          'icon' => 'gauge'],
-                        ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
                         ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'file-text'],
                         ['text' => 'Students & Alumni',    'url' => route('registrar.students.index'),     'icon' => 'users'],
                         ['text' => 'Academic Import Center','url' => route('registrar.imports.index'),      'icon' => 'upload'],
@@ -96,7 +101,12 @@ class ViewServiceProvider extends ServiceProvider
                 $sidebar = [
                     ['header' => 'REGISTRAR PANEL'],
                     ['text' => 'Dashboard',            'url' => route('registrar.dashboard'),          'icon' => 'gauge'],
+                    ['header' => 'ADMISSIONS'],
+                    ['text' => 'Admissions Overview',  'url' => route('registrar.admissions.dashboard'), 'icon' => 'chart-pie'],
                     ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
+                    ['text' => 'Entrance Exams',       'url' => route('registrar.exams.index'),         'icon' => 'clipboard-list', 'active' => ['regex:#^registrar/exams(?:/|$)#']],
+                    ['text' => 'Admission Requirements','url' => route('registrar.admissions.requirements.index'), 'icon' => 'list-checks'],
+                    ['header' => 'RECORDS & SERVICES'],
                     ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'file-text'],
                     ['text' => 'Students & Alumni',    'url' => route('registrar.students.index'),     'icon' => 'users'],
                     ['text' => 'Academic Import Center','url' => route('registrar.imports.index'),      'icon' => 'upload'],

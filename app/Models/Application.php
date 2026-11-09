@@ -13,6 +13,8 @@ class Application extends Model
         'confirmation_token_expires_at',
         'submission_token_hash',
         'program_id',
+        'school_year',
+        'semester',
         'first_name',
         'last_name',
         'middle_name',
@@ -209,6 +211,34 @@ class Application extends Model
     public function documents()
     {
         return $this->hasMany(ApplicationDocument::class);
+    }
+
+    /**
+     * Latest upload for each requirement (replaced uploads are kept as history).
+     */
+    public function currentDocuments()
+    {
+        return $this->hasMany(ApplicationDocument::class)->whereNull('superseded_at');
+    }
+
+    public function examBookings()
+    {
+        return $this->hasMany(EntranceExamBooking::class);
+    }
+
+    /** The booking that currently holds the applicant's exam seat, if any. */
+    public function activeExamBooking()
+    {
+        return $this->hasOne(EntranceExamBooking::class)->ofMany(
+            ['id' => 'max'],
+            fn ($query) => $query->whereIn('status', EntranceExamBooking::ACTIVE_STATUSES)
+        );
+    }
+
+    /** Applications can still change their documents or exam booking. */
+    public function isOpenForAdmissionActivity(): bool
+    {
+        return in_array($this->status, ['submitted', 'under_review', 'revision_required'], true);
     }
 
     public function cancellationRequests()

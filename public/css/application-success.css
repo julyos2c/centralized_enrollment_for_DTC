@@ -111,3 +111,6 @@ body.dtc-dark .application-cancel-button:hover { color: #fff; background: #b4231
 body.dtc-dark .application-cancel-error { color: #fda29b; }
 body.dtc-dark .application-success-icon.is-cancelled { color: #fda29b; background: rgba(240, 68, 56, .14); border-color: rgba(253, 162, 155, .22); }
 @media (max-width: 700px) { .application-success-page { padding: 32px 16px 56px; } .application-reference-card, .application-success-card, .application-next-steps { padding: 22px; border-radius: 15px; } .application-reference-footer { align-items: stretch; flex-direction: column; gap: 12px; } .application-reference-card { padding: 20px; } .application-success-grid, .application-summary-list, .application-education-list, .application-requirements-list { grid-template-columns: 1fr; } .application-copy-reference, .application-reference-link, .application-success-button, .application-cancel-button { width: 100%; } .application-reference-actions { flex-direction: column; } .application-cancel-card { padding: 20px; border-radius: 15px; } .application-success-hero.is-compact { text-align: left; } .application-success-actions { align-items: stretch; flex-direction: column; } }
+
+/* Admission portal call to action */
+.application-portal-cta .application-reference-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }

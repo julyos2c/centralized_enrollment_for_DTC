@@ -293,8 +293,9 @@
         {{-- SECTION 7 — SUPPORTING DOCUMENTS                       --}}
         {{-- ===================================================== --}}
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap" style="gap:8px">
                 <span class="font-weight-bold">Supporting Documents</span>
+                <a href="{{ route('public.admission.portal') }}" class="btn btn-sm btn-outline-primary">Manage requirements &amp; exam</a>
             </div>
             <div class="card-body p-0">
                 @php
@@ -308,7 +309,7 @@
                     ];
                 @endphp
 
-                @forelse ($application->documents as $document)
+                @forelse ($application->documents->whereNull('superseded_at') as $document)
                     <div class="d-flex justify-content-between align-items-center px-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
                         <div>
                             <div class="font-weight-bold u-text-sm" >
@@ -326,9 +327,8 @@
                             </div>
                         </div>
 
-                        <span class="badge badge-success">
-                            <i data-lucide="check"></i> Submitted
-                        </span>
+                        <x-dtc.status-badge :status="$document->status === 'submitted' ? 'Under review' : $document->status"
+                            :variant="['approved' => 'success', 'rejected' => 'danger'][$document->status] ?? 'warning'" />
                     </div>
                 @empty
                     <div class="text-center text-muted py-4 u-text-sm" >

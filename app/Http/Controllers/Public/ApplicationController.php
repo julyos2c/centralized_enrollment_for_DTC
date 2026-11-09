@@ -4,48 +4,23 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ApplicationSubmitted;
+use App\Models\AdmissionRequirement;
 use App\Models\Application;
-use App\Models\ApplicationDocument;
 use App\Models\Program;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\AdmissionDocumentService;
 use App\Services\NotificationService;
 use App\Support\ApplicationTextNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ApplicationController extends Controller
 {
-    /**
-     * Document requirements for each applicant type.
-     *
-     * These are optional digital uploads used for preliminary screening.
-     */
-    private const DOCUMENTS_BY_TYPE = [
-        'new_student' => [
-            'form_138',
-            'good_moral_certificate',
-            'birth_certificate',
-        ],
-
-        'transferee' => [
-            'transfer_credentials',
-            'transcript_of_records',
-            'good_moral_certificate',
-            'birth_certificate',
-        ],
-
-        'shiftee' => [],
-
-        'returnee' => [],
-
-        'cross_enrollee' => [],
-    ];
-
     /**
      * Physical requirements shown as reminders.
      *
@@ -91,7 +66,8 @@ class ApplicationController extends Controller
 
         return view('public.application.create', [
             'programs' => $programs,
-            'documentRequirements' => self::DOCUMENTS_BY_TYPE,
+            'requirementsByType' => $this->requirementsByType(),
+            'conditionalRequirements' => AdmissionRequirement::active()->ordered()->where('condition', 'married')->get(),
             'physicalRequirements' => self::PHYSICAL_REQUIREMENTS,
             'titleCaseFields' => ApplicationTextNormalizer::titleCaseFields(),
             'submissionToken' => $submissionToken,
@@ -338,60 +314,24 @@ class ApplicationController extends Controller
             'school_year_completed' => ['nullable', 'string', 'max:30'],
             'school_location' => ['nullable', 'string', 'max:255'],
 
-            // -------------------------------------------------------------
-            // Digital documents
-            //
-            // IMPORTANT:
-            // All uploads are optional because they are for preliminary
-            // screening only. Physical documents are still required later.
-            // -------------------------------------------------------------
             'documents' => [
                 'nullable',
                 'array',
             ],
-
-            'documents.form_138' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
-
-            'documents.good_moral_certificate' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
-
-            'documents.birth_certificate' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
-
-            'documents.marriage_certificate' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
-
-            'documents.transfer_credentials' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
-
-            'documents.transcript_of_records' => [
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ],
         ];
+
+        // Digital documents are configured by the school (Admissions →
+        // Requirements). Uploads here are optional: anything not uploaded
+        // now can be added later in the applicant's admission portal.
+        $applicantType = is_string($request->input('academic_status')) ? $request->input('academic_status') : null;
+        $maritalStatus = is_string($request->input('marital_status')) ? $request->input('marital_status') : null;
+        $allRequirements = AdmissionRequirement::active()->ordered()->get();
+        $allowedRequirements = $allRequirements
+            ->filter(fn (AdmissionRequirement $requirement) => $requirement->appliesTo($applicantType, $maritalStatus))
+            ->keyBy('code');
+        foreach ($allRequirements as $requirement) {
+            $rules['documents.' . $requirement->code] = $requirement->uploadRules();
+        }
 
         $educationFieldsByType = [
             'shs_strand' => ['new_student'],
@@ -449,19 +389,19 @@ class ApplicationController extends Controller
         }
 
         /*
-         * Marriage certificate is only applicable when the applicant
-         * declares that they are married.
+         * Conditional requirements (e.g. the Marriage Certificate) only
+         * apply when the applicant's answers match their condition.
          */
-        if (
-            ($validated['marital_status'] ?? null) !== 'married'
-            && $request->hasFile('documents.marriage_certificate')
-        ) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'documents.marriage_certificate' =>
-                        'A Marriage Certificate may only be submitted when marital status is Married.',
-                ]);
+        foreach ($allRequirements as $requirement) {
+            if ($requirement->condition && !$allowedRequirements->has($requirement->code) && $request->hasFile('documents.' . $requirement->code)) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'documents.' . $requirement->code => $requirement->condition === 'married'
+                            ? 'A Marriage Certificate may only be submitted when marital status is Married.'
+                            : $requirement->name . ' does not apply to this application.',
+                    ]);
+            }
         }
 
         /*
@@ -476,21 +416,6 @@ class ApplicationController extends Controller
         );
 
         /*
-         * Determine which document types are actually allowed
-         * for the selected applicant type.
-         */
-        $academicStatus = $validated['academic_status'];
-
-        $allowedDocuments = self::DOCUMENTS_BY_TYPE[$academicStatus] ?? [];
-
-        /*
-         * Marriage Certificate is conditional.
-         */
-        if (($validated['marital_status'] ?? null) === 'married') {
-            $allowedDocuments[] = 'marriage_certificate';
-        }
-
-        /*
          * Create the application and its documents atomically.
          *
          * If anything fails, the database transaction rolls back.
@@ -500,7 +425,7 @@ class ApplicationController extends Controller
                 $validated,
                 $request,
                 $referenceNo,
-                $allowedDocuments
+                $allowedRequirements
             ) {
                 $confirmationToken = bin2hex(random_bytes(32));
                 $application = Application::create([
@@ -510,6 +435,8 @@ class ApplicationController extends Controller
                     'confirmation_token_expires_at' => now()->addDays(7),
 
                     'program_id' => $validated['program_id'],
+                    'school_year' => Setting::get('current_school_year'),
+                    'semester' => Setting::get('current_semester'),
 
                     'academic_status' => $validated['academic_status'],
 
@@ -578,48 +505,14 @@ class ApplicationController extends Controller
                 ]);
 
                 /*
-                 * Store only documents that:
-                 *
-                 * 1. Were actually uploaded;
-                 * 2. Are allowed for the selected applicant type.
+                 * Store only documents that were uploaded and apply to the
+                 * selected applicant type. Files go to private storage under
+                 * random names (see AdmissionDocumentService).
                  */
-                foreach ($allowedDocuments as $documentType) {
-                    if (!$request->hasFile("documents.$documentType")) {
-                        continue;
+                foreach ($allowedRequirements as $code => $requirement) {
+                    if ($request->hasFile("documents.$code")) {
+                        app(AdmissionDocumentService::class)->store($application, $requirement, $request->file("documents.$code"));
                     }
-
-                    $file = $request->file("documents.$documentType");
-
-                    /*
-                     * Generate a random UUID filename.
-                     * The applicant's original filename is never used
-                     * as the stored filename.
-                     */
-                    $extension = $file->getClientOriginalExtension();
-
-                    $filename = (string) Str::uuid() . '.' . $extension;
-
-                    /*
-                     * Private local storage:
-                     *
-                     * storage/app/applications/{application_id}/...
-                     *
-                     * These files are NOT publicly accessible.
-                     */
-                    $filePath = $file->storeAs(
-                        "applications/{$application->id}",
-                        $filename,
-                        'local'
-                    );
-
-                    ApplicationDocument::create([
-                        'application_id' => $application->id,
-                        'document_type' => $documentType,
-                        'file_path' => $filePath,
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'size_bytes' => $file->getSize(),
-                    ]);
                 }
 
                 return [$application, $confirmationToken];
@@ -664,6 +557,7 @@ class ApplicationController extends Controller
             }
 
             $request->session()->put('application_confirmation_token', $confirmationToken);
+            AdmissionPortalController::grantAccess($request, $application);
 
             return redirect()
                 ->route('public.application.success')
@@ -761,4 +655,18 @@ class ApplicationController extends Controller
         ]);
     }
 
+    /**
+     * Active upload requirements grouped by applicant type for the wizard.
+     * Conditional requirements are rendered separately.
+     */
+    private function requirementsByType(): array
+    {
+        $requirements = AdmissionRequirement::active()->ordered()->whereNull('condition')->get();
+        $grouped = [];
+        foreach (array_keys(AdmissionRequirement::APPLICANT_TYPES) as $type) {
+            $grouped[$type] = $requirements->filter(fn ($requirement) => $requirement->appliesTo($type))->values();
+        }
+
+        return $grouped;
+    }
 }

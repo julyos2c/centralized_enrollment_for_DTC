@@ -4010,3 +4010,13 @@ body.dtc-dark
     > label {
     color: #93c5fd;
 }
+
+/* ── Admission portal link on the status page; required-upload tag ── */
+.status-portal-link { margin: 18px 0; padding: 16px 18px; border: 1px solid #dbe5f2; border-left: 3px solid #0f4cdb; border-radius: 9px; background: #f8fbff; }
+.status-portal-link h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #0f172a; }
+.status-portal-link p { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #475569; }
+.status-portal-link form { margin: 0; }
+body.dtc-dark .status-portal-link, html.dtc-dark .status-portal-link { background: #111827; border-color: #334155; border-left-color: #60a5fa; }
+body.dtc-dark .status-portal-link h3, html.dtc-dark .status-portal-link h3 { color: #f8fafc; }
+body.dtc-dark .status-portal-link p, html.dtc-dark .status-portal-link p { color: #cbd5e1; }
+.document-input-required { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #fffbeb; color: #b45309; font-size: 11px; font-weight: 600; vertical-align: middle; }

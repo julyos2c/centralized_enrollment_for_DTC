@@ -639,59 +639,41 @@
                         <span>Select your applicant type in Step 1 to see the applicable document uploads.</span>
                     </div>
 
-                    {{-- New Student --}}
-                    <div class="document-section d-none" data-type="new_student">
-                        <div class="wiz-inline-notice wiz-inline-notice--info" style="margin-bottom:16px">
-                            <i data-lucide="info"></i>
-                            <div><strong>New Student / First Year</strong> â€” documents below are optional for preliminary screening.</div>
+                    {{-- Upload slots come from Admissions → Requirements. --}}
+                    @foreach(\App\Models\AdmissionRequirement::APPLICANT_TYPES as $typeKey => $typeLabel)
+                        <div class="document-section d-none" data-type="{{ $typeKey }}">
+                            @if(($requirementsByType[$typeKey] ?? collect())->isNotEmpty())
+                                <div class="wiz-inline-notice wiz-inline-notice--info" style="margin-bottom:16px">
+                                    <i data-lucide="info"></i>
+                                    <div><strong>{{ $typeLabel }}</strong> — upload what you have now. Anything not uploaded here can be added later in your admission portal.</div>
+                                </div>
+                                @foreach($requirementsByType[$typeKey] as $requirement)
+                                    @include('public.application.partials.document-input', ['name' => $requirement->code, 'label' => $requirement->name, 'description' => $requirement->description, 'requirement' => $requirement])
+                                @endforeach
+                            @elseif($typeKey === 'cross_enrollee')
+                                <div class="wiz-inline-notice wiz-inline-notice--info">
+                                    <i data-lucide="info"></i>
+                                    <div><strong>Cross-Enrollee:</strong> Requirements are subject to confirmation by the Registrar's Office.</div>
+                                </div>
+                            @else
+                                <div class="wiz-inline-notice wiz-inline-notice--neutral">
+                                    <i data-lucide="info"></i>
+                                    <span>No document upload required for {{ $typeLabel }} applicants at this stage. The Registrar's Office will provide further instructions.</span>
+                                </div>
+                            @endif
                         </div>
-                        @include('public.application.partials.document-input', ['name'=>'form_138','label'=>'Form 138 or Equivalent','description'=>'Issued by your originating school.'])
-                        @include('public.application.partials.document-input', ['name'=>'good_moral_certificate','label'=>'Certificate of Good Moral Character','description'=>'Issued by your originating school.'])
-                        @include('public.application.partials.document-input', ['name'=>'birth_certificate','label'=>'PSA Birth Certificate','description'=>'Digital copy for preliminary screening.'])
-                    </div>
+                    @endforeach
 
-                    {{-- Transferee --}}
-                    <div class="document-section d-none" data-type="transferee">
-                        <div class="wiz-inline-notice wiz-inline-notice--info" style="margin-bottom:16px">
-                            <i data-lucide="info"></i>
-                            <div><strong>Transferee</strong> â€” documents below are optional for preliminary screening.</div>
-                        </div>
-                        @include('public.application.partials.document-input', ['name'=>'transfer_credentials','label'=>'Certificate of Transfer Credentials','description'=>'Issued by your originating school.'])
-                        @include('public.application.partials.document-input', ['name'=>'transcript_of_records','label'=>'Transcript of Records','description'=>'For preliminary evaluation.'])
-                        @include('public.application.partials.document-input', ['name'=>'good_moral_certificate','label'=>'Certificate of Good Moral Character','description'=>'Issued by your originating school.'])
-                        @include('public.application.partials.document-input', ['name'=>'birth_certificate','label'=>'PSA Birth Certificate','description'=>'Digital copy for preliminary screening.'])
-                    </div>
-
-                    {{-- Shiftee --}}
-                    <div class="document-section d-none" data-type="shiftee">
-                        <div class="wiz-inline-notice wiz-inline-notice--neutral">
-                            <i data-lucide="info"></i>
-                            <span>No document upload required for Shiftees at this stage. The Registrar's Office will provide further instructions.</span>
-                        </div>
-                    </div>
-
-                    {{-- Returnee --}}
-                    <div class="document-section d-none" data-type="returnee">
-                        <div class="wiz-inline-notice wiz-inline-notice--neutral">
-                            <i data-lucide="info"></i>
-                            <span>No additional document upload required for Returnees. The Registrar's Office will provide further instructions.</span>
-                        </div>
-                    </div>
-
-                    {{-- Cross-Enrollee --}}
-                    <div class="document-section d-none" data-type="cross_enrollee">
-                        <div class="wiz-inline-notice wiz-inline-notice--info">
-                            <i data-lucide="info"></i>
-                            <div><strong>Cross-Enrollee:</strong> Requirements are subject to confirmation by the Registrar's Office.</div>
-                        </div>
-                    </div>
-
-                    {{-- Marriage Certificate --}}
+                    {{-- Marriage Certificate (and any other "married" requirement) --}}
                     <div id="marriageDocument" class="d-none" style="margin-top:20px">
-                        <div class="wiz-divider"></div>
-                        <p class="wiz-group-label"><i data-lucide="bell-ring"></i> Marriage Certificate</p>
-                        <p style="font-size:13px;color:#64748b;margin:-8px 0 14px">Applicable only to married applicants. Upload is optional.</p>
-                        @include('public.application.partials.document-input', ['name'=>'marriage_certificate','label'=>'Marriage Certificate (PSA)','description'=>'Upload if applicable.'])
+                        @if($conditionalRequirements->isNotEmpty())
+                            <div class="wiz-divider"></div>
+                            <p class="wiz-group-label"><i data-lucide="bell-ring"></i> Marriage Certificate</p>
+                            <p style="font-size:13px;color:#64748b;margin:-8px 0 14px">Applicable only to married applicants.</p>
+                            @foreach($conditionalRequirements as $requirement)
+                                @include('public.application.partials.document-input', ['name' => $requirement->code, 'label' => $requirement->name, 'description' => $requirement->description, 'requirement' => $requirement])
+                            @endforeach
+                        @endif
                     </div>
 
                 </div>{{-- end uploads tab panel --}}

@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Application;
+use App\Models\ApplicationDocument;
 use App\Models\Appointment;
+use App\Models\EntranceExamBooking;
 use App\Models\DocumentRequest;
 use App\Models\Enrollment;
 use App\Models\User;
@@ -12,6 +14,8 @@ class SidebarWorkCounts
 {
     public const LABELS = [
         'registrar.applications.index' => 'applications awaiting review',
+        'registrar.admissions.dashboard' => 'admission documents awaiting review',
+        'registrar.exams.index' => 'entrance exam bookings awaiting approval',
         'registrar.enrollments.index' => 'enrollments awaiting review',
         'registrar.appointments.index' => 'appointments awaiting confirmation',
         'registrar.documents.index' => 'document requests awaiting processing',
@@ -28,6 +32,9 @@ class SidebarWorkCounts
         // Queues are shared by authorized staff, not assigned per staff account.
         if ($user->hasAnyRole(['admin', 'registrar'])) {
             $counts['registrar.applications.index'] = Application::where('status', 'submitted')->count();
+            $counts['registrar.admissions.dashboard'] = ApplicationDocument::whereNull('superseded_at')->where('status', 'submitted')
+                ->whereHas('application', fn ($query) => $query->whereNotIn('status', ['rejected', 'cancelled']))->count();
+            $counts['registrar.exams.index'] = EntranceExamBooking::where('status', 'pending')->count();
             $counts['registrar.enrollments.index'] = Enrollment::where('status', 'pending')->count();
             $counts['registrar.appointments.index'] = Appointment::where('status', 'pending')->count();
             $counts['registrar.documents.index'] = DocumentRequest::where('status', 'submitted')->count();

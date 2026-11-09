@@ -48,6 +48,19 @@
             <span class="visually-hidden" aria-live="polite" id="referenceCopyStatus"></span>
         </section>
 
+        @if(!in_array($application->status, ['cancelled', 'rejected'], true))
+            <section class="application-success-card application-portal-cta" aria-labelledby="admission-portal-cta-title">
+                <div class="application-success-card-heading">
+                    <div class="application-success-card-icon"><i data-lucide="layout-dashboard" aria-hidden="true"></i></div>
+                    <div>
+                        <h2 id="admission-portal-cta-title">Continue in your admission portal</h2>
+                        <p>Upload remaining requirements, follow the document review, and book your entrance examination when it is available — no school visit needed.</p>
+                    </div>
+                </div>
+                <a href="{{ route('public.admission.portal') }}" class="application-reference-link">Open admission portal <i data-lucide="arrow-right" aria-hidden="true"></i></a>
+            </section>
+        @endif
+
         @if($application->pendingCancellationRequest)
             <section class="application-screening-notice" role="status">
                 <i data-lucide="hourglass" aria-hidden="true"></i>

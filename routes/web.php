@@ -35,6 +35,11 @@ use App\Http\Controllers\Portal\ProfileController;
 use App\Http\Controllers\TransactionHistoryController;
 use App\Http\Controllers\PortalActivationController;
 use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
+use App\Http\Controllers\Public\AdmissionPortalController;
+use App\Http\Controllers\Registrar\AdmissionDashboardController;
+use App\Http\Controllers\Registrar\AdmissionRequirementController;
+use App\Http\Controllers\Registrar\ApplicationDocumentReviewController;
+use App\Http\Controllers\Registrar\EntranceExamController;
 
     // ── AUTH ──────────────────────────────────────────────────────────────────────
     Route::get('/', [AuthController::class, 'showLanding'])->name('landing');
@@ -101,6 +106,21 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
         Route::post('/cancel', [\App\Http\Controllers\Public\ApplicationCancellationController::class, 'request'])->middleware('throttle:5,1')->name('cancel');
         Route::get('/status', [ApplicationController::class, 'statusForm'])->name('status.form');
         Route::post('/status', [ApplicationController::class, 'status'])->middleware('throttle:application-status-lookup')->name('status');
+    });
+
+    // ── ADMISSION PORTAL (applicant self-service, no account needed) ─────────────
+    // Access is bound to the browser session after submission or through a
+    // signed, expiring link emailed to the applicant's address.
+    Route::prefix('apply/portal')->name('public.admission.')->group(function () {
+        Route::post('/link', [AdmissionPortalController::class, 'requestLink'])->middleware(['throttle:5,1', 'throttle:application-status-lookup'])->name('link');
+        Route::get('/enter/{application}', [AdmissionPortalController::class, 'enter'])->middleware(['signed', 'throttle:20,1'])->name('enter');
+        Route::get('/', [AdmissionPortalController::class, 'show'])->name('portal');
+        Route::post('/leave', [AdmissionPortalController::class, 'leave'])->name('leave');
+        Route::post('/requirements/{requirement}', [AdmissionPortalController::class, 'upload'])->middleware('throttle:20,1')->name('upload');
+        Route::get('/documents/{document}', [AdmissionPortalController::class, 'document'])->name('document');
+        Route::post('/exam', [AdmissionPortalController::class, 'book'])->middleware('throttle:10,1')->name('exam.book');
+        Route::post('/exam/{booking}/reschedule', [AdmissionPortalController::class, 'reschedule'])->middleware('throttle:10,1')->name('exam.reschedule');
+        Route::post('/exam/{booking}/cancel', [AdmissionPortalController::class, 'cancel'])->middleware('throttle:10,1')->name('exam.cancel');
     });
     
     // ── NOTIFICATIONS & SEARCH (all roles) ───────────────────────────────────────
@@ -242,6 +262,35 @@ use App\Http\Controllers\Registrar\PortalAccountProvisioningController;
     Route::post('/applications/{application}/revision', [RegistrarApplicationController::class, 'revision'])->name('applications.revision');
     Route::post('/applications/cancellation-requests/{cancellationRequest}/approve', [RegistrarApplicationController::class, 'approveCancellation'])->name('applications.cancellation.approve');
     Route::post('/applications/cancellation-requests/{cancellationRequest}/reject', [RegistrarApplicationController::class, 'rejectCancellation'])->name('applications.cancellation.reject');
+    Route::post('/applications/{application}/resume-review', [RegistrarApplicationController::class, 'resumeReview'])->name('applications.resume-review');
+    Route::post('/applications/{application}/exam', [RegistrarApplicationController::class, 'bookExam'])->name('applications.exam.book');
+    Route::post('/applications/{application}/documents/approve-pending', [ApplicationDocumentReviewController::class, 'approvePending'])->name('applications.documents.approve-pending');
+    Route::post('/applications/{application}/documents/{document}/review', [ApplicationDocumentReviewController::class, 'review'])->name('applications.documents.review');
+
+    // ── ADMISSIONS: overview, requirements, entrance exams ──────────────────
+    Route::get('/admissions', [AdmissionDashboardController::class, 'index'])->name('admissions.dashboard');
+    Route::get('/admissions/export/csv', [AdmissionDashboardController::class, 'exportCsv'])->middleware('throttle:10,1')->name('admissions.export.csv');
+    Route::get('/admissions/export/pdf', [AdmissionDashboardController::class, 'exportPdf'])->middleware('throttle:10,1')->name('admissions.export.pdf');
+    Route::get('/admissions/requirements', [AdmissionRequirementController::class, 'index'])->name('admissions.requirements.index');
+    Route::post('/admissions/requirements', [AdmissionRequirementController::class, 'store'])->name('admissions.requirements.store');
+    Route::put('/admissions/requirements/{requirement}', [AdmissionRequirementController::class, 'update'])->name('admissions.requirements.update');
+    Route::post('/admissions/requirements/{requirement}/toggle', [AdmissionRequirementController::class, 'toggle'])->name('admissions.requirements.toggle');
+
+    Route::get('/exams', [EntranceExamController::class, 'index'])->name('exams.index');
+    Route::post('/exams', [EntranceExamController::class, 'store'])->name('exams.store');
+    Route::put('/exams/settings', [EntranceExamController::class, 'updateSettings'])->name('exams.settings');
+    Route::get('/exams/{session}', [EntranceExamController::class, 'show'])->whereNumber('session')->name('exams.show');
+    Route::put('/exams/{session}', [EntranceExamController::class, 'update'])->whereNumber('session')->name('exams.update');
+    Route::post('/exams/{session}/status', [EntranceExamController::class, 'setStatus'])->whereNumber('session')->name('exams.status');
+    Route::post('/exams/{session}/attend-all', [EntranceExamController::class, 'markAllAttended'])->whereNumber('session')->name('exams.attend-all');
+    Route::post('/exams/{session}/release-results', [EntranceExamController::class, 'releaseAll'])->whereNumber('session')->name('exams.release-all');
+    Route::post('/exam-bookings/{booking}/approve', [EntranceExamController::class, 'approve'])->name('exams.bookings.approve');
+    Route::post('/exam-bookings/{booking}/reject', [EntranceExamController::class, 'reject'])->name('exams.bookings.reject');
+    Route::post('/exam-bookings/{booking}/cancel', [EntranceExamController::class, 'cancel'])->name('exams.bookings.cancel');
+    Route::post('/exam-bookings/{booking}/attendance', [EntranceExamController::class, 'attendance'])->name('exams.bookings.attendance');
+    Route::post('/exam-bookings/{booking}/result', [EntranceExamController::class, 'result'])->name('exams.bookings.result');
+    Route::post('/exam-bookings/{booking}/release', [EntranceExamController::class, 'release'])->name('exams.bookings.release');
+    Route::post('/exam-bookings/{booking}/reschedule', [EntranceExamController::class, 'reschedule'])->name('exams.bookings.reschedule');
     });
 
     // ── CASHIER ───────────────────────────────────────────────────────────────────

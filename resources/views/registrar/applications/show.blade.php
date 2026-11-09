@@ -48,6 +48,7 @@
 <link rel="stylesheet" href="{{ asset_v('css/registrar-workspace.css') }}">
 <link rel="stylesheet" href="{{ asset_v('css/application-review.css') }}">
 <link rel="stylesheet" href="{{ asset_v('css/physical-requirements.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/admission.css') }}">
 @endpush
 @section('content')
 <div class="registrar-workspace application-review-page">
@@ -247,65 +248,7 @@
             </div>
         </div>
 
-        {{-- ===================================================== --}}
-        {{-- SECTION 5 — SUPPORTING DOCUMENTS                       --}}
-        {{-- ===================================================== --}}
-        <div class="card">
-            <div class="card-header">
-                <span class="font-weight-bold">Supporting Documents</span>
-            </div>
-            <div class="card-body p-0">
-                @php
-                    $documentLabels = [
-                        'form_138'                => 'Form 138 / Equivalent',
-                        'good_moral_certificate'   => 'Certificate of Good Moral Character',
-                        'birth_certificate'        => 'PSA Birth Certificate',
-                        'marriage_certificate'     => 'Marriage Certificate (PSA)',
-                        'transfer_credentials'     => 'Certificate of Transfer Credentials',
-                        'transcript_of_records'    => 'Transcript of Records',
-                    ];
-                @endphp
-
-                @forelse ($application->documents as $document)
-                    <div class="application-document">
-                        <div class="application-document-info">
-                            <h3 class="application-document-title">
-                                {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }}
-                            </h3>
-                            <p class="application-document-filename">
-                                {{ $document->original_name }}
-                            </p>
-                            <p class="application-document-meta">
-                                <span>Uploaded {{ $document->created_at->format('M d, Y · h:i A') }}</span>
-                                @if($document->size_bytes)
-                                    @php
-                                        $sizeKb = $document->size_bytes / 1024;
-                                    @endphp
-                                    <span>{{ $sizeKb >= 1024 ? number_format($sizeKb / 1024, 2) . ' MB' : number_format($sizeKb, 1) . ' KB' }}</span>
-                                @endif
-                            </p>
-                        </div>
-
-                        <div class="application-document-actions">
-                        <a href="{{ route('registrar.applications.documents.view', [$application, $document]) }}"
-                           class="application-document-download" target="_blank" rel="noopener noreferrer"
-                           aria-label="View {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }} (opens in a new tab)">
-                            <i data-lucide="eye" aria-hidden="true"></i> View
-                        </a>
-                        <a href="{{ route('registrar.applications.documents.show', [$application, $document]) }}"
-                           class="application-document-download"
-                           aria-label="Download {{ $documentLabels[$document->document_type] ?? ucwords(str_replace('_', ' ', $document->document_type)) }}">
-                            <i data-lucide="download" aria-hidden="true"></i> Download file
-                        </a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center text-muted py-4 u-text-sm" >
-                        No documents were uploaded with this application.
-                    </div>
-                @endforelse
-            </div>
-        </div>
+        @include('registrar.applications._requirements-review')
 
         {{-- ===================================================== --}}
         {{-- SECTION 6 — PHYSICAL REQUIREMENTS                      --}}
@@ -454,6 +397,8 @@
         </div>
         @endif
 
+        @include('registrar.applications._exam-panel')
+
         {{-- ===================================================== --}}
         {{-- SECTION 8 — ACTIONS                                    --}}
         {{-- ===================================================== --}}
@@ -487,6 +432,9 @@
                 <span class="font-weight-bold">Registrar Actions</span>
             </div>
             <div class="card-body application-review-actions">
+                @if($approvalBlocker)
+                    <div class="alert alert-warning py-2 small mb-2" role="status">{{ $approvalBlocker }}</div>
+                @endif
 
                 <form id="approve-application-{{ $application->id }}"
                       method="POST"
@@ -495,6 +443,7 @@
                     @csrf
                     <button type="button"
                             class="application-decision application-decision--approve"
+                            @if($approvalBlocker) disabled title="{{ $approvalBlocker }}" @endif
                             data-dtc-confirm
                             data-dtc-confirm-title="Approve application?"
                             data-dtc-confirm-message="The application for {subject} will be approved and an account will be created."
@@ -518,12 +467,25 @@
 
             </div>
         </div>
-        @elseif($application->status === 'revision_required')
+        @elseif($application->status === 'revision_required' && !$application->pendingCancellationRequest)
         <div class="card">
+            <div class="card-header">
+                <span class="font-weight-bold">Registrar Actions</span>
+            </div>
             <div class="card-body">
-                <div class="text-muted u-text-sm">
-                    This application requires revision. Review the Registrar remarks above before further action.
-                </div>
+                <p class="text-muted u-text-sm">
+                    This application requires revision. Waiting for the applicant's corrections. Uploading a corrected document returns the application to review automatically; you can also resume review now.
+                </p>
+                <form id="resume-review-{{ $application->id }}" method="POST" action="{{ route('registrar.applications.resume-review', $application) }}">
+                    @csrf
+                    <button type="button" class="application-decision application-decision--start"
+                            data-dtc-confirm data-dtc-confirm-title="Resume review?"
+                            data-dtc-confirm-message="The application for {subject} will return to Under Review."
+                            data-dtc-confirm-subject="{{ $application->full_name }}" data-dtc-confirm-ok="Resume"
+                            data-dtc-confirm-tone="neutral" data-dtc-confirm-form="#resume-review-{{ $application->id }}">
+                        Resume Review
+                    </button>
+                </form>
             </div>
         </div>
         @elseif($application->status === 'approved')

@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('appointments:generate-slots')->dailyAt('00:10')->withoutOverlapping();
         $schedule->command('academic-imports:cleanup')->dailyAt('00:30')->withoutOverlapping();
         $schedule->command('document-payment-notifications:process --limit=100')->everyMinute()->withoutOverlapping();
+        $schedule->command('admissions:send-exam-reminders')->dailyAt('08:00')->withoutOverlapping();
     }
 
     /**

@@ -2,6 +2,9 @@
 
     <label for="document_{{ $name }}">
         {{ $label }}
+        @if(!empty($requirement) && $requirement->is_required)
+            <span class="document-input-required">Required</span>
+        @endif
     </label>
 
     @if (!empty($description))
@@ -25,13 +28,18 @@
             name="documents[{{ $name }}]"
             id="document_{{ $name }}"
             class="document-input-file @error('documents.' . $name) is-invalid @enderror"
-            accept=".pdf,.jpg,.jpeg,.png"
+            accept="{{ !empty($requirement) ? $requirement->acceptList() : '.pdf,.jpg,.jpeg,.png' }}"
         >
     </div>
 
     <small class="form-text text-muted">
-        PDF, JPG, JPEG, or PNG. Maximum file size: 5 MB.
-        Uploading is optional.
+        @if(!empty($requirement))
+            {{ $requirement->formatSummary() }}.
+            {{ $requirement->is_required ? 'You may also upload it later in your admission portal.' : 'Uploading is optional.' }}
+        @else
+            PDF, JPG, JPEG, or PNG. Maximum file size: 5 MB.
+            Uploading is optional.
+        @endif
     </small>
 
     @error('documents.' . $name)
