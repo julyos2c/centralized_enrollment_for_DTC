@@ -472,3 +472,43 @@ body.dtc-dark .app-wizard-page.app-form {
         justify-content: center;
     }
 }
+
+/* ── Address picker status (loading problems, retry) ────────────────── */
+.app-wizard-page.app-form .wiz-address-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 8px 12px;
+    border: 1px solid #fde68a;
+    border-radius: 9px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+.app-wizard-page.app-form .wiz-address-status[hidden] {
+    display: none !important;
+}
+.app-wizard-page.app-form .wiz-address-retry {
+    padding: 3px 10px;
+    border: 1px solid currentColor;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.app-wizard-page.app-form .wiz-address-retry:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-address-status {
+    border-color: rgba(217, 119, 6, 0.4);
+    background: rgba(217, 119, 6, 0.12);
+    color: #fcd34d;
+}
+.app-wizard-page.app-form select.wiz-input:disabled {
+    cursor: not-allowed;
+}

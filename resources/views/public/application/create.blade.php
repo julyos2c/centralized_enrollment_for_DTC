@@ -356,9 +356,13 @@
                      region / province / city fields apply. --}}
                 <div class="wiz-address-heading">
                     <h3>Address</h3>
-                    <p>Optional. Use a saved browser address or enter it manually.</p>
+                    <p>Optional. Choose your area from the lists; the postal code fills in when it is known.</p>
                 </div>
-                <div class="wiz-grid">
+                {{-- Address picker: public/js/address-cascade.js fills the lists from
+                     the PSGC endpoints below (relative paths, versioned by data). --}}
+                <div class="wiz-grid" id="addressFields"
+                    data-lookup="{{ json_encode($addressLookup) }}"
+                    data-old="{{ json_encode(['region_code' => old('region_code'), 'province_code' => old('province_code'), 'city_code' => old('city_code'), 'barangay' => old('barangay')]) }}">
                     <div class="wiz-field c8">
                         <label for="current_address">House No., Street</label>
                         <input type="text" name="current_address" id="current_address"
@@ -372,22 +376,27 @@
                             class="wiz-input" value="{{ old('country', 'Philippines') }}"
                             autocomplete="country-name">
                     </div>
-                    <div class="wiz-field c4">
-                        <label for="region_text">Region</label>
-                        <input type="text" name="region" id="region_text" placeholder="e.g. Central Visayas" class="wiz-input" value="{{ old('region') }}" maxlength="255">
-                        <input type="hidden" name="region_code" id="region_code" value="">
+                    <div class="wiz-field c4" data-ph-only>
+                        <label for="region_code">Region</label>
+                        <select name="region_code" id="region_code" class="wiz-input @error('region_code') wiz-invalid @enderror" disabled>
+                            <option value="">Loading regions…</option>
+                        </select>
                         @error('region_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c4">
-                        <label for="province_text">Province</label>
-                        <input type="text" name="province" id="province_text" placeholder="e.g. Bohol" class="wiz-input" value="{{ old('province') }}" maxlength="255" autocomplete="address-level1">
-                        <input type="hidden" name="province_code" id="province_code" value="">
+                    <div class="wiz-field c4" data-ph-only>
+                        <label for="area_select">Province / Independent City</label>
+                        <select id="area_select" class="wiz-input @error('province_code') wiz-invalid @enderror" disabled aria-describedby="areaHint">
+                            <option value="">Select a region first</option>
+                        </select>
+                        <input type="hidden" name="province_code" id="province_code" value="{{ old('province_code') }}">
+                        <span class="wiz-hint" id="areaHint" hidden></span>
                         @error('province_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c4">
-                        <label for="city_text">City / Municipality</label>
-                        <input type="text" name="city" id="city_text" placeholder="e.g. Danao" class="wiz-input" value="{{ old('city') }}" maxlength="255" autocomplete="address-level2">
-                        <input type="hidden" name="city_code" id="city_code" value="">
+                    <div class="wiz-field c4" data-ph-only>
+                        <label for="city_code">City / Municipality</label>
+                        <select name="city_code" id="city_code" class="wiz-input @error('city_code') wiz-invalid @enderror" disabled autocomplete="address-level2">
+                            <option value="">Select a province first</option>
+                        </select>
                         @error('city_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                     <div class="wiz-field c8" id="internationalLocationField" hidden>
@@ -395,15 +404,28 @@
                         <input type="text" name="international_location" id="international_location" placeholder="e.g. City, State or Province" class="wiz-input" value="{{ old('international_location') }}" maxlength="255">
                         @error('international_location')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c5">
+                    <div class="wiz-field c5" data-ph-only id="barangaySelectField" hidden>
+                        <label for="barangay_select">Barangay</label>
+                        <select id="barangay_select" class="wiz-input" disabled>
+                            <option value="">Select a city first</option>
+                        </select>
+                    </div>
+                    {{-- Submitted value. Shown for "not listed" barangays and whenever the list is unavailable. --}}
+                    <div class="wiz-field c5" id="barangayManualField">
                         <label for="barangay_text">Barangay</label>
                         <input type="text" name="barangay" id="barangay_text" placeholder="e.g. Remedios" class="wiz-input" value="{{ old('barangay') }}" maxlength="255" autocomplete="address-level3">
                     </div>
                     <div class="wiz-field c3 m-half">
                         <label for="postal_code">Postal Code</label>
                         <input type="text" name="postal_code" id="postal_code" placeholder="e.g. 6344"
-                            class="wiz-input" value="{{ old('postal_code') }}"
-                            autocomplete="postal-code" inputmode="numeric" maxlength="4">
+                            class="wiz-input" value="{{ old('postal_code') }}" list="postalCodeOptions"
+                            autocomplete="postal-code" inputmode="numeric" maxlength="4" aria-describedby="postalCodeHint">
+                        <datalist id="postalCodeOptions"></datalist>
+                        <span class="wiz-hint" id="postalCodeHint" aria-live="polite" hidden></span>
+                    </div>
+                    <div class="c12 wiz-address-status" id="addressLookupStatus" role="status" aria-live="polite" hidden>
+                        <span id="addressLookupMessage"></span>
+                        <button type="button" class="wiz-address-retry" id="addressLookupRetry" hidden>Try again</button>
                     </div>
                 </div>
 
@@ -814,6 +836,7 @@
 <script>window.dtcApplicationEducationLevels = @json(\App\Support\ApplicationEducation::LEVELS);</script>
 <script src="{{ asset_v('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset_v('js/application-wizard.js') }}" defer></script>
+<script src="{{ asset_v('js/address-cascade.js') }}" defer></script>
 @php
     $firstErrorKey = $errors->keys()[0] ?? '';
     $errorStep = match (true) {

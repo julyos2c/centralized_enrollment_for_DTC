@@ -91,20 +91,23 @@ class ApplicationLocationPickerTest extends TestCase
 
     public function test_location_is_optional_and_form_contains_labeled_manual_address_and_draft_fields(): void
     {
+        // Cascading PSGC selects (address-cascade.js) with labelled controls,
+        // plus a typed barangay and postal code that can always be corrected.
         $this->get(route('public.application.create'))
             ->assertOk()
-            ->assertSee('<label for="region_text">Region</label>', false)
-            ->assertSee('name="region" id="region_text"', false)
-            ->assertSee('<label for="province_text">Province</label>', false)
-            ->assertSee('name="province" id="province_text"', false)
-            ->assertSee('<label for="city_text">City / Municipality</label>', false)
-            ->assertSee('name="city" id="city_text"', false)
-            ->assertSee('autocomplete="address-level1"', false)
+            ->assertSee('<label for="region_code">Region</label>', false)
+            ->assertSee('<select name="region_code" id="region_code"', false)
+            ->assertSee('<label for="area_select">Province / Independent City</label>', false)
+            ->assertSee('<label for="city_code">City / Municipality</label>', false)
+            ->assertSee('<select name="city_code" id="city_code"', false)
+            ->assertSee('name="province_code" id="province_code"', false)
+            ->assertSee('<label for="barangay_select">Barangay</label>', false)
+            ->assertSee('name="barangay" id="barangay_text"', false)
+            ->assertSee('name="postal_code" id="postal_code"', false)
             ->assertSee('autocomplete="address-level2"', false)
+            ->assertSee('autocomplete="address-level3"', false)
             ->assertDontSee('id="locPickerSearch"', false)
-            ->assertSee('name="region_code"', false)
-            ->assertSee('name="province_code"', false)
-            ->assertSee('name="city_code"', false);
+            ->assertSee('js/address-cascade.js', false);
 
         $application = $this->submitLocation([], 'no-location@example.test');
         $this->assertNull($application->region_code);

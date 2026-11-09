@@ -71,7 +71,30 @@ class ApplicationController extends Controller
             'physicalRequirements' => self::PHYSICAL_REQUIREMENTS,
             'titleCaseFields' => ApplicationTextNormalizer::titleCaseFields(),
             'submissionToken' => $submissionToken,
+            'addressLookup' => $this->addressLookupConfig(),
         ]);
+    }
+
+    /**
+     * Relative (host-less) API paths for the address picker, so the same
+     * markup works on localhost, behind the production HTTPS domain, and
+     * through Cloudflare. ":code" is replaced by the browser.
+     */
+    private function addressLookupConfig(): array
+    {
+        $placeholder = '0000000000';
+        // route(..., false) drops any sub-folder base path; add it back so the
+        // paths also work when the app is not served from the domain root.
+        $base = request()->getBaseUrl();
+        $path = fn (string $name, array $params = []) => $base . str_replace($placeholder, ':code', route($name, $params, false));
+
+        return [
+            'version' => app(\App\Services\PsgcLocationCatalog::class)->version(),
+            'regions' => $path('public.application.locations.regions'),
+            'areas' => $path('public.application.locations.areas', ['region' => $placeholder]),
+            'cities' => $path('public.application.locations.cities', ['province' => $placeholder]),
+            'city' => $path('public.application.locations.city', ['city' => $placeholder]),
+        ];
     }
 
     /**
@@ -378,6 +401,13 @@ class ApplicationController extends Controller
                         ->firstWhere('code', $validated['city_code']);
                     $validated['city'] = $directCity['name'];
                 }
+            }
+
+            // Store the official barangay spelling when it is on the PSGC list;
+            // otherwise keep what the applicant typed ("not listed" entries).
+            if (!empty($validated['city_code']) && filled($validated['barangay'] ?? null)) {
+                $validated['barangay'] = $locations->barangayName($validated['city_code'], $validated['barangay'])
+                    ?? $validated['barangay'];
             }
         } else {
             $validated['city'] = $validated['international_location'] ?? null;

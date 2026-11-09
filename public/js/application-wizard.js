@@ -888,15 +888,19 @@ document.addEventListener("DOMContentLoaded", function () {
             const barangay = document.getElementById("barangay_text")
                 ? document.getElementById("barangay_text").value.trim()
                 : "";
-            const city = document.getElementById("city_text")
-                ? document.getElementById("city_text").value.trim()
-                : "";
-            const province = document.getElementById("province_text")
-                ? document.getElementById("province_text").value.trim()
-                : "";
-            const region = document.getElementById("region_text")
-                ? document.getElementById("region_text").value.trim()
-                : "";
+            /* Names of the chosen address-picker options (codes are submitted). */
+            function chosen(id, typeFilter) {
+                const sel = document.getElementById(id);
+                if (!sel || sel.disabled || !sel.value) return "";
+                const opt = sel.options[sel.selectedIndex];
+                if (typeFilter && opt.parentElement.tagName === "OPTGROUP"
+                    && opt.parentElement.label !== typeFilter) return "";
+                return opt ? opt.text.trim() : "";
+            }
+            const international = val("international_location");
+            const city = chosen("city_code") || (international !== "—" ? international : "");
+            const province = chosen("area_select", "Provinces");
+            const region = chosen("region_code");
             const postal = val("postal_code");
             const country = val("country");
 

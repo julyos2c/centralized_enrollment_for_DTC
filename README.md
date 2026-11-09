@@ -215,6 +215,19 @@ Every default keeps the previous behaviour: the existing upload slots stay optio
 
 Deployment: back up, then run `php artisan migrate --force` (four additive migrations). Exam-day reminders go out daily at 08:00 through the existing scheduler (`admissions:send-exam-reminders`). Admission emails are sent synchronously after each change is saved; a delivery failure is logged and never undoes the change.
 
+## Philippine address picker (PSGC)
+
+The application form's address step uses cascading lists: Region → Province / Independent City → City / Municipality → Barangay. It also suggests postal codes. NCR has no provinces, so its cities are listed directly under the region. Independent and highly urbanized cities (for example Cebu City) are saved as the city with no province. Applicants can always choose "My barangay is not listed" and type it, and can edit any suggested postal code.
+
+How it works in production:
+
+- **No external calls at runtime.** The data is served by the app's own endpoints (`/apply/locations/...`, rate-limited to 300 requests per minute per IP) from local JSON files: the snapshot committed in `resources/data/psgc` (about 1.5 MB). The form receives host-independent relative URLs, so the same build works on XAMPP, behind HTTPS on the production domain, and through Cloudflare.
+- **Caching.** Responses carry `Cache-Control: public, max-age=604800`, an ETag, and `X-PSGC-Version`. URLs include `?v={data version}`, so a data update is picked up immediately. No Redis, queue, Node, or database tables are needed.
+- **Validation.** The server stores names derived from the submitted PSGC codes (never browser-supplied labels) and the official barangay spelling when it matches the list.
+- **Refreshing data (optional).** `php artisan psgc:sync` downloads the public source (`PSGC_SOURCE_URL`, no credentials), validates it, and atomically installs it in `storage/app/psgc`. The app then prefers that copy. A failed download, an incomplete source, or a damaged copy leaves the current data or the bundled snapshot in use. Run `php artisan psgc:sync --dry-run` to check the source without writing. See `resources/data/psgc/README.md`.
+
+Deployment: no migration or new environment variable is required. After pulling, run `php artisan route:cache` and `php artisan config:cache` as usual; both are supported. `storage/app` must stay writable by the cPanel account only if you use `psgc:sync`; the bundled snapshot is read-only.
+
 ## Security settings and changed-email verification
 
 Apply migrations before serving the updated application (`php artisan migrate --force` in a backed-up production deployment). The additive `email_verification_required` column preserves existing account activation workflows. Changing an existing user's email clears verification and requires a signed link sent to the new address before normal account access resumes. Profile corrections, verification, required password changes, and logout remain available. Verification links require the recipient's authenticated session; sign in to the matching account before opening the link.

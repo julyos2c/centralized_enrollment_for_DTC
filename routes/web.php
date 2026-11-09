@@ -98,9 +98,13 @@ use App\Http\Controllers\Registrar\EntranceExamController;
     // ── PUBLIC APPLICATION / PRE-ENROLLMENT ─────────────────────────────────────
     Route::prefix('apply')->name('public.application.')->group(function () {
         Route::get('/', [ApplicationController::class, 'create'])->name('create');
-        Route::get('/locations/regions', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'regions'])->name('locations.regions');
-        Route::get('/locations/regions/{region}/areas', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'areas'])->whereNumber('region')->name('locations.areas');
-        Route::get('/locations/provinces/{province}/cities', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'cities'])->whereNumber('province')->name('locations.cities');
+        // Read-only PSGC lookups served from local files; generous limit for shared campus IPs.
+        Route::middleware('throttle:300,1')->group(function () {
+            Route::get('/locations/regions', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'regions'])->name('locations.regions');
+            Route::get('/locations/regions/{region}/areas', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'areas'])->whereNumber('region')->name('locations.areas');
+            Route::get('/locations/provinces/{province}/cities', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'cities'])->whereNumber('province')->name('locations.cities');
+            Route::get('/locations/cities/{city}', [\App\Http\Controllers\Public\ApplicationLocationController::class, 'cityDetails'])->whereNumber('city')->name('locations.city');
+        });
         Route::post('/', [ApplicationController::class, 'store'])->middleware('throttle:application-submission')->name('store');
         Route::get('/success', [ApplicationController::class, 'success'])->name('success');
         Route::post('/cancel', [\App\Http\Controllers\Public\ApplicationCancellationController::class, 'request'])->middleware('throttle:5,1')->name('cancel');
