@@ -69,7 +69,36 @@ class Application extends Model
         'home_institution',
         'home_program',
         'acknowledged_at',
+        'school_id',
+        'school_deped_id',
+        'school_sector',
+        'school_region_code',
+        'school_province_code',
+        'school_city_code',
+        'school_barangay',
+        'school_street',
+        'school_year_started',
+        'education_status_other',
+        'shs_curriculum_id',
+        'shs_classification_id',
+        'shs_strand_choice',
     ];
+
+    /** Previous school chosen from the school reference list, if any. */
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    public function shsCurriculum()
+    {
+        return $this->belongsTo(ShsCurriculum::class);
+    }
+
+    public function shsClassification()
+    {
+        return $this->belongsTo(ShsClassification::class);
+    }
 
     // Normalize names on both reads and writes. Existing rows are not rewritten;
     // their displayed values are normalized through these accessors.

@@ -987,8 +987,9 @@ document.addEventListener("DOMContentLoaded", function () {
             returnee: "Returnee / Readmitted",
             cross_enrollee: "Cross-Enrollee",
         };
-        const rawType = val("academic_status");
-        const typeLabel = typeLabels[rawType] || rawType;
+        // val() returns a select's option text; type-specific rows need the value.
+        const rawType = applicantType.value;
+        const typeLabel = typeLabels[rawType] || val("academic_status");
 
         /* Assemble display full name */
         function fullName() {
@@ -1006,26 +1007,34 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const profile = educationProfiles[rawType];
+        // Structured answers (education-background.js) resolve "Other" choices.
+        const edu = window.DtcEducation && window.DtcEducation.summary ? window.DtcEducation.summary() : null;
+        const orDash = function (v) { return v ? v : "—"; };
         const educationRows = [
             ["Education level", val("education_level")],
-            ["Completion status", val("education_status")],
+            ["Completion status", edu ? orDash(edu.status) : val("education_status")],
             [
                 profile ? profile.school : "Most recent school",
                 val("most_recent_school"),
             ],
+            ["School year started", edu ? orDash(edu.yearStarted) : "—"],
             [
                 profile
                     ? profile.year
                     : "School year completed or last attended",
-                val("school_year_completed"),
+                edu ? orDash(edu.yearCompleted) : val("school_year_completed"),
             ],
-            ["School location", val("school_location")],
+            ["School location", rawType === "new_student" && edu ? orDash(edu.schoolLocation) : val("school_location")],
         ];
-        if (rawType === "new_student")
+        if (rawType === "new_student") {
+            if (edu && edu.schoolId) educationRows.push(["DepEd School ID", edu.schoolId]);
+            educationRows.push(["Type of school", edu ? orDash(edu.schoolType) : "—"]);
+            educationRows.push(["SHS curriculum", edu ? orDash(edu.curriculum) : "—"]);
             educationRows.push([
                 "Senior High School strand",
-                val("shs_strand"),
+                edu && edu.strand ? edu.strand : val("shs_strand"),
             ]);
+        }
         if (["transferee", "shiftee", "returnee"].indexOf(rawType) !== -1) {
             educationRows.push([profile.program, val("previous_program")]);
             educationRows.push([profile.level, val("last_year_level")]);

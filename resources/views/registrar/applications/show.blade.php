@@ -130,12 +130,23 @@
                     </div>
                     <div class="col-md-6 mb-2">
                         <div class="text-muted small">Completion status</div>
-                        <div>{{ $application->education_status ?: '—' }}</div>
+                        <div>{{ \App\Services\EducationBackground::STATUSES[$application->education_status] ?? ($application->education_status ?: '—') }}@if($application->education_status_other) — {{ $application->education_status_other }}@endif</div>
                     </div>
                     <div class="col-md-6 mb-2">
                         <div class="text-muted small">Most recent school attended</div>
                         <div>{{ $application->most_recent_school ?: '—' }}</div>
+                        @if($application->school_deped_id || $application->school_sector)
+                            <div class="small text-muted">
+                                {{ collect([$application->school_deped_id ? 'DepEd School ID ' . $application->school_deped_id : null, \App\Models\School::SECTORS[$application->school_sector] ?? null, $application->academic_status === 'new_student' && !$application->school_id && $application->most_recent_school ? 'typed by applicant (not on the school list)' : null])->filter()->implode(' · ') }}
+                            </div>
+                        @endif
                     </div>
+                    @if($application->school_year_started)
+                    <div class="col-md-6 mb-2">
+                        <div class="text-muted small">School year started</div>
+                        <div>{{ $application->school_year_started }}</div>
+                    </div>
+                    @endif
                     <div class="col-md-6 mb-2">
                         <div class="text-muted small">School year completed or last attended</div>
                         <div>{{ $application->school_year_completed ?: '—' }}</div>
@@ -147,7 +158,8 @@
                     @if($application->academic_status === 'new_student')
                     <div class="col-md-6 mb-2">
                         <div class="text-muted small">Senior High School strand</div>
-                        <div>{{ $application->shs_strand ?: '—' }}</div>
+                        <div>{{ $application->shs_strand ?: '—' }}@if($application->shs_strand_choice === 'other') <span class="small text-muted">(typed by applicant)</span>@endif</div>
+                        @if($application->shsCurriculum)<div class="small text-muted">{{ $application->shsCurriculum->name }}</div>@endif
                     </div>
                     @endif
                     @if(in_array($application->academic_status, ['transferee', 'shiftee', 'returnee'], true))

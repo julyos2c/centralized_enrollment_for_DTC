@@ -11,12 +11,14 @@ class ApplicationTextNormalizer
         'barangay', 'international_location', 'country', 'father_occupation', 'mother_occupation',
         'parent_address', 'occupation', 'disability', 'most_recent_school', 'school_location',
         'previous_program', 'home_institution', 'home_program', 'last_year_level',
+        'school_barangay', 'school_street',
     ];
 
     /** Free text whose capitalization has a defined meaning or is an acronym/code. */
     private const WHITESPACE_ONLY_FIELDS = [
         'email', 'phone', 'parent_contact', 'guardian_contact', 'lrn', 'pwd_id', 'postal_code',
-        'school_year_completed', 'shs_strand',
+        'school_year_completed', 'shs_strand', 'school_year_started', 'school_year_completed_other',
+        'school_year_started_other', 'education_status_other',
     ];
 
     public static function normalizeFields(array $values): array

@@ -73,6 +73,8 @@ class ViewServiceProvider extends ServiceProvider
                         ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
                         ['text' => 'Entrance Exams',       'url' => route('registrar.exams.index'),         'icon' => 'clipboard-list', 'active' => ['regex:#^registrar/exams(?:/|$)#']],
                         ['text' => 'Admission Requirements','url' => route('registrar.admissions.requirements.index'), 'icon' => 'list-checks'],
+                        ['text' => 'School List',          'url' => route('registrar.admissions.schools.index'), 'icon' => 'school', 'active' => ['regex:#^registrar/admissions/schools(?:/|$)#']],
+                        ['text' => 'SHS Tracks & Strands', 'url' => route('registrar.admissions.shs.index'), 'icon' => 'layers'],
 
                         ['header' => 'REGISTRAR'],
                         ['text' => 'Registrar Dashboard',  'url' => route('registrar.dashboard'),          'icon' => 'gauge'],
@@ -106,6 +108,8 @@ class ViewServiceProvider extends ServiceProvider
                     ['text' => 'Applications',         'url' => route('registrar.applications.index'), 'icon' => 'user-plus'],
                     ['text' => 'Entrance Exams',       'url' => route('registrar.exams.index'),         'icon' => 'clipboard-list', 'active' => ['regex:#^registrar/exams(?:/|$)#']],
                     ['text' => 'Admission Requirements','url' => route('registrar.admissions.requirements.index'), 'icon' => 'list-checks'],
+                        ['text' => 'School List',          'url' => route('registrar.admissions.schools.index'), 'icon' => 'school', 'active' => ['regex:#^registrar/admissions/schools(?:/|$)#']],
+                        ['text' => 'SHS Tracks & Strands', 'url' => route('registrar.admissions.shs.index'), 'icon' => 'layers'],
                     ['header' => 'RECORDS & SERVICES'],
                     ['text' => 'Review Enrollments',   'url' => route('registrar.enrollments.index'),  'icon' => 'file-text'],
                     ['text' => 'Students & Alumni',    'url' => route('registrar.students.index'),     'icon' => 'users'],

@@ -71,31 +71,34 @@ class ApplicationController extends Controller
             'physicalRequirements' => self::PHYSICAL_REQUIREMENTS,
             'titleCaseFields' => ApplicationTextNormalizer::titleCaseFields(),
             'submissionToken' => $submissionToken,
-            'addressLookup' => $this->addressLookupConfig(),
+            'addressLookup' => \App\Support\AddressLookup::config(),
+            'educationLookup' => [
+                'schools' => request()->getBaseUrl() . route('public.application.schools', [], false),
+                'classifications' => request()->getBaseUrl() . route('public.application.shs-classifications', [], false),
+            ],
+            'educationOld' => $this->educationOldInput(),
+            'academicYears' => \App\Support\AcademicYears::options(),
+            'educationStatuses' => \App\Services\EducationBackground::STATUSES,
+            'schoolSectors' => \App\Models\School::SECTORS,
         ]);
     }
 
-    /**
-     * Relative (host-less) API paths for the address picker, so the same
-     * markup works on localhost, behind the production HTTPS domain, and
-     * through Cloudflare. ":code" is replaced by the browser.
-     */
-    private function addressLookupConfig(): array
+    /** Previous answers to restore after a validation error (structured fields only). */
+    private function educationOldInput(): array
     {
-        $placeholder = '0000000000';
-        // route(..., false) drops any sub-folder base path; add it back so the
-        // paths also work when the app is not served from the domain root.
-        $base = request()->getBaseUrl();
-        $path = fn (string $name, array $params = []) => $base . str_replace($placeholder, ':code', route($name, $params, false));
+        $school = old('school_id') ? \App\Models\School::active()->find(old('school_id')) : null;
 
         return [
-            'version' => app(\App\Services\PsgcLocationCatalog::class)->version(),
-            'regions' => $path('public.application.locations.regions'),
-            'areas' => $path('public.application.locations.areas', ['region' => $placeholder]),
-            'cities' => $path('public.application.locations.cities', ['province' => $placeholder]),
-            'city' => $path('public.application.locations.city', ['city' => $placeholder]),
+            'school' => $school?->toLookupArray(),
+            'school_region_code' => old('school_region_code'),
+            'school_province_code' => old('school_province_code'),
+            'school_city_code' => old('school_city_code'),
+            'school_barangay' => old('school_barangay'),
+            'shs_curriculum_id' => old('shs_curriculum_id'),
+            'shs_strand_selection' => old('shs_strand_selection'),
         ];
     }
+
 
     /**
      * Submit a public application.
@@ -371,13 +374,20 @@ class ApplicationController extends Controller
                 : ['exclude'];
         }
 
-        $validated = $request->validate($rules, [
+        $education = app(\App\Services\EducationBackground::class);
+        $rules = array_merge($rules, $education->rules($request));
+
+        $validated = $request->validate($rules, $education->messages() + [
             'education_level.in' => 'Choose an education level that matches your applicant type.',
             'birthdate.before_or_equal' => 'Enter a date of birth that is today or earlier.',
             'region_code.in' => 'Select a valid region from the list.',
             'province_code.in' => 'Select a province that belongs to the chosen region.',
             'city_code.in' => 'Select a city or municipality that belongs to the chosen area.',
         ]);
+
+        // Structured education choices (school lookup, strand, years); also fills
+        // the original text columns so existing views and reports stay correct.
+        $educationColumns = $education->resolve($validated, $validated['academic_status']);
 
         // Never treat browser-submitted geographic labels as authoritative.
         if (strcasecmp(trim($validated['country'] ?? 'Philippines'), 'Philippines') === 0) {
@@ -455,10 +465,11 @@ class ApplicationController extends Controller
                 $validated,
                 $request,
                 $referenceNo,
-                $allowedRequirements
+                $allowedRequirements,
+                $educationColumns
             ) {
                 $confirmationToken = bin2hex(random_bytes(32));
-                $application = Application::create([
+                $application = Application::create(array_merge([
                     'reference_no' => $referenceNo,
                     'submission_token_hash' => hash('sha256', $validated['submission_token']),
                     'confirmation_token_hash' => hash('sha256', $confirmationToken),
@@ -532,7 +543,7 @@ class ApplicationController extends Controller
                     'acknowledged_at' => now(),
 
                     'status' => 'submitted',
-                ]);
+                ], $educationColumns));
 
                 /*
                  * Store only documents that were uploaded and apply to the

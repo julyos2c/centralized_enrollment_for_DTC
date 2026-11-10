@@ -378,23 +378,23 @@
                     </div>
                     <div class="wiz-field c4" data-ph-only>
                         <label for="region_code">Region</label>
-                        <select name="region_code" id="region_code" class="wiz-input @error('region_code') wiz-invalid @enderror" disabled>
+                        <select name="region_code" id="region_code" data-address="region" class="wiz-input @error('region_code') wiz-invalid @enderror" disabled>
                             <option value="">Loading regions…</option>
                         </select>
                         @error('region_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                     <div class="wiz-field c4" data-ph-only>
                         <label for="area_select">Province / Independent City</label>
-                        <select id="area_select" class="wiz-input @error('province_code') wiz-invalid @enderror" disabled aria-describedby="areaHint">
+                        <select id="area_select" data-address="area" class="wiz-input @error('province_code') wiz-invalid @enderror" disabled aria-describedby="areaHint">
                             <option value="">Select a region first</option>
                         </select>
-                        <input type="hidden" name="province_code" id="province_code" value="{{ old('province_code') }}">
-                        <span class="wiz-hint" id="areaHint" hidden></span>
+                        <input type="hidden" data-address="province" name="province_code" id="province_code" value="{{ old('province_code') }}">
+                        <span class="wiz-hint" id="areaHint" data-address="area-hint" hidden></span>
                         @error('province_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                     <div class="wiz-field c4" data-ph-only>
                         <label for="city_code">City / Municipality</label>
-                        <select name="city_code" id="city_code" class="wiz-input @error('city_code') wiz-invalid @enderror" disabled autocomplete="address-level2">
+                        <select name="city_code" id="city_code" data-address="city" class="wiz-input @error('city_code') wiz-invalid @enderror" disabled autocomplete="address-level2">
                             <option value="">Select a province first</option>
                         </select>
                         @error('city_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
@@ -404,28 +404,28 @@
                         <input type="text" name="international_location" id="international_location" placeholder="e.g. City, State or Province" class="wiz-input" value="{{ old('international_location') }}" maxlength="255">
                         @error('international_location')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c5" data-ph-only id="barangaySelectField" hidden>
+                    <div class="wiz-field c5" data-ph-only data-address="barangay-select-field" id="barangaySelectField" hidden>
                         <label for="barangay_select">Barangay</label>
-                        <select id="barangay_select" class="wiz-input" disabled>
+                        <select id="barangay_select" data-address="barangay-select" class="wiz-input" disabled>
                             <option value="">Select a city first</option>
                         </select>
                     </div>
                     {{-- Submitted value. Shown for "not listed" barangays and whenever the list is unavailable. --}}
-                    <div class="wiz-field c5" id="barangayManualField">
+                    <div class="wiz-field c5" data-address="barangay-manual-field" id="barangayManualField">
                         <label for="barangay_text">Barangay</label>
-                        <input type="text" name="barangay" id="barangay_text" placeholder="e.g. Remedios" class="wiz-input" value="{{ old('barangay') }}" maxlength="255" autocomplete="address-level3">
+                        <input type="text" data-address="barangay" name="barangay" id="barangay_text" placeholder="e.g. Remedios" class="wiz-input" value="{{ old('barangay') }}" maxlength="255" autocomplete="address-level3">
                     </div>
                     <div class="wiz-field c3 m-half">
                         <label for="postal_code">Postal Code</label>
-                        <input type="text" name="postal_code" id="postal_code" placeholder="e.g. 6344"
+                        <input type="text" data-address="postal" name="postal_code" id="postal_code" placeholder="e.g. 6344"
                             class="wiz-input" value="{{ old('postal_code') }}" list="postalCodeOptions"
                             autocomplete="postal-code" inputmode="numeric" maxlength="4" aria-describedby="postalCodeHint">
-                        <datalist id="postalCodeOptions"></datalist>
-                        <span class="wiz-hint" id="postalCodeHint" aria-live="polite" hidden></span>
+                        <datalist id="postalCodeOptions" data-address="postal-options"></datalist>
+                        <span class="wiz-hint" id="postalCodeHint" data-address="postal-hint" aria-live="polite" hidden></span>
                     </div>
-                    <div class="c12 wiz-address-status" id="addressLookupStatus" role="status" aria-live="polite" hidden>
-                        <span id="addressLookupMessage"></span>
-                        <button type="button" class="wiz-address-retry" id="addressLookupRetry" hidden>Try again</button>
+                    <div class="c12 wiz-address-status" id="addressLookupStatus" data-address="status" role="status" aria-live="polite" hidden>
+                        <span id="addressLookupMessage" data-address="status-message"></span>
+                        <button type="button" class="wiz-address-retry" id="addressLookupRetry" data-address="retry" hidden>Try again</button>
                     </div>
                 </div>
 
@@ -445,8 +445,19 @@
                 </div>
             </div>
             <div class="wiz-panel-body">
-                <div class="wiz-grid">
-                    <div class="wiz-field c7">
+                @php
+                    $yearValue = fn (string $field) => old($field);
+                    $isListedYear = fn (?string $value) => $value === null || $value === '' || in_array($value, $academicYears, true);
+                    $curricula = \App\Models\ShsCurriculum::active()->with(['classifications' => fn ($q) => $q->active()])->orderBy('sort_order')->get();
+                @endphp
+                {{-- Structured education details (education-background.js). SHS-only
+                     controls sit in new_student sections, which the wizard disables
+                     (so they are not submitted) for other applicant types. --}}
+                <div class="wiz-grid" id="educationFields"
+                    data-lookup="{{ json_encode($educationLookup) }}"
+                    data-old="{{ json_encode($educationOld) }}"
+                    data-curricula="{{ json_encode($curricula->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'choice_label' => $c->choice_label, 'first' => $c->first_graduation_year, 'last' => $c->last_graduation_year, 'classifications' => $c->classifications->map(fn ($x) => ['id' => $x->id, 'track' => $x->track, 'name' => $x->name, 'offering' => $x->offering_key, 'label' => $x->label()])->values()])->values()) }}">
+                    <div class="wiz-field c4">
                         <label for="education_level">Highest or current education level</label>
                         <select name="education_level" id="education_level" class="wiz-input @error('education_level') wiz-invalid @enderror" aria-describedby="educationLevelHint">
                             <option value="">Select education level</option>
@@ -457,35 +468,168 @@
                         <span class="wiz-hint" id="educationLevelHint" aria-live="polite">Education levels depend on your applicant type.</span>
                         @error('education_level')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c5">
+                    <div class="wiz-field c4">
                         <label for="education_status">Completion status</label>
-                        <select name="education_status" id="education_status" class="wiz-input">
+                        <select name="education_status" id="education_status" class="wiz-input @error('education_status') wiz-invalid @enderror">
                             <option value="">Select status</option>
-                            <option value="Graduated" {{ old('education_status') === 'Graduated' ? 'selected' : '' }}>Graduated</option>
-                            <option value="Currently attending" {{ old('education_status') === 'Currently attending' ? 'selected' : '' }}>Currently attending</option>
-                            <option value="Not completed" {{ old('education_status') === 'Not completed' ? 'selected' : '' }}>Not completed</option>
+                            @foreach($educationStatuses as $value => $label)
+                                <option value="{{ $value }}" {{ old('education_status') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
                         </select>
+                        @error('education_status')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
-                    <div class="wiz-field c7">
-                        <label for="most_recent_school">Most recent school attended</label>
-                        <input type="text" name="most_recent_school" id="most_recent_school" class="wiz-input" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization">
-                    </div>
-                    <div class="wiz-field c5">
-                        <label for="school_year_completed">School year completed or last attended</label>
-                        <input type="text" name="school_year_completed" id="school_year_completed" class="wiz-input" value="{{ old('school_year_completed') }}" maxlength="30" placeholder="e.g. 2024–2025" inputmode="text">
-                    </div>
-                    <div class="wiz-field c7">
-                        <label for="school_location">School location</label>
-                        <input type="text" name="school_location" id="school_location" class="wiz-input" value="{{ old('school_location') }}" maxlength="255" placeholder="City or municipality, province">
+                    <div class="wiz-field c4" id="educationStatusOtherField" @if(old('education_status') !== 'Other') hidden @endif>
+                        <label for="education_status_other">Describe your status</label>
+                        <input type="text" name="education_status_other" id="education_status_other" class="wiz-input @error('education_status_other') wiz-invalid @enderror" value="{{ old('education_status_other') }}" maxlength="255" placeholder="e.g. Alternative Learning System">
+                        @error('education_status_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
 
-                    {{-- Shown for the matching applicant types by application-wizard.js. --}}
-                    <div class="education-section c5 d-none" data-education-for="new_student">
-                        <div class="wiz-field">
-                            <label for="shs_strand">Senior High School strand</label>
-                            <input type="text" name="shs_strand" id="shs_strand" class="wiz-input" value="{{ old('shs_strand') }}" maxlength="100" placeholder="e.g. HUMSS, STEM, TVL">
+                    <div class="wiz-field c8" id="schoolNameField">
+                        <label for="most_recent_school">Most recent school attended</label>
+                        <input type="text" name="most_recent_school" id="most_recent_school" class="wiz-input @error('school_id') wiz-invalid @enderror" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization" aria-describedby="schoolSearchHint">
+                        <span class="wiz-hint" id="schoolSearchHint" hidden>Type at least 2 letters of the school name, or its 6-digit DepEd School ID.</span>
+                        @error('school_id')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="education-section c4 d-none" data-education-for="new_student" id="schoolSectorSection">
+                        <input type="hidden" name="school_id" id="school_id" value="{{ old('school_id') }}">
+                        <div class="wiz-field" id="schoolSectorField">
+                            <label for="school_sector">Public or private</label>
+                            <select name="school_sector" id="school_sector" class="wiz-input">
+                                <option value="">Select type of school</option>
+                                @foreach($schoolSectors as $value => $label)
+                                    <option value="{{ $value }}" {{ old('school_sector') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
+                    <div class="education-section c12 d-none" data-education-for="new_student">
+                        <div class="wiz-school-card" id="schoolSelectedCard" hidden aria-live="polite">
+                            <i data-lucide="school" aria-hidden="true"></i>
+                            <div>
+                                <strong data-school="name"></strong>
+                                <span data-school="meta"></span>
+                            </div>
+                            <button type="button" class="wiz-school-change" id="schoolChangeButton">Change</button>
+                        </div>
+                    </div>
+
+                    {{-- School location: lists for SHS (auto-filled from a listed school), text for others. --}}
+                    <div class="education-section c12 d-none" data-education-for="transferee,shiftee,returnee,cross_enrollee">
+                        <div class="wiz-field">
+                            <label for="school_location">School location</label>
+                            <input type="text" name="school_location" id="school_location" class="wiz-input" value="{{ old('school_location') }}" maxlength="255" placeholder="City or municipality, province">
+                        </div>
+                    </div>
+                    <div class="education-section c12 d-none" data-education-for="new_student">
+                        <p class="wiz-group-label"><i data-lucide="map-pin" aria-hidden="true"></i> School location <span class="wiz-group-note">Filled in when you choose a listed school — complete or correct it if needed.</span></p>
+                        <div class="wiz-grid" id="schoolLocationFields">
+                            <div class="wiz-field c4">
+                                <label for="school_region_code">Region</label>
+                                <select name="school_region_code" id="school_region_code" data-address="region" class="wiz-input @error('school_region_code') wiz-invalid @enderror" disabled>
+                                    <option value="">Loading regions…</option>
+                                </select>
+                                @error('school_region_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field c4">
+                                <label for="school_area_select">Province / Independent City</label>
+                                <select id="school_area_select" data-address="area" class="wiz-input @error('school_province_code') wiz-invalid @enderror" disabled aria-describedby="schoolAreaHint">
+                                    <option value="">Select a region first</option>
+                                </select>
+                                <input type="hidden" data-address="province" name="school_province_code" id="school_province_code" value="{{ old('school_province_code') }}">
+                                <span class="wiz-hint" id="schoolAreaHint" data-address="area-hint" hidden></span>
+                                @error('school_province_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field c4">
+                                <label for="school_city_code">City / Municipality</label>
+                                <select name="school_city_code" id="school_city_code" data-address="city" class="wiz-input @error('school_city_code') wiz-invalid @enderror" disabled>
+                                    <option value="">Select a province first</option>
+                                </select>
+                                @error('school_city_code')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field c5" data-address="barangay-select-field" hidden>
+                                <label for="school_barangay_select">Barangay</label>
+                                <select id="school_barangay_select" data-address="barangay-select" class="wiz-input" disabled>
+                                    <option value="">Select a city first</option>
+                                </select>
+                            </div>
+                            <div class="wiz-field c5" data-address="barangay-manual-field">
+                                <label for="school_barangay">Barangay</label>
+                                <input type="text" data-address="barangay" name="school_barangay" id="school_barangay" class="wiz-input" value="{{ old('school_barangay') }}" maxlength="255" placeholder="e.g. Poblacion">
+                            </div>
+                            <div class="wiz-field c7">
+                                <label for="school_street">Street / address (optional)</label>
+                                <input type="text" name="school_street" id="school_street" class="wiz-input" value="{{ old('school_street') }}" maxlength="255" placeholder="e.g. Rizal St.">
+                            </div>
+                            <div class="c12 wiz-address-status" data-address="status" role="status" aria-live="polite" hidden>
+                                <span data-address="status-message"></span>
+                                <button type="button" class="wiz-address-retry" data-address="retry" hidden>Try again</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- School years: searchable lists with "Other" for unusual records. --}}
+                    <div class="wiz-field c3">
+                        <label for="school_year_started">School year started</label>
+                        <select name="school_year_started" id="school_year_started" class="wiz-input @error('school_year_started') wiz-invalid @enderror" data-searchable>
+                            <option value="">Select school year</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year }}" {{ $yearValue('school_year_started') === $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
+                            <option value="__other" data-extra="1" {{ !$isListedYear($yearValue('school_year_started')) || old('school_year_started') === '__other' ? 'selected' : '' }}>Other (type it)</option>
+                        </select>
+                        @error('school_year_started')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="wiz-field c3" id="schoolYearStartedOtherField" @if($isListedYear($yearValue('school_year_started')) && old('school_year_started') !== '__other') hidden @endif>
+                        <label for="school_year_started_other">Type the year started</label>
+                        <input type="text" name="school_year_started_other" id="school_year_started_other" class="wiz-input @error('school_year_started_other') wiz-invalid @enderror" value="{{ old('school_year_started_other', $isListedYear($yearValue('school_year_started')) ? '' : $yearValue('school_year_started')) }}" maxlength="30" placeholder="e.g. 1998-1999">
+                        @error('school_year_started_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="wiz-field c3">
+                        <label for="school_year_completed">School year completed or last attended</label>
+                        <select name="school_year_completed" id="school_year_completed" class="wiz-input @error('school_year_completed') wiz-invalid @enderror" data-searchable>
+                            <option value="">Select school year</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year }}" {{ $yearValue('school_year_completed') === $year ? 'selected' : '' }}>{{ $year }}</option>
+                            @endforeach
+                            <option value="__other" data-extra="1" {{ !$isListedYear($yearValue('school_year_completed')) || old('school_year_completed') === '__other' ? 'selected' : '' }}>Other (type it)</option>
+                        </select>
+                        @error('school_year_completed')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="wiz-field c3" id="schoolYearCompletedOtherField" @if($isListedYear($yearValue('school_year_completed')) && old('school_year_completed') !== '__other') hidden @endif>
+                        <label for="school_year_completed_other">Type the year</label>
+                        <input type="text" name="school_year_completed_other" id="school_year_completed_other" class="wiz-input @error('school_year_completed_other') wiz-invalid @enderror" value="{{ old('school_year_completed_other', $isListedYear($yearValue('school_year_completed')) ? '' : $yearValue('school_year_completed')) }}" maxlength="30" placeholder="e.g. 1998-1999">
+                        @error('school_year_completed_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                    </div>
+
+                    {{-- SHS curriculum and strand / elective cluster (configurable by staff). --}}
+                    <div class="education-section c12 d-none" data-education-for="new_student">
+                        <div class="wiz-grid">
+                            <div class="wiz-field c4">
+                                <label for="shs_curriculum_id">SHS curriculum</label>
+                                <select name="shs_curriculum_id" id="shs_curriculum_id" class="wiz-input @error('shs_curriculum_id') wiz-invalid @enderror" aria-describedby="shsCurriculumHint">
+                                    <option value="">Select curriculum</option>
+                                    @foreach($curricula as $curriculum)
+                                        <option value="{{ $curriculum->id }}" {{ (string) old('shs_curriculum_id') === (string) $curriculum->id ? 'selected' : '' }}>{{ $curriculum->name }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="wiz-hint" id="shsCurriculumHint" aria-live="polite">Chosen from your school year; change it if your school used another curriculum.</span>
+                                @error('shs_curriculum_id')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field c8">
+                                <label for="shs_strand_selection">Track and strand</label>
+                                <select name="shs_strand_selection" id="shs_strand_selection" class="wiz-input @error('shs_strand_selection') wiz-invalid @enderror" data-searchable>
+                                    <option value="">Select a curriculum first</option>
+                                </select>
+                                @error('shs_strand_selection')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                            <div class="wiz-field c8" id="shsStrandOtherField" @if(old('shs_strand_selection') !== 'other') hidden @endif>
+                                <label for="shs_strand">Specify your strand or specialization</label>
+                                <input type="text" name="shs_strand" id="shs_strand" class="wiz-input @error('shs_strand') wiz-invalid @enderror" value="{{ old('shs_strand') }}" maxlength="100" placeholder="e.g. TVL – Cookery, Maritime">
+                                @error('shs_strand')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="education-section c5 d-none" data-education-for="transferee,shiftee,returnee">
                         <div class="wiz-field">
                             <label for="previous_program">Previous or current program</label>
@@ -836,7 +980,9 @@
 <script>window.dtcApplicationEducationLevels = @json(\App\Support\ApplicationEducation::LEVELS);</script>
 <script src="{{ asset_v('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset_v('js/application-wizard.js') }}" defer></script>
+<script src="{{ asset_v('js/dtc-combobox.js') }}" defer></script>
 <script src="{{ asset_v('js/address-cascade.js') }}" defer></script>
+<script src="{{ asset_v('js/education-background.js') }}" defer></script>
 @php
     $firstErrorKey = $errors->keys()[0] ?? '';
     $errorStep = match (true) {
