@@ -50,11 +50,11 @@ class EducationBackgroundTest extends TestCase
         $school = $this->school();
         School::create(['name' => 'Hidden Academy', 'deped_school_id' => '499998', 'is_active' => false]);
 
-        $this->getJson(route('public.application.schools', ['q' => 'saint aug']))
-            ->assertOk()->assertJsonPath('results.0.name', 'Saint Augustine Academy, Inc.')
-            ->assertJsonPath('results.0.deped_school_id', '404297')
-            ->assertJsonPath('results.0.city_code', '0702201000');
-        $this->getJson(route('public.application.schools', ['q' => '404297']))->assertJsonPath('results.0.id', $school->id);
+        $this->getJson(route('public.application.schools', ['q' => 'infant anda']))
+            ->assertOk()->assertJsonPath('results.0.name', 'Holy Infant Academy-Anda')
+            ->assertJsonPath('results.0.deped_school_id', '404233')
+            ->assertJsonPath('results.0.municipality', 'Anda');
+        $this->getJson(route('public.application.schools', ['q' => '404233']))->assertJsonPath('results.0.id', $school->id);
         $this->getJson(route('public.application.schools', ['q' => 'hidden']))->assertJsonCount(0, 'results');
         $this->getJson(route('public.application.schools', ['q' => 's']))->assertJsonCount(0, 'results');
         $this->getJson(route('public.application.schools', ['q' => '%']))->assertOk()->assertJsonCount(0, 'results');
@@ -73,8 +73,8 @@ class EducationBackgroundTest extends TestCase
             'most_recent_school' => 'whatever the browser sent',
             'school_sector' => 'public',
             'school_region_code' => '0700000000',
-            'school_province_code' => '0702200000',
-            'school_city_code' => '0702201000',
+            'school_province_code' => '0701200000',
+            'school_city_code' => '0701203000',
             'school_barangay' => 'poblacion',
             'school_year_started' => '2015-2016',
             'school_year_completed' => '2017-2018',
@@ -84,12 +84,12 @@ class EducationBackgroundTest extends TestCase
         ]);
 
         $this->assertSame($school->id, $application->school_id);
-        $this->assertSame('Saint Augustine Academy, Inc.', $application->most_recent_school);
-        $this->assertSame('404297', $application->school_deped_id);
+        $this->assertSame('Holy Infant Academy-Anda', $application->most_recent_school);
+        $this->assertSame('404233', $application->school_deped_id);
         $this->assertSame('private', $application->school_sector, 'The school record decides the sector.');
-        $this->assertSame('0702201000', $application->school_city_code);
+        $this->assertSame('0701203000', $application->school_city_code);
         $this->assertSame('Poblacion', $application->school_barangay);
-        $this->assertSame('Poblacion, Alcantara, Cebu', $application->school_location);
+        $this->assertSame('Poblacion, Anda, Bohol', $application->school_location);
         $this->assertSame('Science, Technology, Engineering and Mathematics (STEM) (Academic Track)', $application->shs_strand);
         $this->assertSame($stem->id, $application->shs_classification_id);
         $this->assertSame('selected', $application->shs_strand_choice);
@@ -97,7 +97,7 @@ class EducationBackgroundTest extends TestCase
 
         $this->actingAs($this->makeUserWithRole('registrar'))
             ->get(route('registrar.applications.show', $application))
-            ->assertOk()->assertSee('DepEd School ID 404297')->assertSee('2015-2016')->assertSee('K to 12 SHS Curriculum');
+            ->assertOk()->assertSee('DepEd School ID 404233')->assertSee('2015-2016')->assertSee('K to 12 SHS Curriculum');
     }
 
     public function test_unlisted_school_other_strand_other_year_and_other_status(): void
@@ -221,17 +221,20 @@ class EducationBackgroundTest extends TestCase
         $this->actingAs($registrar)->post(route('registrar.admissions.schools.store'), [
             'name' => 'Danao  National High School', 'deped_school_id' => '303030', 'sector' => 'public',
             'region_code' => '0700000000', 'province_code' => '0701200000', 'city_code' => '0701218000',
-            'offerings' => ['STEM', 'GAS'], 'is_active' => '1',
+            'offerings' => ['STEM', 'GAS'], 'is_active' => '1', 'verification_status' => 'unverified',
         ])->assertRedirect();
         $school = School::where('deped_school_id', '303030')->firstOrFail();
         $this->assertSame('Danao National High School', $school->name);
         $this->assertSame('Danao, Bohol', $school->locationLabel());
 
         $this->actingAs($registrar)->post(route('registrar.admissions.schools.store'), [
-            'name' => 'Wrong City', 'region_code' => '0700000000', 'province_code' => '0701200000', 'city_code' => '0730600000',
+            'name' => 'Wrong City', 'region_code' => '0700000000', 'province_code' => '0701200000', 'city_code' => '0730600000', 'verification_status' => 'unverified',
         ])->assertSessionHasErrors('city_code');
-        $this->actingAs($registrar)->post(route('registrar.admissions.schools.store'), ['name' => 'Duplicate', 'deped_school_id' => '303030'])
+        $this->actingAs($registrar)->post(route('registrar.admissions.schools.store'), ['name' => 'Duplicate', 'deped_school_id' => '303030', 'verification_status' => 'unverified'])
             ->assertSessionHasErrors('deped_school_id');
+        $this->actingAs($registrar)->post(route('registrar.admissions.schools.store'), [
+            'name' => 'danao national high school', 'region_code' => '0700000000', 'province_code' => '0701200000', 'city_code' => '0701218000', 'verification_status' => 'unverified',
+        ])->assertSessionHasErrors('name');
 
         $this->actingAs($registrar)->post(route('registrar.admissions.schools.toggle', $school));
         $this->assertFalse($school->fresh()->is_active);
@@ -254,12 +257,86 @@ class EducationBackgroundTest extends TestCase
         }
     }
 
+    public function test_only_bohol_schools_are_offered_and_accepted(): void
+    {
+        $bohol = $this->school();
+        $cebu = School::create(['name' => 'Saint Augustine Academy, Inc.', 'deped_school_id' => '404297', 'region_code' => '0700000000',
+            'province_code' => '0702200000', 'city_code' => '0702201000', 'source' => 'test']);
+
+        $all = $this->getJson(route('public.application.schools'))->assertOk()->json('results');
+        $this->assertSame([$bohol->id], array_column($all, 'id'));
+        $this->getJson(route('public.application.schools', ['q' => 'saint augustine']))->assertJsonCount(0, 'results');
+        $this->getJson(route('public.application.schools', ['city' => '0701203000']))->assertJsonPath('results.0.id', $bohol->id);
+        $this->getJson(route('public.application.schools', ['city' => '0701218000']))->assertJsonCount(0, 'results');
+        $this->getJson(route('public.application.schools', ['city' => 'x']))->assertStatus(422);
+
+        $this->assertRejected(['school_id' => $cebu->id], 'school_id');
+
+        // The form offers all 48 Bohol localities, with Tagbilaran written as people say it.
+        $html = $this->get(route('public.application.create'))->assertOk()->getContent();
+        preg_match('/data-scope="([^"]+)"/', $html, $match);
+        $scope = json_decode(html_entity_decode($match[1]), true);
+        $this->assertSame('0701200000', $scope['province_code']);
+        $this->assertCount(48, $scope['localities']);
+        $this->assertContains('Tagbilaran City', array_column($scope['localities'], 'name'));
+        $this->assertContains('President Carlos P. Garcia', array_column($scope['localities'], 'name'));
+        $this->assertContains('Bien Unido', array_column($scope['localities'], 'name'));
+
+        // Applicants who studied outside Bohol type the school and give its location.
+        $outside = $this->submit([
+            'most_recent_school' => 'cebu city national science high school', 'school_choice' => '__outside',
+            'school_region_code' => '0700000000', 'school_city_code' => '0730600000',
+        ]);
+        $this->assertNull($outside->school_id);
+        $this->assertSame('Cebu City National Science High School', $outside->most_recent_school);
+        $this->assertSame('City of Cebu', $outside->school_location);
+    }
+
+    public function test_bundled_bohol_list_imports_and_replace_hides_other_imports(): void
+    {
+        $old = School::create(['name' => 'Old Import Elsewhere', 'deped_school_id' => '499999', 'source' => 'deped-shs-list-2018', 'province_code' => '0702200000']);
+        $manual = School::create(['name' => 'Staff Added School', 'source' => 'manual', 'province_code' => '0701200000', 'city_code' => '0701218000']);
+        $history = $this->submit(['most_recent_school' => 'Old Import Elsewhere']);
+
+        $this->artisan('schools:import', ['--replace' => true])->assertSuccessful();
+
+        $this->assertSame(80, School::selectable()->count(), '79 bundled schools plus the staff-added one.');
+        $this->assertSame(0, School::selectable()->where('province_code', '!=', '0701200000')->count());
+        $this->assertSame(78, School::where('source', 'bohol-schools')->where('verification_status', 'verified')->count());
+        $this->assertSame('needs_review', School::where('deped_school_id', '404282')->value('verification_status'));
+        $this->assertDatabaseMissing('schools', ['deped_school_id' => '406292']);
+        $this->assertFalse($old->fresh()->is_active, 'Imported schools not in the file are hidden, not deleted.');
+        $this->assertTrue($manual->fresh()->is_active, 'Staff-added schools are kept.');
+        $this->assertSame('Old Import Elsewhere', $history->fresh()->most_recent_school);
+
+        // Running it again changes nothing and creates no duplicates.
+        $this->artisan('schools:import')->assertSuccessful();
+        $this->assertSame(81, School::count());
+    }
+
+    public function test_rows_without_a_school_id_are_not_duplicated(): void
+    {
+        $csv = storage_path('framework/testing-schools-noid.csv');
+        File::put($csv, implode("\n", [
+            'school_name,region,province,municipality,verification_status',
+            'Anda National High School,Region VII,Bohol,Anda,unverified',
+            'anda national high school,Region VII,Bohol,Anda,unverified',
+            'Anda National High School,Region VII,Bohol,Danao,unverified',
+        ]));
+        $this->artisan('schools:import', ['file' => $csv])->assertSuccessful();
+        $this->artisan('schools:import', ['file' => $csv])->assertSuccessful();
+        File::delete($csv);
+
+        $this->assertSame(2, School::whereRaw('LOWER(name) = ?', ['anda national high school'])->count(), 'Same name in two municipalities are two schools.');
+        $this->assertSame('unverified', School::where('city_code', '0701203000')->value('verification_status'));
+    }
+
     private function school(): School
     {
         return School::create([
-            'name' => 'Saint Augustine Academy, Inc.', 'deped_school_id' => '404297', 'sector' => 'private',
-            'region_code' => '0700000000', 'province_code' => '0702200000', 'city_code' => '0702201000',
-            'offerings' => ['ABM', 'GAS', 'TVL'], 'source' => 'test',
+            'name' => 'Holy Infant Academy-Anda', 'deped_school_id' => '404233', 'sector' => 'private',
+            'region_code' => '0700000000', 'province_code' => '0701200000', 'city_code' => '0701203000',
+            'offerings' => ['GAS'], 'source' => 'test', 'verification_status' => 'verified',
         ]);
     }
 

@@ -20,14 +20,21 @@ class SchoolController extends Controller
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::in(['active', 'inactive', 'no_location'])],
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'no_location', 'needs_review', 'unverified'])],
+            'city' => ['nullable', 'regex:/^\d{10}$/'],
+            'scope' => ['nullable', Rule::in(['province', 'all'])],
         ]);
+        $province = config('schools.province_code');
+        $inProvince = $province && ($filters['scope'] ?? 'province') === 'province';
 
         $schools = School::query()
             ->when($filters['search'] ?? null, fn ($q, $term) => $q->search($term))
             ->when(($filters['status'] ?? null) === 'active', fn ($q) => $q->where('is_active', true))
             ->when(($filters['status'] ?? null) === 'inactive', fn ($q) => $q->where('is_active', false))
             ->when(($filters['status'] ?? null) === 'no_location', fn ($q) => $q->whereNull('city_code'))
+            ->when(in_array($filters['status'] ?? null, ['needs_review', 'unverified'], true), fn ($q) => $q->where('verification_status', $filters['status']))
+            ->when($inProvince, fn ($q) => $q->where(fn ($w) => $w->where('province_code', $province)->orWhereNull('city_code')))
+            ->when($filters['city'] ?? null, fn ($q, $city) => $q->where('city_code', $city))
             ->when(!isset($filters['search']), fn ($q) => $q->orderBy('name'))
             ->withCount('applications')
             ->paginate(\App\Support\TablePagination::perPage(25))
@@ -37,9 +44,13 @@ class SchoolController extends Controller
             'schools' => $schools,
             'totals' => [
                 'all' => School::count(),
-                'active' => School::where('is_active', true)->count(),
+                'selectable' => School::selectable()->count(),
                 'no_location' => School::whereNull('city_code')->count(),
+                'review' => School::where('verification_status', '!=', 'verified')->count(),
             ],
+            'scopeName' => $province ? (app(\App\Services\PsgcLocationCatalog::class)->area($province, config('schools.region_code'))['name'] ?? null) : null,
+            'localities' => $province ? collect(app(\App\Services\PsgcLocationCatalog::class)->cities($province))
+                ->map(fn ($c) => ['code' => $c['code'], 'name' => School::displayLocality($c['name'])])->sortBy('name')->values() : collect(),
         ]);
     }
 
@@ -88,13 +99,29 @@ class SchoolController extends Controller
             'street_address' => ['nullable', 'string', 'max:255'],
             'offerings' => ['nullable', 'array'],
             'offerings.*' => [Rule::in(\App\Services\Schools\SchoolImporter::OFFERINGS)],
+            'verification_status' => ['required', Rule::in(array_keys(School::VERIFICATION))],
+            'verification_note' => ['nullable', 'string', 'max:500'],
         ], AddressLookup::rules($request->all(), 'region_code', 'province_code', 'city_code')), [
             'deped_school_id.regex' => 'A DepEd School ID has 6 digits.',
             'deped_school_id.unique' => 'Another school already uses this DepEd School ID.',
         ]);
 
+        $name = trim(preg_replace('/\s+/', ' ', $data['name']));
+        // One record per school: no second school with the same name in the same municipality.
+        $duplicate = School::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->where(fn ($q) => ($data['city_code'] ?? null) ? $q->where('city_code', $data['city_code']) : $q->whereNull('city_code'))
+            ->when($school, fn ($q) => $q->whereKeyNot($school->id))
+            ->first();
+        if ($duplicate) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'name' => "{$duplicate->name} is already on the list for this municipality (record #{$duplicate->id}). Edit that record instead.",
+            ]);
+        }
+
         return [
-            'name' => trim(preg_replace('/\s+/', ' ', $data['name'])),
+            'name' => $name,
+            'verification_status' => $data['verification_status'],
+            'verification_note' => $data['verification_note'] ?? null,
             'deped_school_id' => $data['deped_school_id'] ?? null,
             'sector' => $data['sector'] ?? null,
             'region_code' => $data['region_code'] ?? null,

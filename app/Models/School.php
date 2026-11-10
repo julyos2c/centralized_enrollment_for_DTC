@@ -27,7 +27,15 @@ class School extends Model
         'source_location',
         'offerings',
         'source',
+        'verification_status',
+        'verification_note',
         'is_active',
+    ];
+
+    public const VERIFICATION = [
+        'verified' => 'Verified (DepEd record)',
+        'needs_review' => 'Needs review',
+        'unverified' => 'Not yet verified',
     ];
 
     protected $casts = [
@@ -43,6 +51,28 @@ class School extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /** Schools applicants may pick: active, and in the configured province (Bohol) when one is set. */
+    public function scopeSelectable(Builder $query): Builder
+    {
+        $province = config('schools.province_code');
+
+        return $query->active()->when($province, fn ($q) => $q->where('province_code', $province));
+    }
+
+    /** Readable municipality / city name from PSGC (e.g. "Tagbilaran City"). */
+    public function municipalityName(): ?string
+    {
+        $city = $this->city_code ? app(PsgcLocationCatalog::class)->cityByCode($this->city_code) : null;
+
+        return $city ? self::displayLocality($city['name']) : null;
+    }
+
+    /** PSGC writes "City of Tagbilaran"; people say "Tagbilaran City". */
+    public static function displayLocality(string $name): string
+    {
+        return preg_match('/^City of (.+)$/', $name, $m) ? $m[1] . ' City' : $name;
     }
 
     /** Name or DepEd School ID search, best matches (prefix) first. */
@@ -101,6 +131,8 @@ class School extends Model
             'barangay' => $this->barangay,
             'street_address' => $this->street_address,
             'offerings' => $this->offerings ?? [],
+            'municipality' => $this->municipalityName(),
+            'verification_status' => $this->verification_status,
         ];
     }
 }

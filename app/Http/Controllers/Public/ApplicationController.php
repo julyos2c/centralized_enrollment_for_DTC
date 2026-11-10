@@ -77,10 +77,34 @@ class ApplicationController extends Controller
                 'classifications' => request()->getBaseUrl() . route('public.application.shs-classifications', [], false),
             ],
             'educationOld' => $this->educationOldInput(),
+            'schoolScope' => $this->schoolScope(),
             'academicYears' => \App\Support\AcademicYears::options(),
             'educationStatuses' => \App\Services\EducationBackground::STATUSES,
             'schoolSectors' => \App\Models\School::SECTORS,
         ]);
+    }
+
+    /**
+     * The province whose schools applicants pick from (Bohol by default) and
+     * its municipalities / cities from PSGC, for the school picker.
+     */
+    private function schoolScope(): ?array
+    {
+        $province = config('schools.province_code');
+        $region = config('schools.region_code');
+        if (!$province || !$region) {
+            return null;
+        }
+        $catalog = app(\App\Services\PsgcLocationCatalog::class);
+        $area = $catalog->area($province, $region);
+        if (!$area) {
+            return null;
+        }
+        $localities = collect($catalog->cities($province))
+            ->map(fn ($city) => ['code' => $city['code'], 'name' => \App\Models\School::displayLocality($city['name'])])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->values()->all();
+
+        return ['region_code' => $region, 'province_code' => $province, 'province_name' => $area['name'], 'localities' => $localities];
     }
 
     /** Previous answers to restore after a validation error (structured fields only). */
@@ -94,6 +118,8 @@ class ApplicationController extends Controller
             'school_province_code' => old('school_province_code'),
             'school_city_code' => old('school_city_code'),
             'school_barangay' => old('school_barangay'),
+            'most_recent_school' => old('most_recent_school'),
+            'school_choice' => old('school_choice'),
             'shs_curriculum_id' => old('shs_curriculum_id'),
             'shs_strand_selection' => old('shs_strand_selection'),
         ];

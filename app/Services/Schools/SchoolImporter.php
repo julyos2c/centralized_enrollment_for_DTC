@@ -26,7 +26,11 @@ class SchoolImporter
         'street_address' => ['street_address', 'street address', 'address'],
         'sector' => ['sector', 'classification'],
         'offerings' => ['program_offerings', 'program offerings', 'offerings'],
+        'verification_status' => ['verification_status', 'verification status', 'verification'],
+        'verification_note' => ['verification_note', 'verification note', 'notes', 'note'],
     ];
+
+    private const VERIFICATION = ['verified', 'needs_review', 'unverified'];
 
     public const OFFERINGS = ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL', 'Sports', 'Arts and Design'];
 
@@ -34,8 +38,12 @@ class SchoolImporter
     {
     }
 
-    /** @return array{added: int, updated: int, unchanged: int, skipped: int, unmatched_location: int, errors: array} */
-    public function import(string $path, string $source): array
+    /**
+     * @param bool $replace hide (never delete) imported schools that are not in this file,
+     *                      so the file becomes the list applicants choose from
+     * @return array{added: int, updated: int, unchanged: int, skipped: int, unmatched_location: int, hidden: int, errors: array}
+     */
+    public function import(string $path, string $source, bool $replace = false): array
     {
         $handle = @fopen($path, 'r');
         if (!$handle) {
@@ -52,10 +60,11 @@ class SchoolImporter
             throw new RuntimeException('The file needs a "school_name" (or "School Name") column.');
         }
 
-        $result = ['added' => 0, 'updated' => 0, 'unchanged' => 0, 'skipped' => 0, 'unmatched_location' => 0, 'errors' => []];
+        $result = ['added' => 0, 'updated' => 0, 'unchanged' => 0, 'skipped' => 0, 'unmatched_location' => 0, 'hidden' => 0, 'errors' => []];
         $line = 1;
+        $seen = [];
 
-        DB::transaction(function () use ($handle, $columns, $source, &$result, &$line) {
+        DB::transaction(function () use ($handle, $columns, $source, $replace, &$result, &$line, &$seen) {
             while (($row = fgetcsv($handle)) !== false) {
                 $line++;
                 if ($row === [null] || count(array_filter($row, fn ($v) => trim((string) $v) !== '')) === 0) {
@@ -80,6 +89,11 @@ class SchoolImporter
                 if (!$location['city_code']) {
                     $result['unmatched_location']++;
                 }
+                $verification = strtolower($value('verification_status'));
+                if (!in_array($verification, self::VERIFICATION, true)) {
+                    // Only rows carrying an official School ID and a matched location count as verified.
+                    $verification = $schoolId !== '' && $location['city_code'] ? 'verified' : 'unverified';
+                }
                 $data = array_filter([
                     'name' => $name,
                     'sector' => $this->sector($value('sector')),
@@ -90,13 +104,30 @@ class SchoolImporter
                     'street_address' => $value('street_address') ?: null,
                     'source_location' => implode(', ', array_filter([$value('municipality'), $value('province'), $value('region')])) ?: null,
                     'offerings' => $this->offerings($value('offerings')) ?: null,
+                    'verification_note' => $value('verification_note') ?: null,
                 ], fn ($v) => $v !== null);
 
-                $existing = $schoolId !== '' ? School::where('deped_school_id', $schoolId)->first() : null;
+                // Same school: same DepEd ID, or (without an ID) the same name in the same city.
+                $existing = $schoolId !== ''
+                    ? School::where('deped_school_id', $schoolId)->first()
+                    : School::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                        ->where(fn ($q) => $location['city_code'] ? $q->where('city_code', $location['city_code']) : $q->whereNull('city_code'))
+                        ->first();
+                if ($existing && isset($seen[$existing->id])) {
+                    $result['skipped']++;
+                    $result['errors'][] = "Line {$line}: duplicate of an earlier row ({$name}).";
+                    continue;
+                }
                 if (!$existing) {
-                    School::create($data + ['deped_school_id' => $schoolId ?: null, 'source' => $source, 'is_active' => true]);
+                    $existing = School::create($data + ['deped_school_id' => $schoolId ?: null, 'source' => $source, 'is_active' => true, 'verification_status' => $verification]);
+                    $seen[$existing->id] = true;
                     $result['added']++;
                     continue;
+                }
+                $seen[$existing->id] = true;
+                // A better verification status from the file is taken over.
+                if (array_search($verification, self::VERIFICATION, true) < array_search($existing->verification_status, self::VERIFICATION, true)) {
+                    $existing->update(['verification_status' => $verification]);
                 }
 
                 // Fill gaps only; never overwrite what staff (or an earlier import) recorded.
@@ -107,6 +138,12 @@ class SchoolImporter
                 } else {
                     $result['unchanged']++;
                 }
+            }
+
+            if ($replace) {
+                // Staff-added schools are kept; imported ones missing from this file are hidden.
+                $result['hidden'] = School::where('source', '!=', 'manual')->where('is_active', true)
+                    ->whereNotIn('id', array_keys($seen))->update(['is_active' => false]);
             }
         });
         fclose($handle);

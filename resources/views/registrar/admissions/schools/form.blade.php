@@ -97,6 +97,22 @@
                 @endforeach
             </div>
 
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="verification_status">Verification</label>
+                    <select id="verification_status" name="verification_status" class="form-control">
+                        @foreach(\App\Models\School::VERIFICATION as $value => $label)
+                            <option value="{{ $value }}" @selected(old('verification_status', $school->verification_status ?? 'unverified') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <small class="form-text text-muted">Mark verified only after checking the name, School ID, and municipality against DepEd records.</small>
+                </div>
+                <div class="form-group col-md-8">
+                    <label for="verification_note">Verification note</label>
+                    <input id="verification_note" name="verification_note" class="form-control" maxlength="500" value="{{ old('verification_note', $school->verification_note) }}" placeholder="e.g. Confirmed with DepEd Bohol Division, Nov 2026">
+                </div>
+            </div>
+
             <label class="mb-0"><input type="hidden" name="is_active" value="0"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $school->is_active))> Show this school in the application form's school lookup</label>
         </div>
         <div class="card-footer d-flex justify-content-between flex-wrap" style="gap:8px">

@@ -1,0 +1,80 @@
+school_id,school_name,region,province,municipality,program_offerings,verification_status,verification_note
+404233,Holy Infant Academy-Anda,Region VII,Bohol,Anda,GAS,verified,
+404234,Christ the King Academy,Region VII,Bohol,Antequera,ABM|HUMSS|GAS|TVL,verified,
+404235,Immaculata High School,Region VII,Bohol,Baclayon,GAS|TVL,verified,
+600253,Bohol Island State University-Balilihan Campus,Region VII,Bohol,Balilihan,TVL,verified,
+407537,Carmel Academy,Region VII,Bohol,Balilihan,ABM|STEM|HUMSS|GAS|TVL,verified,
+405890,"Batuan Colleges, Inc.",Region VII,Bohol,Batuan,ABM|STEM|HUMSS|GAS|TVL,verified,
+403511,Saint Anthony Academy,Region VII,Bohol,Batuan,GAS|TVL,verified,
+404295,Bien Unido Academy,Region VII,Bohol,Bien Unido,GAS|TVL,verified,
+404296,Holy Child Academy,Region VII,Bohol,Bien Unido,GAS,verified,
+600070,Bohol Island State University-Bilar Campus,Region VII,Bohol,Bilar,TVL,verified,
+446533,"Immaculate Mother School of Bilar, Inc.",Region VII,Bohol,Bilar,GAS|TVL,verified,
+403250,Buenavista Community College,Region VII,Bohol,Buenavista,HUMSS|GAS|STEM|ABM|TVL,verified,
+600254,Bohol Island State University-Calape Campus,Region VII,Bohol,Calape,TVL,verified,
+600071,Bohol Island State University-Candijay Campus,Region VII,Bohol,Candijay,TVL,verified,
+404239,St. Joseph Academy,Region VII,Bohol,Candijay,ABM|HUMSS|GAS,verified,
+407535,BIT International College-Carmen,Region VII,Bohol,Carmen,GAS|TVL,verified,
+404240,St. Anthony's Academy,Region VII,Bohol,Carmen,ABM|GAS,verified,DepEd list spells the municipality 'North Carmen'.
+405889,Bohol Northwestern Colleges,Region VII,Bohol,Catigbian,ABM|HUMSS|GAS|TVL,verified,
+404241,Holy Infant Academy-Catigbian,Region VII,Bohol,Catigbian,GAS|TVL,verified,
+404242,Immaculate Mary Academy,Region VII,Bohol,Catigbian,GAS|TVL,verified,
+404269,BIT International College-Tagbilaran,Region VII,Bohol,City of Tagbilaran,STEM|ABM|HUMSS|GAS|TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+600022,Bohol Island State University-Main Campus,Region VII,Bohol,City of Tagbilaran,TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404270,Bohol Wisdom School,Region VII,Bohol,City of Tagbilaran,STEM|ABM|HUMSS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+492001,Holy Infant School of Tagbilaran,Region VII,Bohol,City of Tagbilaran,GAS|Sports|TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404273,Holy Name University,Region VII,Bohol,City of Tagbilaran,STEM|ABM|HUMSS|GAS|Sports|Arts and Design,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404274,Holy Spirit School of Tagbilaran,Region VII,Bohol,City of Tagbilaran,STEM|ABM|GAS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+492010,Immaculate Heart of Mary Seminary,Region VII,Bohol,City of Tagbilaran,HUMSS|GAS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404277,Royal Christian School,Region VII,Bohol,City of Tagbilaran,HUMSS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+492018,"Schola Societas, Inc.",Region VII,Bohol,City of Tagbilaran,GAS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+403554,STI College - Bohol,Region VII,Bohol,City of Tagbilaran,GAS|TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404272,Tagbilaran Grace Christian School,Region VII,Bohol,City of Tagbilaran,ABM|STEM|GAS|TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404280,University of Bohol,Region VII,Bohol,City of Tagbilaran,GAS,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+404281,Victoriano D. Tirol Advanced Learning Center,Region VII,Bohol,City of Tagbilaran,STEM|ABM|HUMSS|GAS|Sports|Arts and Design|TVL,verified,DepEd list spells the municipality 'Tagbilaran City (Capital)'.
+600255,Bohol Island State University-Clarin Campus,Region VII,Bohol,Clarin,TVL,verified,
+446542,"Presentation of Mary School of Clarin, Inc.",Region VII,Bohol,Clarin,GAS|HUMSS,verified,
+446510,Bohol International Learning Center,Region VII,Bohol,Cortes,HUMSS|TVL,verified,
+404243,Infant King Academy,Region VII,Bohol,Cortes,GAS|TVL,verified,
+446544,International Academe of Ensciema,Region VII,Bohol,Dauis,GAS|HUMSS|STEM,verified,
+404244,Saint Nicholas Academy,Region VII,Bohol,Dimiao,GAS,verified,
+404245,Immaculate Academy,Region VII,Bohol,Duero,GAS|TVL,verified,
+404246,St. John the Baptist Academy,Region VII,Bohol,Garcia Hernandez,GAS|TVL,verified,DepEd list spells the municipality 'Garcia-Hernandez'.
+404253,Santo Niño Institute,Region VII,Bohol,Getafe,ABM|GAS,verified,
+404247,Saint Mary Academy,Region VII,Bohol,Guindulman,GAS|TVL,verified,
+403270,Saint Paul's Academy,Region VII,Bohol,Inabanga,ABM|GAS,verified,
+404249,BIT International College-Jagna,Region VII,Bohol,Jagna,GAS|ABM|HUMSS|STEM|TVL,verified,
+404250,Central Visayan Institute Foundation,Region VII,Bohol,Jagna,STEM|ABM|HUMSS|GAS|TVL,verified,
+404251,Colegio dela Medalla Milagrosa,Region VII,Bohol,Jagna,STEM|GAS,verified,
+404252,"San Miguel Academy, Bohol",Region VII,Bohol,Jagna,GAS,verified,
+407539,Holy Rosary Academy,Region VII,Bohol,Lila,GAS,verified,
+407540,Holy Trinity Academy,Region VII,Bohol,Loay,GAS|TVL,verified,
+404256,PMI-Loboc Academy,Region VII,Bohol,Loboc,GAS,verified,
+405738,"Bohol College of Science and Technology, Inc.-Loon Campus",Region VII,Bohol,Loon,TVL,verified,
+407541,Sacred Heart Academy,Region VII,Bohol,Loon,GAS|TVL,verified,
+404258,Saint Teresa Academy,Region VII,Bohol,Loon,GAS,verified,
+404259,UB-Loon Institute,Region VII,Bohol,Loon,ABM|GAS|HUMSS|STEM,verified,
+404260,Santa Monica Institute,Region VII,Bohol,Mabini,GAS,verified,
+404262,Saint Vincent Institute,Region VII,Bohol,Maribojoc,GAS|TVL,verified,
+446505,"Arbasto Foundation, Inc.",Region VII,Bohol,Panglao,TVL,verified,
+403266,Cristal e-College,Region VII,Bohol,Panglao,ABM|STEM|TVL,verified,
+446627,"Panglao Christian Academy, Inc.",Region VII,Bohol,Panglao,GAS,verified,
+404263,San Agustin Academy,Region VII,Bohol,Panglao,GAS|TVL,verified,
+600308,"Bohol College of Science and Technology, Inc.-Pilar Campus",Region VII,Bohol,Pilar,TVL,verified,
+404264,Virgen del Pilar Academy,Region VII,Bohol,Pilar,GAS,verified,
+407538,"Holy Child Academy of Pitogo, Bohol, Inc.",Region VII,Bohol,President Carlos P. Garcia,GAS|TVL,verified,DepEd list spells the municipality 'President Carlos P. Garcia (Pitogo)'.
+600307,"Bohol College of Science and Technology, Inc.-Main Campus",Region VII,Bohol,Sagbayan,TVL,verified,
+404267,"St. Augustine Institute of Sagbayan, Bohol Inc.",Region VII,Bohol,Sagbayan,HUMSS|GAS|TVL,verified,DepEd list spells the municipality 'Sagbayan (Borja)'.
+407536,BIT International College-Talibon,Region VII,Bohol,Talibon,HUMSS|ABM|GAS|TVL,verified,
+404284,"Bohol Maranatha Christian Academy, Inc.",Region VII,Bohol,Talibon,GAS,verified,
+404285,St. Isidore Academy of Trinidad,Region VII,Bohol,Trinidad,ABM|GAS,verified,
+404286,Holy Cross Academy,Region VII,Bohol,Tubigon,STEM|GAS|HUMSS|ABM|TVL,verified,
+404287,Holy Family of Nazareth School,Region VII,Bohol,Tubigon,STEM|ABM|HUMSS|GAS|TVL,verified,
+446511,Mater Dei College,Region VII,Bohol,Tubigon,ABM|HUMSS|GAS|STEM|TVL,verified,
+404288,Salus Institute of Technology,Region VII,Bohol,Tubigon,GAS,verified,
+404289,"Bohol Northeastern Education Foundation, Inc.",Region VII,Bohol,Ubay,HUMSS|ABM|GAS|TVL,verified,
+404291,Holy Child Academy (Ubay),Region VII,Bohol,Ubay,ABM|GAS,verified,
+446513,"Icthus Christian Academy, Inc.",Region VII,Bohol,Ubay,STEM|GAS,verified,
+405892,"Montessori Educational Learning Center of Ubay, Inc.",Region VII,Bohol,Ubay,GAS|TVL,verified,
+404293,San Pascual Academy,Region VII,Bohol,Ubay,GAS,verified,
+404282,"Blessed Trinity College - A.R. of Talibon, Bohol, Inc.",Region VII,Bohol,,GAS|ABM|STEM|TVL,needs_review,"DepEd list gives the municipality as 'Kapawan', which is not a Bohol municipality; confirm the location."

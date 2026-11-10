@@ -56,7 +56,12 @@ class EducationBackground
             'school_year_started_other' => ['nullable', 'required_if:school_year_started,' . self::OTHER, 'string', 'max:30'],
             'school_year_completed_other' => ['nullable', 'required_if:school_year_completed,' . self::OTHER, 'string', 'max:30'],
 
-            'school_id' => $only(['nullable', 'integer', Rule::exists('schools', 'id')->where('is_active', true)]),
+            'school_id' => $only(['nullable', 'integer', Rule::exists('schools', 'id')->where(function ($query) {
+                $query->where('is_active', true);
+                if (config('schools.province_code')) {
+                    $query->where('province_code', config('schools.province_code'));
+                }
+            })]),
             'school_sector' => $only(['nullable', Rule::in(array_keys(School::SECTORS))]),
             'school_region_code' => $only($location['school_region_code']),
             'school_province_code' => $only($location['school_province_code']),

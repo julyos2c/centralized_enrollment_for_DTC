@@ -12,15 +12,33 @@ use Illuminate\Http\Request;
 /** Public lookups for the application form's education step. */
 class EducationLookupController extends Controller
 {
+    /**
+     * Selectable schools. With a province configured (Bohol) the whole list is
+     * small, so it is returned at once (optionally for one municipality) and
+     * filtered in the browser; ?q= searches by name or DepEd School ID.
+     */
     public function schools(Request $request): JsonResponse
     {
         $term = trim((string) $request->query('q', ''));
-        if (mb_strlen($term) < 2 || mb_strlen($term) > 100) {
+        $city = (string) $request->query('city', '');
+        if (mb_strlen($term) > 100 || ($city !== '' && !preg_match('/^\d{10}$/', $city))) {
+            return response()->json(['results' => []], 422);
+        }
+
+        $query = School::selectable()->when($city !== '', fn ($q) => $q->where('city_code', $city));
+        if ($term !== '') {
+            if (mb_strlen($term) < 2) {
+                return response()->json(['results' => []]);
+            }
+            $query->search($term)->limit(50);
+        } elseif (config('schools.province_code')) {
+            $query->orderBy('name')->limit(3000);
+        } else {
+            // Nationwide lists are too large to send whole; search instead.
             return response()->json(['results' => []]);
         }
 
-        $schools = School::active()->search($term)->limit(15)->get()
-            ->map(fn (School $school) => $school->toLookupArray());
+        $schools = $query->get()->map(fn (School $school) => $school->toLookupArray())->values();
 
         return response()->json(['results' => $schools])
             ->header('Cache-Control', 'private, max-age=300');

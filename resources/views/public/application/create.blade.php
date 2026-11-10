@@ -484,11 +484,36 @@
                         @error('education_status_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
 
+                    {{-- New students pick their school from the Bohol list (municipality first). --}}
+                    @if($schoolScope)
+                    <div class="education-section c12 d-none" data-education-for="new_student">
+                        <div class="wiz-grid" id="schoolPicker" data-scope="{{ json_encode($schoolScope) }}">
+                            <div class="wiz-field c4">
+                                <label for="school_locality">Municipality / city of the school</label>
+                                <select id="school_locality" class="wiz-input" data-searchable aria-describedby="schoolLocalityHint">
+                                    <option value="">All of {{ $schoolScope['province_name'] }}</option>
+                                    @foreach($schoolScope['localities'] as $locality)
+                                        <option value="{{ $locality['code'] }}">{{ $locality['name'] }}</option>
+                                    @endforeach
+                                </select>
+                                <span class="wiz-hint" id="schoolLocalityHint">{{ $schoolScope['province_name'] }}, Region VII (Central Visayas)</span>
+                            </div>
+                            <div class="wiz-field c8">
+                                <label for="school_select">Senior High School</label>
+                                <select id="school_select" class="wiz-input @error('school_id') wiz-invalid @enderror" data-searchable aria-describedby="schoolSelectHint">
+                                    <option value="">Loading schools…</option>
+                                </select>
+                                <input type="hidden" name="school_choice" id="school_choice" value="{{ old('school_choice') }}">
+                                <span class="wiz-hint" id="schoolSelectHint" aria-live="polite">Type to search. Not listed, or studied outside {{ $schoolScope['province_name'] }}? Choose it at the end of the list.</span>
+                                @error('school_id')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="wiz-field c8" id="schoolNameField">
                         <label for="most_recent_school">Most recent school attended</label>
-                        <input type="text" name="most_recent_school" id="most_recent_school" class="wiz-input @error('school_id') wiz-invalid @enderror" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization" aria-describedby="schoolSearchHint">
-                        <span class="wiz-hint" id="schoolSearchHint" hidden>Type at least 2 letters of the school name, or its 6-digit DepEd School ID.</span>
-                        @error('school_id')<span class="wiz-err-msg">{{ $message }}</span>@enderror
+                        <input type="text" name="most_recent_school" id="most_recent_school" class="wiz-input" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization">
                     </div>
                     <div class="education-section c4 d-none" data-education-for="new_student" id="schoolSectorSection">
                         <input type="hidden" name="school_id" id="school_id" value="{{ old('school_id') }}">

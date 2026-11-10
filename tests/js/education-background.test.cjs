@@ -53,6 +53,24 @@ test('strands offered by the school come first; other choices are always last', 
     assert.equal(DtcEducation.strandOptions(null, []).length, 0);
 });
 
+test('school list filters by municipality, labels the municipality, and ends with manual choices', () => {
+    const { DtcEducation } = load('education-background.js');
+    const schools = [
+        { id: 2, name: 'Holy Cross Academy', city_code: 'TUB', municipality: 'Tubigon' },
+        { id: 1, name: 'Holy Infant Academy-Anda', city_code: 'AND', municipality: 'Anda' },
+        { id: 1, name: 'Holy Infant Academy-Anda', city_code: 'AND', municipality: 'Anda' },
+    ];
+    const all = DtcEducation.schoolOptions(schools, '', 'Bohol');
+    assert.equal(all.map((o) => o.value).join(','), '1,2,__not_listed,__outside');
+    assert.equal(all[0].label, 'Holy Infant Academy-Anda — Anda');
+    assert.equal(all.at(-1).label, 'I studied outside Bohol');
+
+    const tubigon = DtcEducation.schoolOptions(schools, 'TUB', 'Bohol');
+    assert.equal(tubigon.map((o) => o.value).join(','), '2,__not_listed,__outside');
+    assert.equal(tubigon[0].label, 'Holy Cross Academy');
+    assert.equal(DtcEducation.schoolOptions(schools, 'NONE', 'Bohol').length, 2);
+});
+
 test('searchable dropdown filtering ignores case, accents, and word order', () => {
     const { DtcCombobox } = load('dtc-combobox.js');
     const items = [{ label: 'Science City of Muñoz' }, { label: 'Santo Niño' }, { label: 'City of Cebu' }];
