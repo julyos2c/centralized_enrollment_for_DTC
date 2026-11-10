@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{{ asset_v('css/application-wizard.css') }}">
 <link rel="stylesheet" href="{{ asset_v('css/physical-requirements.css') }}">
 <link rel="stylesheet" href="{{ asset_v('css/application-form.css') }}">
+<link rel="stylesheet" href="{{ asset_v('css/legal.css') }}">
 @stop
 
 
@@ -894,14 +895,28 @@
 
                 <div class="wiz-divider"></div>
 
-                {{-- ── Simple Acknowledgement with Clickable Links ── --}}
-                <div class="simple-ack-bar">
-                    <input type="hidden" id="ack_enrollment" name="ack_enrollment" value="">
-                    <p class="simple-ack-text" id="applicationAcknowledgement" style="margin:0">
-                        By clicking <strong>Continue</strong>, you confirm accurate details, accept the <a href="#" class="simple-ack-link" id="openTermsModal">Terms</a>, and acknowledge the <a href="#" class="simple-ack-link" id="openPrivacyModal">Privacy Policy</a>.
-                    </p>
-                    @error('ack_enrollment')<p class="wiz-err-msg">Please continue and confirm submission to acknowledge the Terms and Privacy Policy.</p>@enderror
-                </div>
+                {{-- Agreement, acknowledgment, and consent are separate and never pre-ticked. --}}
+                <fieldset class="legal-acks" id="applicationAcknowledgement">
+                    <legend class="wiz-subsection-title">Before you submit</legend>
+                    <label class="legal-ack">
+                        <input type="checkbox" name="ack_enrollment" id="ack_enrollment" value="1" required @checked(old('ack_enrollment'))>
+                        <span>I have read and agree to the <a href="{{ route('legal.terms') }}" class="simple-ack-link" id="openTermsModal">Terms and Conditions</a> (version {{ $legal['terms']['version'] }}), and I confirm that the information I gave is true and complete.</span>
+                    </label>
+                    @error('ack_enrollment')<p class="wiz-err-msg">{{ $message }}</p>@enderror
+                    <label class="legal-ack">
+                        <input type="checkbox" name="acknowledge_privacy" id="acknowledge_privacy" value="1" required @checked(old('acknowledge_privacy'))>
+                        <span>I have read and understood the <a href="{{ route('legal.privacy') }}" class="simple-ack-link" id="openPrivacyModal">Privacy Notice</a> (version {{ $legal['privacy']['version'] }}), which explains how DTC processes my personal information.</span>
+                    </label>
+                    @error('acknowledge_privacy')<p class="wiz-err-msg">{{ $message }}</p>@enderror
+                    <div id="sensitiveConsentField" @unless(old('consent_sensitive') || $errors->has('consent_sensitive')) hidden @endunless>
+                        <label class="legal-ack">
+                            <input type="checkbox" name="consent_sensitive" id="consent_sensitive" value="1" @checked(old('consent_sensitive'))>
+                            <span>I consent to DTC processing the optional sensitive information I chose to give — <span id="sensitiveFieldList">religion, civil status, disability, or PWD ID</span> — for the purposes in section 4 of the Privacy Notice. I may leave these fields blank instead, and I may withdraw this consent later.</span>
+                        </label>
+                        @error('consent_sensitive')<p class="wiz-err-msg">{{ $message }}</p>@enderror
+                    </div>
+                    <p class="wiz-err-msg" id="legalAckError" role="alert" hidden></p>
+                </fieldset>
 
             </div>
         </div>
@@ -923,76 +938,28 @@
 
     {{-- ── Submit Confirmation Modal ────────────────────────────────────── --}}
 
-    {{-- ── Privacy Policy Modal ────────────────────────────────────── --}}
-    <div class="privacy-modal-overlay" id="privacyModal">
-        <div class="privacy-modal">
-            <div class="privacy-modal-header">
-                <h3 class="privacy-modal-title">Privacy Policy</h3>
-            </div>
-            <div class="privacy-modal-body">
-                <p>
-                    We take your privacy seriously. When you fill out this enrollment form, you're sharing personal information with Danao Technological College (DTC). This notice explains what we collect, why we need it, and how we keep it safe. This follows the Data Privacy Act of 2012 (RA 10173).
-                </p>
-
-                <div class="privacy-section">
-                    <h4>What we collect</h4>
-                    <p>Your name, birthdate, address, phone number, family information, academic records, and the documents you upload here. Only what you choose to share with us.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>Why we need it</h4>
-                    <p>To process your enrollment, verify your credentials, send you updates about your application, and maintain your official student records as required by CHED.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>How we protect it</h4>
-                    <p>Your information stays with DTC. Only our staff who need it for your enrollment can access it. We don't sell your data to anyone, and we won't share it without your permission.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>Your rights</h4>
-                    <p>You can ask to see, correct, or delete your information anytime. Just visit the Registrar's Office. If you have concerns, you can also contact the National Privacy Commission at complaints@privacy.gov.ph.</p>
-                </div>
+    {{-- Policy documents: the same text as /privacy and /terms. Closing a modal
+         never ticks a box and keeps the application as it is. --}}
+    <div class="privacy-modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacy-modal-title" hidden>
+        <div class="privacy-modal legal-modal">
+            <div class="privacy-modal-body legal-modal-body" tabindex="0">
+                @include('legal.privacy', ['titleId' => 'privacy-modal-title'])
             </div>
             <div class="privacy-modal-footer">
-                <button type="button" class="wiz-btn wiz-btn--primary" id="closePrivacyModal">
-                    I Understand
-                </button>
+                <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener" class="legal-modal-link">Open in a new tab</a>
+                <button type="button" class="wiz-btn wiz-btn--primary" id="closePrivacyModal">Close</button>
             </div>
         </div>
     </div>
 
-    {{-- ── Terms Modal ────────────────────────────────────── --}}
-    <div class="privacy-modal-overlay" id="termsModal">
-        <div class="privacy-modal">
-            <div class="privacy-modal-header">
-                <h3 class="privacy-modal-title">Terms of Service</h3>
-            </div>
-            <div class="privacy-modal-body">
-                <div class="privacy-section">
-                    <h4>About this form</h4>
-                    <p>This is a preliminary application - it doesn't guarantee admission. You'll still need to bring your original documents to the Registrar's Office. We review all applications and may reject those with incorrect information.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>Your responsibilities</h4>
-                    <p>By submitting this form, you certify that all information provided is true and accurate to the best of your knowledge. You agree to provide original documents when requested by the Registrar's Office.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>Data collection</h4>
-                    <p>You consent to the collection and processing of your personal information as described in our Privacy Policy. This includes providing accurate and complete information for enrollment purposes.</p>
-                </div>
-
-                <div class="privacy-section">
-                    <h4>Changes to terms</h4>
-                    <p>DTC reserves the right to update these terms as needed. Continued use of our enrollment system constitutes acceptance of any changes.</p>
-                </div>
+    <div class="privacy-modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title" hidden>
+        <div class="privacy-modal legal-modal">
+            <div class="privacy-modal-body legal-modal-body" tabindex="0">
+                @include('legal.terms', ['titleId' => 'terms-modal-title'])
             </div>
             <div class="privacy-modal-footer">
-                <button type="button" class="wiz-btn wiz-btn--primary" id="closeTermsModal">
-                    I Understand
-                </button>
+                <a href="{{ route('legal.terms') }}" target="_blank" rel="noopener" class="legal-modal-link">Open in a new tab</a>
+                <button type="button" class="wiz-btn wiz-btn--primary" id="closeTermsModal">Close</button>
             </div>
         </div>
     </div>
@@ -1015,7 +982,7 @@
         in_array($firstErrorKey, ['first_name', 'last_name', 'middle_name', 'honorific', 'suffix', 'gender', 'birthdate', 'birth_place', 'religion', 'nationality', 'lrn', 'marital_status', 'spouse_name'], true) => 2,
         in_array($firstErrorKey, ['email', 'phone', 'current_address', 'region', 'province', 'city', 'region_code', 'province_code', 'city_code', 'international_location', 'barangay', 'postal_code', 'country'], true) => 3,
         in_array($firstErrorKey, ['education_level', 'education_status', 'most_recent_school', 'school_year_completed', 'school_location', 'shs_strand', 'previous_program', 'last_year_level', 'home_institution', 'home_program'], true) => 4,
-        $firstErrorKey === 'documents' || str_starts_with($firstErrorKey, 'documents.') || in_array($firstErrorKey, ['guardian_name', 'guardian_contact', 'father_name', 'father_occupation', 'mother_name', 'mother_occupation', 'parent_address', 'parent_contact', 'occupation', 'disability', 'pwd_id', 'ack_enrollment'], true) => in_array($firstErrorKey, ['ack_enrollment'], true) ? 6 : 5,
+        $firstErrorKey === 'documents' || str_starts_with($firstErrorKey, 'documents.') || in_array($firstErrorKey, ['guardian_name', 'guardian_contact', 'father_name', 'father_occupation', 'mother_name', 'mother_occupation', 'parent_address', 'parent_contact', 'occupation', 'disability', 'pwd_id', 'ack_enrollment', 'acknowledge_privacy', 'consent_sensitive'], true) => in_array($firstErrorKey, ['ack_enrollment', 'acknowledge_privacy', 'consent_sensitive'], true) ? 6 : 5,
         default => 1,
     };
 @endphp

@@ -1,0 +1,285 @@
+/* ==========================================================================
+   DTC Nexus — Terms and Conditions / Privacy Notice
+   Used by the public /terms and /privacy pages and the application form's
+   document modals. Plain, readable document typography.
+   ========================================================================== */
+
+.legal-doc {
+    color: #1e293b;
+    font-size: 14.5px;
+    line-height: 1.7;
+}
+.legal-doc section {
+    margin: 0 0 22px;
+}
+.legal-doc h3 {
+    margin: 0 0 8px;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+.legal-doc h4 {
+    margin: 14px 0 6px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+}
+.legal-doc p,
+.legal-doc ul {
+    margin: 0 0 10px;
+}
+.legal-doc ul {
+    padding-left: 20px;
+}
+.legal-doc li {
+    margin-bottom: 4px;
+}
+.legal-doc a {
+    color: #0f4cdb;
+    text-decoration: underline;
+}
+.legal-doc-header {
+    margin: 0 0 20px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.legal-doc-title {
+    margin: 0 0 10px;
+    color: #0f172a;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.legal-doc-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    margin: 0;
+    font-size: 12.5px;
+}
+.legal-doc-meta div {
+    display: flex;
+    gap: 6px;
+}
+.legal-doc-meta dt {
+    color: #64748b;
+    font-weight: 600;
+}
+.legal-doc-meta dd {
+    margin: 0;
+    color: #1e293b;
+}
+.legal-table {
+    width: 100%;
+    margin: 6px 0 12px;
+    border-collapse: collapse;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.legal-table th,
+.legal-table td {
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+    vertical-align: top;
+}
+.legal-table th {
+    background: #f8fafc;
+    font-weight: 700;
+}
+.legal-note,
+.legal-pending {
+    padding: 10px 12px;
+    border-left: 3px solid #d97706;
+    border-radius: 6px;
+    background: #fffbeb;
+    color: #78350f;
+    font-size: 13.5px;
+}
+.legal-contact {
+    list-style: none;
+    padding: 0 !important;
+}
+
+/* Public pages */
+.legal-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+}
+.legal-page-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.legal-page-nav a {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.legal-page-nav a[aria-current="page"] {
+    border-color: #0f4cdb;
+    background: #0f4cdb;
+    color: #fff;
+}
+.legal-page-body {
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+/* Modals on the application form */
+.privacy-modal-overlay[hidden] {
+    display: none !important;
+}
+.legal-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(760px, calc(100vw - 24px));
+    max-width: none;
+    max-height: calc(100vh - 40px);
+}
+.legal-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.legal-modal-body:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+}
+.legal-modal .privacy-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.legal-modal-link {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Acknowledgment checkboxes */
+.legal-acks {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+.legal-acks legend {
+    margin-bottom: 4px;
+}
+.legal-ack {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13.5px;
+    font-weight: 400;
+    line-height: 1.55;
+    cursor: pointer;
+}
+.legal-ack input {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #0f4cdb;
+}
+.legal-ack:has(input:checked) {
+    border-color: #0f4cdb;
+    background: #f5f8ff;
+}
+.legal-ack:has(input:focus-visible) {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+#legalAckError[hidden],
+#sensitiveConsentField[hidden] {
+    display: none;
+}
+
+/* Dark theme */
+html.dtc-dark .legal-doc,
+body.dtc-dark .legal-doc,
+html.dtc-dark .legal-doc-meta dd,
+body.dtc-dark .legal-doc-meta dd {
+    color: #e2e8f0;
+}
+html.dtc-dark .legal-doc :is(h3, h4, .legal-doc-title),
+body.dtc-dark .legal-doc :is(h3, h4, .legal-doc-title) {
+    color: #f8fafc;
+}
+html.dtc-dark .legal-doc a,
+body.dtc-dark .legal-doc a {
+    color: #93c5fd;
+}
+html.dtc-dark :is(.legal-doc-header, .legal-table th, .legal-table td),
+body.dtc-dark :is(.legal-doc-header, .legal-table th, .legal-table td) {
+    border-color: #334155;
+}
+html.dtc-dark .legal-table th,
+body.dtc-dark .legal-table th {
+    background: #1e293b;
+}
+html.dtc-dark :is(.legal-note, .legal-pending),
+body.dtc-dark :is(.legal-note, .legal-pending) {
+    background: rgba(217, 119, 6, 0.14);
+    color: #fde68a;
+}
+html.dtc-dark .legal-page-body,
+body.dtc-dark .legal-page-body,
+html.dtc-dark .legal-ack,
+body.dtc-dark .legal-ack {
+    border-color: #334155;
+    background: #111827;
+    color: #e2e8f0;
+}
+html.dtc-dark .legal-ack:has(input:checked),
+body.dtc-dark .legal-ack:has(input:checked) {
+    border-color: #60a5fa;
+    background: #13213a;
+}
+html.dtc-dark .legal-page-nav a,
+body.dtc-dark .legal-page-nav a {
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+@media (max-width: 599px) {
+    .legal-page-body {
+        padding: 16px;
+    }
+    .legal-doc-title {
+        font-size: 18px;
+    }
+    .legal-table thead {
+        display: none;
+    }
+    .legal-table,
+    .legal-table tbody,
+    .legal-table tr,
+    .legal-table td {
+        display: block;
+        width: 100%;
+    }
+    .legal-table tr {
+        margin-bottom: 10px;
+    }
+    .legal-table td + td {
+        border-top: 0;
+    }
+}

@@ -72,7 +72,7 @@ class PublicApplicationBirthdateTest extends TestCase
             'gender' => 'female',
             'birthdate' => $birthdate,
             'email' => $email,
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ];
     }
 }

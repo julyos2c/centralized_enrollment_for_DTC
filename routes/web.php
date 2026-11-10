@@ -114,6 +114,10 @@ use App\Http\Controllers\Registrar\EntranceExamController;
         Route::post('/status', [ApplicationController::class, 'status'])->middleware('throttle:application-status-lookup')->name('status');
     });
 
+    // ── POLICY DOCUMENTS ─────────────────────────────────────────────────────────
+    Route::get('/terms', [\App\Http\Controllers\LegalController::class, 'terms'])->name('legal.terms');
+    Route::get('/privacy', [\App\Http\Controllers\LegalController::class, 'privacy'])->name('legal.privacy');
+
     // ── ADMISSION PORTAL (applicant self-service, no account needed) ─────────────
     // Access is bound to the browser session after submission or through a
     // signed, expiring link emailed to the applicant's address.

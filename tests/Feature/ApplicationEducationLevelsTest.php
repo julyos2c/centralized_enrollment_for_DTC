@@ -35,7 +35,7 @@ class ApplicationEducationLevelsTest extends TestCase
                 'submission_token' => session('public_application_submission_token'), 'academic_status' => $type,
                 'program_id' => $program->id, 'first_name' => 'Test', 'last_name' => 'Applicant',
                 'gender' => 'female', 'birthdate' => '2005-01-01', 'email' => $email,
-                'ack_enrollment' => 'on', 'education_level' => $level,
+                'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on', 'education_level' => $level,
             ]);
             if ($allowed) {
                 $response->assertRedirect(route('public.application.success'));

@@ -98,7 +98,7 @@ class SecurityAuditRemediationTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => 'new-applicant@example.test',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ]);
 
         $application = Application::where('email', 'new-applicant@example.test')->firstOrFail();

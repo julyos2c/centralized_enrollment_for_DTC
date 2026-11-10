@@ -250,6 +250,46 @@
                     </div>
                 </div>
 
+                {{-- Shown in the Privacy Notice and Terms (resources/views/legal). --}}
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="settings-section-title">
+                                <div class="settings-section-icon is-primary">
+                                    <i data-lucide="shield-check"></i>
+                                </div>
+                                <h3>Data Privacy Contact</h3>
+                            </div>
+                            <p style="font-size:12px; color:var(--dtc-text-secondary); margin:-6px 0 14px; max-width:720px;">
+                                The Data Protection Officer (or designated privacy contact) shown to applicants in the Privacy Notice.
+                                Until these are filled in, the notice tells applicants to contact the Registrar's Office.
+                            </p>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="privacy_officer_name">Name or title</label>
+                                    <input type="text" id="privacy_officer_name" name="privacy_officer_name" class="form-control" maxlength="255"
+                                           value="{{ old('privacy_officer_name', $settings->privacy_officer_name ?? '') }}" placeholder="e.g. Data Protection Officer">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="privacy_officer_email">Email</label>
+                                    <input type="email" id="privacy_officer_email" name="privacy_officer_email" class="form-control" maxlength="255"
+                                           value="{{ old('privacy_officer_email', $settings->privacy_officer_email ?? '') }}">
+                                </div>
+                                <div class="form-group col-md-6 mb-0">
+                                    <label for="privacy_officer_phone">Telephone</label>
+                                    <input type="text" id="privacy_officer_phone" name="privacy_officer_phone" class="form-control" maxlength="100"
+                                           value="{{ old('privacy_officer_phone', $settings->privacy_officer_phone ?? '') }}">
+                                </div>
+                                <div class="form-group col-md-6 mb-0">
+                                    <label for="privacy_officer_office">Office address</label>
+                                    <input type="text" id="privacy_officer_office" name="privacy_officer_office" class="form-control" maxlength="500"
+                                           value="{{ old('privacy_officer_office', $settings->privacy_officer_office ?? '') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </form>
 

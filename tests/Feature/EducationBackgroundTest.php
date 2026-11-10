@@ -348,7 +348,7 @@ class EducationBackgroundTest extends TestCase
             'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
             'academic_status' => 'new_student', 'program_id' => Program::factory()->create()->id,
             'first_name' => 'Edu', 'last_name' => 'Applicant', 'gender' => 'female',
-            'birthdate' => '2002-01-01', 'email' => uniqid('edu-', true) . '@example.test', 'ack_enrollment' => 'on',
+            'birthdate' => '2002-01-01', 'email' => uniqid('edu-', true) . '@example.test', 'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ], $overrides);
     }
 

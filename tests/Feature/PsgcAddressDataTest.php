@@ -218,7 +218,7 @@ class PsgcAddressDataTest extends TestCase
             'academic_status' => 'new_student', 'program_id' => $program->id,
             'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
             'first_name' => 'Address', 'last_name' => 'Applicant', 'gender' => 'female',
-            'birthdate' => '2005-01-01', 'email' => $email, 'ack_enrollment' => 'on',
+            'birthdate' => '2005-01-01', 'email' => $email, 'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             'country' => 'Philippines', 'region_code' => '0700000000',
             'province_code' => '0701200000', 'city_code' => '0701218000',
         ], $location))->assertSessionHasNoErrors()->assertRedirect(route('public.application.success'));

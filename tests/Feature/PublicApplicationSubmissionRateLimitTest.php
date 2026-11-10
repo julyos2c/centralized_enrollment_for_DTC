@@ -29,7 +29,7 @@ class PublicApplicationSubmissionRateLimitTest extends TestCase
                 'gender' => 'female',
                 'birthdate' => '2005-01-01',
                 'email' => 'applicant' . $number . '@example.test',
-                'ack_enrollment' => 'on',
+                'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             ];
 
             $this->post(route('public.application.store'), $payload)
@@ -60,7 +60,7 @@ class PublicApplicationSubmissionRateLimitTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => 'token-replay@example.test',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ];
 
         $this->post(route('public.application.store'), $payload)

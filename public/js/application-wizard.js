@@ -115,7 +115,10 @@ document.addEventListener("DOMContentLoaded", function () {
             btnNext.classList.remove("d-none");
             btnSubmit.classList.add("d-none");
         }
-        if (current === 6) buildReview();
+        if (current === 6) {
+            buildReview();
+            updateSensitiveConsent();
+        }
 
         /* Rebuild each icon before Lucide renders it. Reusing a rendered SVG can
            leave the previous checkmark paths in place when returning to a step. */
@@ -286,6 +289,64 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ── Continue opens confirmation; acknowledgement is sent only on final submission ── */
     let submissionInProgress = false;
+
+    /* Optional fields holding sensitive personal information (config/legal.php). */
+    const SENSITIVE_FIELDS = {
+        religion: "religion",
+        marital_status: "civil status",
+        spouse_name: "spouse's name",
+        disability: "disability",
+        pwd_id: "PWD ID",
+    };
+    function filledSensitiveFields() {
+        return Object.keys(SENSITIVE_FIELDS).filter(function (name) {
+            const field = document.getElementById(name);
+            return field && !field.disabled && field.value.trim() !== "";
+        });
+    }
+    function updateSensitiveConsent() {
+        const wrap = document.getElementById("sensitiveConsentField");
+        const box = document.getElementById("consent_sensitive");
+        if (!wrap || !box) return;
+        const filled = filledSensitiveFields();
+        wrap.hidden = filled.length === 0;
+        box.required = filled.length > 0;
+        if (!filled.length) box.checked = false;
+        const list = document.getElementById("sensitiveFieldList");
+        if (list && filled.length) {
+            list.textContent = filled.map(function (n) { return SENSITIVE_FIELDS[n]; }).join(", ");
+        }
+    }
+    /** Each required box must be ticked by the applicant; show which one is missing. */
+    function legalAcknowledgmentsComplete() {
+        updateSensitiveConsent();
+        const error = document.getElementById("legalAckError");
+        const checks = [
+            ["ack_enrollment", "Please agree to the Terms and Conditions."],
+            ["acknowledge_privacy", "Please confirm that you have read the Privacy Notice."],
+            ["consent_sensitive", "Give your consent for the optional sensitive details you entered, or go back and clear them."],
+        ];
+        for (let i = 0; i < checks.length; i++) {
+            const box = document.getElementById(checks[i][0]);
+            if (box && box.required && !box.checked) {
+                if (error) {
+                    error.textContent = checks[i][1];
+                    error.hidden = false;
+                }
+                if (typeof box.focus === "function") box.focus();
+                return false;
+            }
+        }
+        if (error) error.hidden = true;
+        return true;
+    }
+    Object.keys(SENSITIVE_FIELDS).forEach(function (name) {
+        const field = document.getElementById(name);
+        if (field && field.addEventListener) {
+            field.addEventListener("input", updateSensitiveConsent);
+            field.addEventListener("change", updateSensitiveConsent);
+        }
+    });
     document
         .getElementById("applicationForm")
         .addEventListener("submit", function (event) {
@@ -304,6 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
             }
+            if (!legalAcknowledgmentsComplete()) return;
             if (window.dtcConfirm) {
                 window.dtcConfirm.open({
                     trigger: btnSubmit,
@@ -317,7 +379,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         const form = document.getElementById("applicationForm");
                         if (!form) return;
                         submissionInProgress = true;
-                        document.getElementById("ack_enrollment").value = "1";
                         btnSubmit.disabled = true;
                         btnSubmit.setAttribute("aria-busy", "true");
                         try {
@@ -333,83 +394,42 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /* ── Privacy policy modal ── */
-    const privacyModalEl = document.getElementById("privacyModal");
-    const closePrivacyModalBtn = document.getElementById("closePrivacyModal");
-    const openPrivacyModalLink = document.getElementById("openPrivacyModal");
-
-    if (privacyModalEl) {
-        // Open modal when clicking Privacy Policy link
-        if (openPrivacyModalLink) {
-            openPrivacyModalLink.addEventListener("click", function (e) {
-                e.preventDefault();
-                privacyModalEl.classList.add("active");
-            });
+    /* ── Policy document modals (Privacy Notice, Terms) ──
+       Opening or closing a document never ticks an acknowledgment box and
+       does not change the application. Without JS the links open the pages. */
+    [
+        ["privacyModal", "openPrivacyModal", "closePrivacyModal"],
+        ["termsModal", "openTermsModal", "closeTermsModal"],
+    ].forEach(function (ids) {
+        const modal = document.getElementById(ids[0]);
+        const opener = document.getElementById(ids[1]);
+        const closer = document.getElementById(ids[2]);
+        if (!modal || !opener) return;
+        let returnFocus = null;
+        function close() {
+            modal.classList.remove("active");
+            modal.hidden = true;
+            if (returnFocus) returnFocus.focus();
         }
-
-        // Close modal when clicking "I Understand"
-        if (closePrivacyModalBtn) {
-            closePrivacyModalBtn.addEventListener("click", function () {
-                privacyModalEl.classList.remove("active");
-            });
-        }
-
-        // Close modal when clicking outside
-        privacyModalEl.addEventListener("click", function (e) {
-            if (e.target === privacyModalEl) {
-                privacyModalEl.classList.remove("active");
+        opener.addEventListener("click", function (e) {
+            e.preventDefault();
+            returnFocus = opener;
+            modal.hidden = false;
+            modal.classList.add("active");
+            const body = modal.querySelector(".privacy-modal-body");
+            if (body) {
+                body.scrollTop = 0;
+                body.focus();
             }
         });
-
-        // Close modal on Escape key
+        if (closer) closer.addEventListener("click", close);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) close();
+        });
         document.addEventListener("keydown", function (e) {
-            if (
-                e.key === "Escape" &&
-                privacyModalEl.classList.contains("active")
-            ) {
-                privacyModalEl.classList.remove("active");
-            }
+            if (e.key === "Escape" && !modal.hidden) close();
         });
-    }
-
-    /* ── Terms modal ── */
-    const termsModalEl = document.getElementById("termsModal");
-    const closeTermsModalBtn = document.getElementById("closeTermsModal");
-    const openTermsModalLink = document.getElementById("openTermsModal");
-
-    if (termsModalEl) {
-        // Open modal when clicking Terms link
-        if (openTermsModalLink) {
-            openTermsModalLink.addEventListener("click", function (e) {
-                e.preventDefault();
-                termsModalEl.classList.add("active");
-            });
-        }
-
-        // Close modal when clicking "I Understand"
-        if (closeTermsModalBtn) {
-            closeTermsModalBtn.addEventListener("click", function () {
-                termsModalEl.classList.remove("active");
-            });
-        }
-
-        // Close modal when clicking outside
-        termsModalEl.addEventListener("click", function (e) {
-            if (e.target === termsModalEl) {
-                termsModalEl.classList.remove("active");
-            }
-        });
-
-        // Close modal on Escape key
-        document.addEventListener("keydown", function (e) {
-            if (
-                e.key === "Escape" &&
-                termsModalEl.classList.contains("active")
-            ) {
-                termsModalEl.classList.remove("active");
-            }
-        });
-    }
+    });
 
     /* ════════════════════════════════════════════════════════════
        FILE PICKER LABELS

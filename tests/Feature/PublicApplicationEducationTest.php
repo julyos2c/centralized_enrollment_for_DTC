@@ -75,7 +75,7 @@ class PublicApplicationEducationTest extends TestCase
             'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
             'academic_status' => 'new_student', 'program_id' => $program->id,
             'first_name' => 'Test', 'last_name' => 'Applicant', 'gender' => 'female',
-            'birthdate' => '2005-01-01', 'email' => 'optional-error@example.test', 'ack_enrollment' => 'on',
+            'birthdate' => '2005-01-01', 'email' => 'optional-error@example.test', 'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             'marital_status' => 'invalid-status',
         ])->assertRedirect(route('public.application.create'))->assertSessionHasErrors('marital_status');
         $response = $this->get(route('public.application.create'))->assertOk();
@@ -137,7 +137,7 @@ class PublicApplicationEducationTest extends TestCase
                 'province_code' => '0701200000',
                 'city_code' => '0701218000',
                 'barangay' => 'Poblacion',
-                'ack_enrollment' => 'on',
+                'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
                 'education_level' => $type === 'new_student' ? 'Senior High School' : 'College',
                 'education_status' => 'Graduated',
                 'most_recent_school' => 'Danao National High School',
@@ -213,7 +213,7 @@ class PublicApplicationEducationTest extends TestCase
             'gender' => 'male',
             'birthdate' => '2005-01-01',
             'email' => 'MiXeD@example.test',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ])->assertRedirect(route('public.application.success'));
 
         $application = Application::where('email', 'MiXeD@example.test')->firstOrFail();
@@ -266,7 +266,7 @@ class PublicApplicationEducationTest extends TestCase
             'parent_address' => '  purok 2   poblacion, danao. ',
             'occupation' => 'part-time student',
             'disability' => 'visual impairment',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ];
 
         $this->post(route('public.application.store'), $payload)
@@ -319,7 +319,7 @@ class PublicApplicationEducationTest extends TestCase
                 'gender' => 'male',
                 'birthdate' => '2005-01-01',
                 'email' => $type . '-optional-education@example.test',
-                'ack_enrollment' => 'on',
+                'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             ];
 
             $this->get(route('public.application.create'))->assertOk();
@@ -359,7 +359,7 @@ class PublicApplicationEducationTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => 'field-rules@example.test',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             'previous_program' => str_repeat('x', 256),
             'shs_strand' => str_repeat('x', 500),
         ];
@@ -394,7 +394,7 @@ class PublicApplicationEducationTest extends TestCase
                     'gender' => 'female',
                     'birthdate' => '2005-01-01',
                     'email' => $type . '-' . $missingField . '@example.test',
-                    'ack_enrollment' => 'on',
+                    'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
                 ];
                 unset($payload[$missingField]);
 
@@ -421,8 +421,9 @@ class PublicApplicationEducationTest extends TestCase
             ->assertSee('id="educationDescription"', false)
             ->assertSee('All other fields are optional and can be left blank.')
             ->assertDontSee('(Optional)')
-            ->assertSee('By clicking <strong>Continue</strong>, you confirm accurate details', false)
-            ->assertSee('type="hidden" id="ack_enrollment" name="ack_enrollment" value=""', false)
+            // Separate, unticked agreement (Terms) and acknowledgment (Privacy Notice).
+            ->assertSee('<input type="checkbox" name="ack_enrollment" id="ack_enrollment" value="1" required >', false)
+            ->assertSee('<input type="checkbox" name="acknowledge_privacy" id="acknowledge_privacy" value="1" required >', false)
             ->assertSee('Review Your Application')
             ->assertSee('wiz-step-label">Education', false);
     }
@@ -438,7 +439,7 @@ class PublicApplicationEducationTest extends TestCase
             'academic_status' => 'new_student', 'program_id' => $program->id,
             'first_name' => 'Juan', 'last_name' => 'Cruz', 'gender' => 'male',
             'birthdate' => '2005-01-01', 'email' => 'guardian@example.test',
-            'ack_enrollment' => 'on', 'guardian_name' => '  mARIA rEYES ',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on', 'guardian_name' => '  mARIA rEYES ',
             'guardian_contact' => ' 09171234567 ',
         ];
         $this->post(route('public.application.store'), $payload)
@@ -462,7 +463,7 @@ class PublicApplicationEducationTest extends TestCase
             'academic_status' => 'new_student', 'program_id' => $program->id,
             'first_name' => 'Juan', 'last_name' => 'Cruz', 'gender' => 'male',
             'birthdate' => '2005-01-01', 'email' => 'invalid-guardian@example.test',
-            'ack_enrollment' => 'on', 'guardian_name' => str_repeat('a', 256),
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on', 'guardian_name' => str_repeat('a', 256),
             'guardian_contact' => str_repeat('1', 51),
         ])->assertSessionHasErrors(['guardian_name', 'guardian_contact']);
         $response = $this->get(route('public.application.create'))->assertOk();
@@ -486,7 +487,7 @@ class PublicApplicationEducationTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => 'one-submission@example.test',
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ];
 
         $this->post(route('public.application.store'), $payload)

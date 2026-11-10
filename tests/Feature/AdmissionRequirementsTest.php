@@ -240,7 +240,7 @@ class AdmissionRequirementsTest extends TestCase
             'submission_token' => $this->app['session.store']->get('public_application_submission_token'),
             'academic_status' => 'new_student', 'program_id' => $program->id,
             'first_name' => 'Test', 'last_name' => 'Applicant', 'gender' => 'female',
-            'birthdate' => '2005-01-01', 'email' => 'req-' . uniqid() . '@example.test', 'ack_enrollment' => 'on',
+            'birthdate' => '2005-01-01', 'email' => 'req-' . uniqid() . '@example.test', 'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ], $overrides);
     }
 

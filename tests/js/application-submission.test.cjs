@@ -16,7 +16,9 @@ function setup() {
             setAttribute() {}, scrollIntoView() {}, closest() { return null; }
         };
     }
-    const nodes = Object.fromEntries(['applicationForm', 'ack_enrollment'].map(id => [id, element()]));
+    const nodes = Object.fromEntries(['applicationForm', 'ack_enrollment', 'acknowledge_privacy'].map(id => [id, element()]));
+    // Required, applicant-ticked checkboxes (Terms agreement, Privacy acknowledgment).
+    for (const id of ['ack_enrollment', 'acknowledge_privacy']) Object.assign(nodes[id], { required: true, checked: true, value: '1', focus() {} });
     const button = element();
     button.click = () => button.fire('click');
     let submissions = 0;
@@ -34,23 +36,22 @@ function setup() {
         window: { dtcConfirm: { open(options) { confirmation = options; } } }
     });
     const start = source.indexOf('    let submissionInProgress = false;');
-    const end = source.indexOf('    const privacyModalEl');
+    const end = source.indexOf('    /* ── Policy document modals');
     vm.runInContext(source.slice(start, end), context);
     const event = () => ({ prevented: false, preventDefault() { this.prevented = true; } });
     return { nodes, button, event, drafts, pending, confirmation: () => confirmation, submissions: () => submissions, invalidate: () => { valid = false; }, navigated: () => navigated };
 }
 
-test('Continue opens confirmation without acknowledging; final confirm submits once', () => {
+test('Continue opens confirmation only when both boxes are ticked; final confirm submits once', () => {
     const s = setup();
     s.button.click();
     assert.equal(s.confirmation().okLabel, 'Submit');
-    assert.equal(s.nodes.ack_enrollment.value, '');
     assert.equal(s.submissions(), 0);
-    // Cancel/close does not invoke onConfirm; reopening still leaves acknowledgement blank.
+    // Cancel/close does not invoke onConfirm; the script never changes the boxes.
     s.button.click();
-    assert.equal(s.nodes.ack_enrollment.value, '');
     s.confirmation().onConfirm();
-    assert.equal(s.nodes.ack_enrollment.value, '1');
+    assert.equal(s.nodes.ack_enrollment.checked, true);
+    assert.equal(s.nodes.acknowledge_privacy.checked, true);
     assert.equal(s.submissions(), 1);
     assert.equal(s.drafts.get('draft'), '{"first_name":"Juan"}');
     assert.equal(s.pending.get('dtc_pending_application_draft'), '{"first_name":"Juan"}');
@@ -93,8 +94,18 @@ test('native submission opens confirmation without bypassing acknowledgement', (
     s.nodes.applicationForm.fire('submit', event);
     assert.equal(event.prevented, true);
     assert.equal(s.confirmation().title, 'Submit application?');
-    assert.equal(s.nodes.ack_enrollment.value, '');
     assert.equal(s.submissions(), 0);
+});
+
+test('an unticked Terms or Privacy box blocks submission and is never ticked for the applicant', () => {
+    for (const id of ['ack_enrollment', 'acknowledge_privacy']) {
+        const s = setup();
+        s.nodes[id].checked = false;
+        s.button.click();
+        assert.equal(s.confirmation(), undefined, id + ' must be ticked');
+        assert.equal(s.nodes[id].checked, false);
+        assert.equal(s.submissions(), 0);
+    }
 });
 
 test('invalid steps prevent confirmation and navigate to the incomplete section', () => {

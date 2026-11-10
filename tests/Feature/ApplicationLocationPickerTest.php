@@ -158,7 +158,7 @@ class ApplicationLocationPickerTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => $email,
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
             'country' => 'Philippines',
         ], $location);
 
@@ -182,7 +182,7 @@ class ApplicationLocationPickerTest extends TestCase
             'gender' => 'female',
             'birthdate' => '2005-01-01',
             'email' => $email,
-            'ack_enrollment' => 'on',
+            'ack_enrollment' => 'on', 'acknowledge_privacy' => 'on', 'consent_sensitive' => 'on',
         ], $location))->assertRedirect(route('public.application.create'))->assertSessionHasErrors($error);
         $this->assertDatabaseMissing('applications', ['email' => $email]);
     }

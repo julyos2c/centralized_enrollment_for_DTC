@@ -76,6 +76,8 @@
     <footer class="site-footer">
         © {{ date('Y') }} Danao Technological College —
         Enrollment Management System. All rights reserved.
+        · <a href="{{ route('legal.terms') }}">Terms and Conditions</a>
+        · <a href="{{ route('legal.privacy') }}">Privacy Notice</a>
     </footer>
 
 

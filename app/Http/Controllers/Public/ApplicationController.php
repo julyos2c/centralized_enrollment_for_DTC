@@ -78,6 +78,7 @@ class ApplicationController extends Controller
             ],
             'educationOld' => $this->educationOldInput(),
             'schoolScope' => $this->schoolScope(),
+            'legal' => \App\Support\LegalDocuments::context(),
             'academicYears' => \App\Support\AcademicYears::options(),
             'educationStatuses' => \App\Services\EducationBackground::STATUSES,
             'schoolSectors' => \App\Models\School::SECTORS,
@@ -359,7 +360,11 @@ class ApplicationController extends Controller
                 'max:255',
             ],
 
+            // Agreement to the Terms, acknowledgment of the Privacy Notice, and
+            // consent for optional sensitive details are separate (config/legal.php).
             'ack_enrollment' => ['required', 'accepted'],
+            'acknowledge_privacy' => ['required', 'accepted'],
+            'consent_sensitive' => $this->providesSensitiveInformation($request) ? ['required', 'accepted'] : ['nullable'],
             'education_level' => ['nullable', 'string', Rule::in(\App\Support\ApplicationEducation::levelsFor(is_string($request->input('academic_status')) ? $request->input('academic_status') : null))],
             'education_status' => ['nullable', 'string', Rule::in(['Graduated', 'Currently attending', 'Not completed'])],
             'most_recent_school' => ['nullable', 'string', 'max:255'],
@@ -404,6 +409,12 @@ class ApplicationController extends Controller
         $rules = array_merge($rules, $education->rules($request));
 
         $validated = $request->validate($rules, $education->messages() + [
+            'ack_enrollment.required' => 'Please agree to the Terms and Conditions to submit your application.',
+            'ack_enrollment.accepted' => 'Please agree to the Terms and Conditions to submit your application.',
+            'acknowledge_privacy.required' => 'Please confirm that you have read the Privacy Notice.',
+            'acknowledge_privacy.accepted' => 'Please confirm that you have read the Privacy Notice.',
+            'consent_sensitive.required' => 'You filled in optional sensitive details (religion, civil status, disability, or PWD ID). Give your consent, or clear those fields.',
+            'consent_sensitive.accepted' => 'You filled in optional sensitive details (religion, civil status, disability, or PWD ID). Give your consent, or clear those fields.',
             'education_level.in' => 'Choose an education level that matches your applicant type.',
             'birthdate.before_or_equal' => 'Enter a date of birth that is today or earlier.',
             'region_code.in' => 'Select a valid region from the list.',
@@ -571,6 +582,8 @@ class ApplicationController extends Controller
                     'status' => 'submitted',
                 ], $educationColumns));
 
+                $this->recordPolicyAcknowledgments($application, $request);
+
                 /*
                  * Store only documents that were uploaded and apply to the
                  * selected applicant type. Files go to private storage under
@@ -735,5 +748,37 @@ class ApplicationController extends Controller
         }
 
         return $grouped;
+    }
+
+    /** Whether any optional field holding sensitive personal information was filled. */
+    private function providesSensitiveInformation(Request $request): bool
+    {
+        foreach (config('legal.sensitive_optional_fields', []) as $field) {
+            if (filled($request->input($field))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Append-only record of the policy versions this application agreed to. */
+    private function recordPolicyAcknowledgments(Application $application, Request $request): void
+    {
+        $documents = ['terms', 'privacy'];
+        if ($request->boolean('consent_sensitive') && $this->providesSensitiveInformation($request)) {
+            $documents[] = 'sensitive_consent';
+        }
+        foreach ($documents as $document) {
+            \App\Models\PolicyAcknowledgment::create([
+                'application_id' => $application->id,
+                'document' => $document,
+                'kind' => \App\Models\PolicyAcknowledgment::KINDS[$document],
+                'version' => config("legal.{$document}.version"),
+                'acknowledged_at' => now(),
+                'ip_address' => $request->ip(),
+                'user_agent' => \Illuminate\Support\Str::limit((string) $request->userAgent(), 250, ''),
+            ]);
+        }
     }
 }
