@@ -58,7 +58,9 @@
         </button>
     </nav>
 
-    {{-- ── Progress Bar ─────────────────────────────────────────── --}}
+    {{-- Progress summary and messages for locked sections or saving problems. --}}
+    <p class="wiz-progress-text" id="wizardProgressText" aria-live="polite">Step 1 of 6: Admission</p>
+    <div class="wiz-step-message" id="wizardStepMessage" role="alert" hidden></div>
 
     {{-- ── Server-side Validation Errors ───────────────────────── --}}
     @if ($errors->any())
@@ -98,6 +100,7 @@
         method="POST"
         enctype="multipart/form-data"
         id="applicationForm"
+        data-step-url="{{ request()->getBaseUrl() . str_replace('/999999', '/:step', route('public.application.step', ['step' => 999999], false)) }}"
         novalidate
         autocomplete="on"
     >
@@ -481,7 +484,7 @@
                     </div>
                     <div class="wiz-field c4" id="educationStatusOtherField" @if(old('education_status') !== 'Other') hidden @endif>
                         <label for="education_status_other">Describe your status</label>
-                        <input type="text" name="education_status_other" id="education_status_other" class="wiz-input @error('education_status_other') wiz-invalid @enderror" value="{{ old('education_status_other') }}" maxlength="255" placeholder="e.g. Alternative Learning System">
+                        <input type="text" name="education_status_other" id="education_status_other" data-required-message="Describe your completion status." class="wiz-input @error('education_status_other') wiz-invalid @enderror" value="{{ old('education_status_other') }}" maxlength="255" placeholder="e.g. Alternative Learning System">
                         @error('education_status_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
 
@@ -514,7 +517,7 @@
 
                     <div class="wiz-field c8" id="schoolNameField">
                         <label for="most_recent_school">Most recent school attended</label>
-                        <input type="text" name="most_recent_school" id="most_recent_school" class="wiz-input" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization">
+                        <input type="text" name="most_recent_school" id="most_recent_school" data-required-message="Type the name of your Senior High School." class="wiz-input" value="{{ old('most_recent_school') }}" maxlength="255" autocomplete="organization">
                     </div>
                     <div class="education-section c4 d-none" data-education-for="new_student" id="schoolSectorSection">
                         <input type="hidden" name="school_id" id="school_id" value="{{ old('school_id') }}">
@@ -607,7 +610,7 @@
                     </div>
                     <div class="wiz-field c3" id="schoolYearStartedOtherField" @if($isListedYear($yearValue('school_year_started')) && old('school_year_started') !== '__other') hidden @endif>
                         <label for="school_year_started_other">Type the year started</label>
-                        <input type="text" name="school_year_started_other" id="school_year_started_other" class="wiz-input @error('school_year_started_other') wiz-invalid @enderror" value="{{ old('school_year_started_other', $isListedYear($yearValue('school_year_started')) ? '' : $yearValue('school_year_started')) }}" maxlength="30" placeholder="e.g. 1998-1999">
+                        <input type="text" name="school_year_started_other" id="school_year_started_other" data-required-message="Type the school year you started." class="wiz-input @error('school_year_started_other') wiz-invalid @enderror" value="{{ old('school_year_started_other', $isListedYear($yearValue('school_year_started')) ? '' : $yearValue('school_year_started')) }}" maxlength="30" placeholder="e.g. 1998-1999">
                         @error('school_year_started_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
                     <div class="wiz-field c3">
@@ -623,7 +626,7 @@
                     </div>
                     <div class="wiz-field c3" id="schoolYearCompletedOtherField" @if($isListedYear($yearValue('school_year_completed')) && old('school_year_completed') !== '__other') hidden @endif>
                         <label for="school_year_completed_other">Type the year</label>
-                        <input type="text" name="school_year_completed_other" id="school_year_completed_other" class="wiz-input @error('school_year_completed_other') wiz-invalid @enderror" value="{{ old('school_year_completed_other', $isListedYear($yearValue('school_year_completed')) ? '' : $yearValue('school_year_completed')) }}" maxlength="30" placeholder="e.g. 1998-1999">
+                        <input type="text" name="school_year_completed_other" id="school_year_completed_other" data-required-message="Type the school year you graduated or last attended." class="wiz-input @error('school_year_completed_other') wiz-invalid @enderror" value="{{ old('school_year_completed_other', $isListedYear($yearValue('school_year_completed')) ? '' : $yearValue('school_year_completed')) }}" maxlength="30" placeholder="e.g. 1998-1999">
                         @error('school_year_completed_other')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                     </div>
 
@@ -650,7 +653,7 @@
                             </div>
                             <div class="wiz-field c8" id="shsStrandOtherField" @if(old('shs_strand_selection') !== 'other') hidden @endif>
                                 <label for="shs_strand">Specify your strand or specialization</label>
-                                <input type="text" name="shs_strand" id="shs_strand" class="wiz-input @error('shs_strand') wiz-invalid @enderror" value="{{ old('shs_strand') }}" maxlength="100" placeholder="e.g. TVL – Cookery, Maritime">
+                                <input type="text" name="shs_strand" id="shs_strand" data-required-message="Type your strand or specialization." class="wiz-input @error('shs_strand') wiz-invalid @enderror" value="{{ old('shs_strand') }}" maxlength="100" placeholder="e.g. TVL – Cookery, Maritime">
                                 @error('shs_strand')<span class="wiz-err-msg">{{ $message }}</span>@enderror
                             </div>
                         </div>
@@ -970,30 +973,38 @@
 @section('scripts')
 <script>window.dtcApplicationTitleCaseFields = @json($titleCaseFields);</script>
 <script>window.dtcApplicationEducationLevels = @json(\App\Support\ApplicationEducation::LEVELS);</script>
+<script>
+    /* Sections completed (and saved on the server) in this session. When the
+       browser has no draft of its own, the saved answers are restored from it. */
+    window.dtcApplicationProgress = @json($progress);
+    window.dtcApplicationStepTitles = @json($stepTitles);
+    (function () {
+        try {
+            var key = 'dtc_application_draft';
+            var local = JSON.parse(localStorage.getItem(key) || '{}') || {};
+            var saved = window.dtcApplicationProgress.data || {};
+            if (Object.keys(local).length === 0 && Object.keys(saved).length) {
+                var draft = Object.assign({}, saved);
+                draft.address_area = saved.province_code || saved.city_code || '';
+                draft.school_area = saved.school_province_code || saved.school_city_code || '';
+                localStorage.setItem(key, JSON.stringify(draft));
+            }
+        } catch (e) {}
+    })();
+</script>
 <script src="{{ asset_v('js/dtc-name-normalizer.js') }}" defer></script>
 <script src="{{ asset_v('js/application-wizard.js') }}" defer></script>
 <script src="{{ asset_v('js/dtc-combobox.js') }}" defer></script>
 <script src="{{ asset_v('js/address-cascade.js') }}" defer></script>
 <script src="{{ asset_v('js/education-background.js') }}" defer></script>
-@php
-    $firstErrorKey = $errors->keys()[0] ?? '';
-    $errorStep = match (true) {
-        in_array($firstErrorKey, ['academic_status', 'program_id'], true) => 1,
-        in_array($firstErrorKey, ['first_name', 'last_name', 'middle_name', 'honorific', 'suffix', 'gender', 'birthdate', 'birth_place', 'religion', 'nationality', 'lrn', 'marital_status', 'spouse_name'], true) => 2,
-        in_array($firstErrorKey, ['email', 'phone', 'current_address', 'region', 'province', 'city', 'region_code', 'province_code', 'city_code', 'international_location', 'barangay', 'postal_code', 'country'], true) => 3,
-        in_array($firstErrorKey, ['education_level', 'education_status', 'most_recent_school', 'school_year_completed', 'school_location', 'shs_strand', 'previous_program', 'last_year_level', 'home_institution', 'home_program'], true) => 4,
-        $firstErrorKey === 'documents' || str_starts_with($firstErrorKey, 'documents.') || in_array($firstErrorKey, ['guardian_name', 'guardian_contact', 'father_name', 'father_occupation', 'mother_name', 'mother_occupation', 'parent_address', 'parent_contact', 'occupation', 'disability', 'pwd_id', 'ack_enrollment', 'acknowledge_privacy', 'consent_sensitive'], true) => in_array($firstErrorKey, ['ack_enrollment', 'acknowledge_privacy', 'consent_sensitive'], true) ? 6 : 5,
-        default => 1,
-    };
-@endphp
 <script>
-    /* Tell the wizard which step to open first.
-       Runs after application-wizard.js because it is defer-loaded
-       but this inline script runs after DOMContentLoaded as well. */
-    document.addEventListener('DOMContentLoaded', function () {
+    /* Tell the wizard which step to open first: the section with the first
+       server error, otherwise where the applicant left off (never a locked one).
+       application-wizard.js calls this hook once it has set up the steps. */
+    window._wizOnReady = function () {
         if (window._wizGoTo) {
             @if ($errors->any())
-                window._wizGoTo({{ $errorStep ?? 1 }}, true);
+                window._wizGoTo(window._wizInitialStep ? window._wizInitialStep() : 1, true);
                 setTimeout(function () {
                     var keys = @json($errors->keys());
                     var form = document.getElementById('applicationForm');
@@ -1010,9 +1021,9 @@
                     else document.getElementById('serverErrors')?.focus();
                 }, 0);
             @else
-                window._wizGoTo(1, true);
+                window._wizGoTo(window._wizInitialStep ? window._wizInitialStep() : 1, true);
             @endif
         }
-    });
+    };
 </script>
 @stop

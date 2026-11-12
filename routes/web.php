@@ -107,6 +107,8 @@ use App\Http\Controllers\Registrar\EntranceExamController;
             Route::get('/shs-classifications', [\App\Http\Controllers\Public\EducationLookupController::class, 'classifications'])->name('shs-classifications');
         });
         Route::get('/schools', [\App\Http\Controllers\Public\EducationLookupController::class, 'schools'])->middleware('throttle:120,1')->name('schools');
+        // Section-by-section check and saved progress for the wizard's Next button.
+        Route::post('/steps/{step}', [ApplicationController::class, 'saveStep'])->whereNumber('step')->middleware('throttle:120,1')->name('step');
         Route::post('/', [ApplicationController::class, 'store'])->middleware('throttle:application-submission')->name('store');
         Route::get('/success', [ApplicationController::class, 'success'])->name('success');
         Route::post('/cancel', [\App\Http\Controllers\Public\ApplicationCancellationController::class, 'request'])->middleware('throttle:5,1')->name('cancel');

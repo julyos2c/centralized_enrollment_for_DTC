@@ -84,30 +84,143 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     /* ════════════════════════════════════════════════════════════
-       WIZARD NAVIGATION
+       WIZARD NAVIGATION — strict, section by section
+
+       A section counts as completed only after it passes the checks
+       below and the server's check (POST /apply/steps/{n}), which
+       validates it together with every earlier section and saves the
+       answers in the applicant's session. Completed sections stay open
+       for editing. The section after the last completed one is the
+       furthest that can be opened; later sections are locked.
     ════════════════════════════════════════════════════════════ */
 
-    function goTo(n, skipValidation) {
-        if (!skipValidation && n > current && !validateStep(current)) return;
+    const form = document.getElementById("applicationForm");
+    const PROGRESS = window.dtcApplicationProgress || {};
+    const STEP_TITLES = window.dtcApplicationStepTitles || {};
+    const WIZARD_KEY = "dtc_application_wizard";
+    const DATA_STEPS = TOTAL - 1;
+    const STATE_LABELS = {
+        completed: "Completed",
+        "in-progress": "In progress",
+        "not-started": "Not started",
+        locked: "Locked",
+    };
+    let completed = Math.max(0, Math.min(DATA_STEPS, Number(PROGRESS.completed) || 0));
+    let saving = false;
+    let lastSavedAt = PROGRESS.saved_at || null;
+    const stepMessage = document.getElementById("wizardStepMessage");
+    const progressText = document.getElementById("wizardProgressText");
+    const btnNextHtml = btnNext ? btnNext.innerHTML : "";
+
+    function loadWizardState() {
+        try {
+            return JSON.parse(localStorage.getItem(WIZARD_KEY)) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+    let visited = (loadWizardState().visited || []).filter(function (n) {
+        return typeof n === "number";
+    });
+    function saveWizardState() {
+        try {
+            localStorage.setItem(WIZARD_KEY, JSON.stringify({ step: current, visited: visited }));
+        } catch (e) {}
+    }
+
+    function title(n) {
+        return STEP_TITLES[n] || "this section";
+    }
+    function accessible(n) {
+        return n >= 1 && n <= Math.min(TOTAL, completed + 1);
+    }
+    function stepState(n) {
+        if (n <= completed) return "completed";
+        if (!accessible(n)) return "locked";
+        if (n === current || visited.indexOf(n) !== -1) return "in-progress";
+        return "not-started";
+    }
+
+    function formatTime(iso) {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return "";
+        return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+
+    function renderTracker() {
+        steps.forEach(function (s, i) {
+            const n = i + 1;
+            const state = stepState(n);
+            s.classList.toggle("active", n === current);
+            s.classList.toggle("completed", state === "completed");
+            s.classList.toggle("locked", state === "locked");
+            s.setAttribute("data-state", state);
+            if (n === current) s.setAttribute("aria-current", "step");
+            else s.removeAttribute("aria-current");
+            if (state === "locked") s.setAttribute("aria-disabled", "true");
+            else s.removeAttribute("aria-disabled");
+            s.disabled = false;
+            s.setAttribute("title", title(n) + ": " + STATE_LABELS[state]);
+            let stateLabel = s.querySelector(".wiz-step-state");
+            if (!stateLabel) {
+                stateLabel = document.createElement("span");
+                stateLabel.className = "wiz-step-state";
+                s.appendChild(stateLabel);
+            }
+            stateLabel.textContent = STATE_LABELS[state];
+
+            /* Rebuild each icon before Lucide renders it. Reusing a rendered SVG can
+               leave the previous paths in place when the state changes. */
+            const dot = s.querySelector(".wiz-step-dot");
+            const iconName =
+                state === "completed" ? "check" : state === "locked" ? "lock" : s.getAttribute("data-original-icon");
+            if (!dot || !iconName) return;
+            const iconEl = document.createElement("i");
+            iconEl.setAttribute("data-lucide", iconName);
+            iconEl.setAttribute("aria-hidden", "true");
+            dot.replaceChildren(iconEl);
+        });
+        connectors.forEach(function (c, i) {
+            c.classList.toggle("completed", i + 1 <= completed);
+        });
+        if (progressText) {
+            const saved = lastSavedAt ? formatTime(lastSavedAt) : "";
+            progressText.textContent =
+                "Step " + current + " of " + TOTAL + ": " + title(current) +
+                " · " + completed + " of " + DATA_STEPS + " sections completed" +
+                (saved ? " · Progress saved " + saved : "");
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
+    function showMessage(text, tone) {
+        if (!stepMessage) return;
+        stepMessage.className = "wiz-step-message wiz-step-message--" + (tone || "info");
+        stepMessage.replaceChildren();
+        const icon = document.createElement("i");
+        icon.setAttribute("data-lucide", tone === "error" ? "alert-circle" : "lock");
+        icon.setAttribute("aria-hidden", "true");
+        const span = document.createElement("span");
+        span.textContent = text;
+        stepMessage.appendChild(icon);
+        stepMessage.appendChild(span);
+        stepMessage.hidden = false;
+        if (window.lucide) lucide.createIcons({ nodes: [stepMessage] });
+    }
+    function hideMessage() {
+        if (stepMessage) stepMessage.hidden = true;
+    }
+
+    /** Display step n. Access rules are applied by goTo(). */
+    function show(n) {
         current = Math.max(1, Math.min(TOTAL, n));
+        if (visited.indexOf(current) === -1) visited.push(current);
+        saveWizardState();
 
         panels.forEach(function (p, i) {
             p.classList.toggle("active", i + 1 === current);
         });
-        steps.forEach(function (s, i) {
-            s.classList.remove("active", "completed");
-            if (i + 1 === current) s.classList.add("active");
-            if (i + 1 < current) s.classList.add("completed");
-            if (i + 1 === current) s.setAttribute("aria-current", "step");
-            else s.removeAttribute("aria-current");
-            s.disabled = false;
-        });
-        connectors.forEach(function (c, i) {
-            c.classList.toggle("completed", i + 1 < current);
-        });
-
         btnPrev.style.visibility = current === 1 ? "hidden" : "visible";
-
         if (current === TOTAL) {
             btnNext.classList.add("d-none");
             btnSubmit.classList.remove("d-none");
@@ -115,120 +228,448 @@ document.addEventListener("DOMContentLoaded", function () {
             btnNext.classList.remove("d-none");
             btnSubmit.classList.add("d-none");
         }
-        if (current === 6) {
+        if (current === TOTAL) {
             buildReview();
             updateSensitiveConsent();
         }
+        renderTracker();
 
-        /* Rebuild each icon before Lucide renders it. Reusing a rendered SVG can
-           leave the previous checkmark paths in place when returning to a step. */
-        steps.forEach(function (s) {
-            var dot = s.querySelector(".wiz-step-dot");
-            if (!dot) return;
-            var iconEl = document.createElement("i");
-            var iconName = s.classList.contains("completed")
-                ? "check"
-                : s.getAttribute("data-original-icon");
-            if (!iconName) return;
-            iconEl.setAttribute("data-lucide", iconName);
-            iconEl.setAttribute("aria-hidden", "true");
-            dot.replaceChildren(iconEl);
-        });
-
-        if (window.lucide) lucide.createIcons();
-        const heading = document.querySelector(
-            "#step-" + current + " .wiz-panel-title",
-        );
+        const heading = document.querySelector("#step-" + current + " .wiz-panel-title");
         if (heading) {
             heading.setAttribute("tabindex", "-1");
             heading.focus({ preventScroll: true });
         }
         const reduceMotion =
-            window.matchMedia &&
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+    }
+
+    /**
+     * Open step n. Going back is always allowed and keeps every answer.
+     * Going forward first checks and saves the current step; a step after
+     * the next incomplete one is locked. skipValidation opens an accessible
+     * step directly (page load, returning to a step with server errors).
+     */
+    function goTo(n, skipValidation) {
+        n = Math.max(1, Math.min(TOTAL, n));
+        if (saving) return Promise.resolve(false);
+        if (n === current) {
+            show(n);
+            return Promise.resolve(true);
+        }
+        if (n < current) {
+            leaveStep();
+            hideMessage();
+            show(n);
+            return Promise.resolve(true);
+        }
+        // The step right after this one opens once this one is checked and saved.
+        if (n > Math.max(completed + 1, current + 1) || (skipValidation && !accessible(n))) {
+            showLocked(n);
+            return Promise.resolve(false);
+        }
+        if (skipValidation) {
+            hideMessage();
+            show(n);
+            return Promise.resolve(true);
+        }
+        return advanceTo(n);
+    }
+
+    function showLocked(n) {
+        const next = Math.min(TOTAL, completed + 1);
+        showMessage(
+            "“" + title(n) + "” is locked. Complete “" + title(next) + "” first" +
+                (next === current ? ", then select Next." : "."),
+            "info",
+        );
+    }
+
+    /** A completed step that no longer passes after edits is no longer complete. */
+    function leaveStep() {
+        if (current <= completed && current <= DATA_STEPS && !validateStep(current, true)) {
+            completed = current - 1;
+        }
+    }
+
+    function advanceTo(target) {
+        hideMessage();
+        if (!validateStep(current)) {
+            if (!accessible(target)) showLocked(target);
+            return Promise.resolve(false);
+        }
+        return saveStep(current).then(function (ok) {
+            if (!ok) return false;
+            if (target > completed + 1) {
+                // An earlier section changed and is no longer complete.
+                show(completed + 1);
+                validateStep(current);
+                showMessage("Complete “" + title(current) + "” before going to “" + title(target) + "”.", "error");
+                return false;
+            }
+            show(target);
+            return true;
+        });
+    }
+
+    function setSaving(on) {
+        saving = on;
+        btnNext.disabled = on;
+        if (on) {
+            btnNext.setAttribute("aria-busy", "true");
+            btnNext.textContent = "Saving…";
+        } else {
+            btnNext.removeAttribute("aria-busy");
+            btnNext.innerHTML = btnNextHtml;
+            if (window.lucide) lucide.createIcons({ nodes: [btnNext] });
+        }
+    }
+
+    /** Server check and save of step n (with every earlier step). Resolves true on success. */
+    function saveStep(n) {
+        const template = form.getAttribute("data-step-url") || "";
+        if (!template || typeof fetch !== "function" || typeof FormData !== "function") {
+            // Very old browsers: the final submission still validates every section.
+            completed = Math.max(completed, n);
+            return Promise.resolve(true);
+        }
+        const data = new FormData(form);
+        // Files are checked here in the browser and uploaded only on final submission.
+        const fileKeys = [];
+        data.forEach(function (value, key) {
+            if (typeof File !== "undefined" && value instanceof File) fileKeys.push(key);
+        });
+        fileKeys.forEach(function (key) {
+            data.delete(key);
+        });
+
+        setSaving(true);
+        return fetch(template.replace(":step", String(n)), {
+            method: "POST",
+            body: data,
+            credentials: "same-origin",
+            headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        })
+            .then(function (response) {
+                return response
+                    .json()
+                    .catch(function () {
+                        return {};
+                    })
+                    .then(function (body) {
+                        return { status: response.status, body: body || {} };
+                    });
+            })
+            .then(function (res) {
+                setSaving(false);
+                if (res.status === 200) {
+                    completed = Math.max(0, Math.min(DATA_STEPS, Number(res.body.completed) || n));
+                    lastSavedAt = res.body.saved_at || lastSavedAt;
+                    renderTracker();
+                    return true;
+                }
+                if (res.status === 422 && res.body.errors) {
+                    completed = Math.max(0, Math.min(completed, Number(res.body.completed) || 0));
+                    const failed = Number(res.body.step) || n;
+                    if (failed !== current) show(failed);
+                    else renderTracker();
+                    showServerErrors(res.body.errors);
+                    if (failed !== n) showMessage(res.body.message || "Complete “" + title(failed) + "” first.", "error");
+                    return false;
+                }
+                if (res.status === 419) {
+                    showMessage(
+                        "This form has expired. Reload the page to continue. Your answers are kept in this browser.",
+                        "error",
+                    );
+                } else if (res.status === 429) {
+                    showMessage("Too many attempts. Wait a minute, then select Next again.", "error");
+                } else {
+                    showMessage("We couldn't save this section. Please try again.", "error");
+                }
+                return false;
+            })
+            .catch(function () {
+                setSaving(false);
+                showMessage("We couldn't save this section. Check your internet connection, then select Next again.", "error");
+                return false;
+            });
     }
 
     /* ════════════════════════════════════════════════════════════
        VALIDATION
     ════════════════════════════════════════════════════════════ */
 
-    function validateStep(n) {
+    /** The control the applicant sees (a searchable select shows a text box). */
+    function visibleControl(el) {
+        if (el.classList && el.classList.contains("dtc-cb-native")) {
+            return document.getElementById(el.id + "_search") || el;
+        }
+        return el;
+    }
+
+    function fieldLabel(el) {
+        const label = el.id ? document.querySelector('label[for="' + el.id + '"]') : null;
+        let text = label ? label.textContent : el.getAttribute("aria-label") || el.name || "This field";
+        text = text.replace(/\*/g, "").replace(/\bRequired\b/g, "").replace(/\s+/g, " ").trim();
+        return text;
+    }
+    function lowerLabel(text) {
+        return text
+            .split(" ")
+            .map(function (word) {
+                return /^[A-Z0-9]{2,}$/.test(word) ? word : word.toLowerCase();
+            })
+            .join(" ");
+    }
+
+    function fileProblem(el) {
+        if (!el.files || !el.files.length) return "";
+        const file = el.files[0];
+        const accept = (el.getAttribute("accept") || "")
+            .split(",")
+            .map(function (ext) {
+                return ext.trim().toLowerCase();
+            })
+            .filter(Boolean);
+        const ext = "." + String(file.name.split(".").pop() || "").toLowerCase();
+        if (accept.length && accept.indexOf(ext) === -1) {
+            return "Choose a " + accept.join(", ").toUpperCase().replace(/\./g, "") + " file.";
+        }
+        const maxKb = Number(el.getAttribute("data-max-kb")) || 0;
+        if (maxKb && file.size > maxKb * 1024) {
+            const limit = maxKb >= 1024 ? Math.round((maxKb / 1024) * 10) / 10 + " MB" : maxKb + " KB";
+            return "This file is too large. The limit is " + limit + ".";
+        }
+        return "";
+    }
+
+    /** The problem with a field, or "" when it is fine. */
+    function fieldProblem(el) {
+        if (el.type === "file") return fileProblem(el);
+        const value = String(el.value || "").trim();
+        if (el.required && !value) {
+            return (
+                el.getAttribute("data-required-message") ||
+                (el.tagName === "SELECT" ? "Choose " : "Enter ") + lowerLabel(fieldLabel(el)) + "."
+            );
+        }
+        if (!value) return "";
+        const v = el.validity;
+        if (v) {
+            if (v.typeMismatch && el.type === "email") return "Enter a valid email address, like name@example.com.";
+            if (v.tooLong) return "Use no more than " + el.maxLength + " characters.";
+            if (v.rangeOverflow) return el.id === "birthdate" ? "Date of birth can't be in the future." : "Enter an earlier date.";
+            if (v.rangeUnderflow) return "Enter a later date.";
+            if (v.badInput) return "Enter a valid date.";
+            if (v.patternMismatch || v.typeMismatch) return el.getAttribute("title") || "Check the format of this field.";
+        }
+        return "";
+    }
+
+    function isShown(el) {
+        return !el.disabled && el.type !== "hidden" && !(el.closest && el.closest("[hidden], .d-none"));
+    }
+
+    /** Checks that involve more than one field. Returns [[element, message], …]. */
+    function crossFieldProblems(n) {
+        const problems = [];
+        if (n === 3) {
+            const country = document.getElementById("country");
+            const inPhilippines =
+                !country ||
+                (window.DtcAddressCascade && window.DtcAddressCascade.isPhilippines
+                    ? window.DtcAddressCascade.isPhilippines(country.value)
+                    : /^\s*(philippines)?\s*$/i.test(country.value));
+            const region = document.getElementById("region_code");
+            const area = document.getElementById("area_select");
+            const city = document.getElementById("city_code");
+            if (inPhilippines && region && region.value) {
+                if (area && !area.disabled && area.options.length > 1 && !area.value) {
+                    problems.push([area, "Choose your province or independent city, or clear the region."]);
+                } else if (city && !city.value) {
+                    problems.push([city, city.disabled
+                        ? "Wait for the list of cities to load, then choose your city or municipality."
+                        : "Choose your city or municipality, or clear the region."]);
+                }
+            }
+        }
+        return problems;
+    }
+
+    /**
+     * Check step n. Shows each problem beside its field and a list at the top
+     * of the step, then moves to the first one. silent: report only.
+     */
+    function validateStep(n, silent) {
         const panel = document.getElementById("step-" + n);
         if (!panel) return true;
-        let ok = true;
-        let firstInvalid = null;
-        panel.querySelectorAll("[required]").forEach(function (el) {
-            if (el.type === "hidden" || el.disabled) return;
-            const field = el.closest(".wiz-field");
-            if (!el.value.trim()) {
-                el.classList.add("wiz-invalid");
-                el.setAttribute("aria-invalid", "true");
-                if (!firstInvalid) firstInvalid = el;
-                if (field) {
-                    let err = field.querySelector(".wiz-err-msg");
-                    if (!err) {
-                        err = document.createElement("span");
-                        err.className = "wiz-err-msg wiz-err-dynamic";
-                        err.innerHTML =
-                            '<i data-lucide="alert-circle"></i> This field is required.';
-                        field.appendChild(err);
-                        if (window.lucide) lucide.createIcons({ nodes: [err] });
-                    }
-                    err.id = (el.id || el.name) + "-error";
-                    const descriptions = (
-                        el.getAttribute("aria-describedby") || ""
-                    )
-                        .split(/\s+/)
-                        .filter(Boolean);
-                    if (!descriptions.includes(err.id))
-                        descriptions.push(err.id);
-                    el.setAttribute("aria-describedby", descriptions.join(" "));
-                }
-                ok = false;
-            } else {
-                clearFieldError(el);
-            }
+        const problems = [];
+        panel.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (el) {
+            if (!isShown(el) || el.type === "checkbox" || el.type === "radio") return;
+            const message = fieldProblem(el);
+            if (message) problems.push([el, message]);
+            else if (!silent) clearFieldError(el);
         });
-        if (firstInvalid)
-            setTimeout(function () {
-                firstInvalid.focus();
-            }, 0);
-        return ok;
+        crossFieldProblems(n).forEach(function (p) {
+            problems.push(p);
+        });
+        if (silent) return problems.length === 0;
+
+        problems.forEach(function (p) {
+            markInvalid(p[0], p[1]);
+        });
+        renderStepAlert(panel, problems);
+        if (problems.length) focusField(problems[0][0]);
+        return problems.length === 0;
+    }
+
+    function revealField(el) {
+        const details = el.closest && el.closest("details");
+        if (details) details.open = true;
+        if (personalDetailsContent && personalDetailsContent.contains(el)) setPersonalDetailsExpanded(true);
+    }
+
+    function focusField(el) {
+        const target = visibleControl(el);
+        revealField(target);
+        setTimeout(function () {
+            const reduceMotion =
+                window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (target.scrollIntoView) target.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+            if (target.focus) target.focus({ preventScroll: true });
+        }, 0);
+    }
+
+    function markInvalid(el, message) {
+        const target = visibleControl(el);
+        [el, target].forEach(function (node) {
+            node.classList.add("wiz-invalid");
+            node.setAttribute("aria-invalid", "true");
+        });
+        revealField(target);
+        const field = target.closest(".wiz-field, .document-input");
+        if (!field) return;
+        let err = field.querySelector(".wiz-err-msg");
+        if (!err) {
+            err = document.createElement("span");
+            err.className = "wiz-err-msg wiz-err-dynamic";
+            field.appendChild(err);
+        }
+        err.replaceChildren();
+        const icon = document.createElement("i");
+        icon.setAttribute("data-lucide", "alert-circle");
+        icon.setAttribute("aria-hidden", "true");
+        err.appendChild(icon);
+        err.appendChild(document.createTextNode(" " + message));
+        if (window.lucide) lucide.createIcons({ nodes: [err] });
+        err.id = (el.id || el.name) + "-error";
+        const descriptions = (target.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+        if (descriptions.indexOf(err.id) === -1) descriptions.push(err.id);
+        target.setAttribute("aria-describedby", descriptions.join(" "));
+    }
+
+    /** List of what is missing at the top of the step; each entry moves to its field. */
+    function renderStepAlert(panel, problems) {
+        const body = panel.querySelector(".wiz-panel-body") || panel;
+        let alert = body.querySelector(".wiz-step-alert");
+        if (!problems.length) {
+            if (alert) alert.remove();
+            return;
+        }
+        if (!alert) {
+            alert = document.createElement("div");
+            alert.className = "wiz-step-alert";
+            alert.setAttribute("role", "alert");
+            body.insertBefore(alert, body.firstChild);
+        }
+        alert.replaceChildren();
+        const heading = document.createElement("p");
+        heading.className = "wiz-step-alert-title";
+        heading.textContent =
+            problems.length === 1
+                ? "1 item needs your attention before you can continue:"
+                : problems.length + " items need your attention before you can continue:";
+        const list = document.createElement("ul");
+        problems.forEach(function (p) {
+            const li = document.createElement("li");
+            li.setAttribute("data-for", p[0].id || p[0].name);
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "wiz-step-alert-link";
+            button.textContent = fieldLabel(p[0]) + ": " + p[1];
+            button.addEventListener("click", function () {
+                focusField(p[0]);
+            });
+            li.appendChild(button);
+            list.appendChild(li);
+        });
+        alert.appendChild(heading);
+        alert.appendChild(list);
+    }
+
+    function showServerErrors(errors) {
+        const aliases = {
+            school_id: "school_select",
+            school_choice: "school_select",
+            province_code: "area_select",
+            school_province_code: "school_area_select",
+        };
+        const panel = document.getElementById("step-" + current);
+        const problems = [];
+        Object.keys(errors).forEach(function (key) {
+            const message = [].concat(errors[key])[0];
+            let el = aliases[key] ? document.getElementById(aliases[key]) : null;
+            if (!el) {
+                const name = key.indexOf("documents.") === 0 ? "documents[" + key.slice(10) + "]" : key;
+                el = form.querySelector('[name="' + name + '"]');
+            }
+            if (!el || el.type === "hidden") el = panel ? panel.querySelector(".wiz-input") : null;
+            if (el) problems.push([el, message]);
+        });
+        problems.forEach(function (p) {
+            markInvalid(p[0], p[1]);
+        });
+        if (panel) renderStepAlert(panel, problems);
+        if (problems.length) focusField(problems[0][0]);
     }
 
     function clearFieldError(el) {
-        el.classList.remove("wiz-invalid");
-        el.removeAttribute("aria-invalid");
-        const field = el.closest(".wiz-field");
+        const target = visibleControl(el);
+        [el, target].forEach(function (node) {
+            node.classList.remove("wiz-invalid");
+            node.removeAttribute("aria-invalid");
+        });
+        const field = target.closest(".wiz-field, .document-input");
         const error = field && field.querySelector(".wiz-err-msg");
         if (error) {
-            const descriptions = (el.getAttribute("aria-describedby") || "")
-                .split(/\s+/)
-                .filter(function (id) {
-                    return id && id !== error.id;
-                });
-            if (descriptions.length)
-                el.setAttribute("aria-describedby", descriptions.join(" "));
-            else el.removeAttribute("aria-describedby");
+            const descriptions = (target.getAttribute("aria-describedby") || "").split(/\s+/).filter(function (id) {
+                return id && id !== error.id;
+            });
+            if (descriptions.length) target.setAttribute("aria-describedby", descriptions.join(" "));
+            else target.removeAttribute("aria-describedby");
             error.remove();
+        }
+        const alert = el.closest && el.closest(".wiz-panel") && el.closest(".wiz-panel").querySelector(".wiz-step-alert");
+        if (alert) {
+            const item = alert.querySelector('[data-for="' + (el.id || el.name) + '"]');
+            if (item) item.remove();
+            if (!alert.querySelector("li")) alert.remove();
         }
     }
 
-    document.querySelectorAll(".wiz-input").forEach(function (el) {
+    document.querySelectorAll(".wiz-input, .document-input-file").forEach(function (el) {
         const field = el.closest(".wiz-field");
         const error = field && field.querySelector(".wiz-err-msg");
         if (error) {
             error.id = (el.id || el.name) + "-error";
             el.setAttribute("aria-invalid", "true");
-            const descriptions = (el.getAttribute("aria-describedby") || "")
-                .split(/\s+/)
-                .filter(Boolean);
+            const descriptions = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
             if (!descriptions.includes(error.id)) descriptions.push(error.id);
             el.setAttribute("aria-describedby", descriptions.join(" "));
         }
         function clear() {
-            clearFieldError(el);
+            if (el.classList.contains("wiz-invalid") || el.getAttribute("aria-invalid")) clearFieldError(el);
         }
         el.addEventListener("input", clear);
         el.addEventListener("change", clear);
@@ -242,20 +683,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     steps.forEach(function (s, i) {
-        /* Store the original icon name so goTo() can restore it when going back */
-        var origI = s.querySelector(".wiz-step-dot [data-lucide]");
-        if (origI)
-            s.setAttribute(
-                "data-original-icon",
-                origI.getAttribute("data-lucide"),
-            );
+        /* Store the original icon name so the tracker can restore it */
+        const origI = s.querySelector(".wiz-step-dot [data-lucide]");
+        if (origI) s.setAttribute("data-original-icon", origI.getAttribute("data-lucide"));
 
         s.addEventListener("click", function () {
             const target = i + 1;
-            if (target === current) return;
-            goTo(target, true);
+            if (target === current || saving) return;
+            goTo(target);
         });
     });
+
+    /** Step to open on page load: where the applicant left off, if it is still open. */
+    window._wizInitialStep = function () {
+        const saved = Number(loadWizardState().step) || 0;
+        if (PROGRESS.error_step) return Math.min(Number(PROGRESS.error_step), completed + 1);
+        if (saved >= 1) return Math.min(saved, completed + 1);
+        return completed > 0 ? completed + 1 : 1;
+    };
 
     const screeningToggle = document.getElementById("screeningNoticeToggle");
     const screeningContent = document.getElementById("screeningNoticeContent");
@@ -359,6 +804,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (btnSubmit) {
         btnSubmit.addEventListener("click", function () {
             if (submissionInProgress) return;
+            // Every section must have been completed (and saved) first.
+            if (completed < TOTAL - 1) {
+                goTo(completed + 1, true);
+                return;
+            }
             for (let step = 1; step < TOTAL; step++) {
                 if (!validateStep(step)) {
                     goTo(step, true);
@@ -854,6 +1304,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     window._wizGoTo = goTo;
+
+    /* Open the first step: the page's hook decides (server errors), otherwise
+       where the applicant left off. Nothing locked is ever opened. */
+    if (typeof window._wizOnReady === "function") window._wizOnReady();
+    else goTo(window._wizInitialStep(), true);
 
     /* ════════════════════════════════════════════════════════════
        STEP 6 — REVIEW PANEL

@@ -171,6 +171,7 @@ try {
     const pendingDraft = sessionStorage.getItem('dtc_pending_application_draft');
     if (pendingDraft !== null && pendingDraft === (localStorage.getItem('dtc_application_draft') || '')) {
         localStorage.removeItem('dtc_application_draft');
+        localStorage.removeItem('dtc_application_wizard');
     }
     sessionStorage.removeItem('dtc_pending_application_draft');
 } catch (error) {}

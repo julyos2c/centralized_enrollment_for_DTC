@@ -29,7 +29,7 @@ function setup() {
     const pending = new Map();
     nodes.applicationForm.submit = () => submissions++;
     const document = { getElementById: id => nodes[id] || null, addEventListener() {} };
-    const context = vm.createContext({ document, btnSubmit: button, STORAGE_KEY: 'draft', current: 6, TOTAL: 6,
+    const context = vm.createContext({ document, btnSubmit: button, STORAGE_KEY: 'draft', current: 6, TOTAL: 6, completed: 5,
         validateStep: () => valid, goTo: step => { navigated = step; },
         localStorage: { getItem: key => drafts.get(key), removeItem: key => drafts.delete(key) },
         sessionStorage: { setItem: (key, value) => pending.set(key, value) },
@@ -39,7 +39,7 @@ function setup() {
     const end = source.indexOf('    /* ── Policy document modals');
     vm.runInContext(source.slice(start, end), context);
     const event = () => ({ prevented: false, preventDefault() { this.prevented = true; } });
-    return { nodes, button, event, drafts, pending, confirmation: () => confirmation, submissions: () => submissions, invalidate: () => { valid = false; }, navigated: () => navigated };
+    return { nodes, button, event, drafts, pending, context, confirmation: () => confirmation, submissions: () => submissions, invalidate: () => { valid = false; }, navigated: () => navigated };
 }
 
 test('Continue opens confirmation only when both boxes are ticked; final confirm submits once', () => {
@@ -114,5 +114,14 @@ test('invalid steps prevent confirmation and navigate to the incomplete section'
     s.button.click();
     assert.equal(s.confirmation(), undefined);
     assert.equal(s.navigated(), 1);
+    assert.equal(s.submissions(), 0);
+});
+
+test('submission is blocked until every section has been completed and saved', () => {
+    const s = setup();
+    s.context.completed = 3;
+    s.button.click();
+    assert.equal(s.confirmation(), undefined);
+    assert.equal(s.navigated(), 4);
     assert.equal(s.submissions(), 0);
 });

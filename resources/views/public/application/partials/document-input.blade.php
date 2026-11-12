@@ -29,6 +29,7 @@
             id="document_{{ $name }}"
             class="document-input-file @error('documents.' . $name) is-invalid @enderror"
             accept="{{ !empty($requirement) ? $requirement->acceptList() : '.pdf,.jpg,.jpeg,.png' }}"
+            data-max-kb="{{ !empty($requirement) ? min(max(1, (int) $requirement->max_size_kb), \App\Models\AdmissionRequirement::MAX_SIZE_LIMIT_KB) : 5120 }}"
         >
     </div>
 

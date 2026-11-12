@@ -42,6 +42,7 @@ Both documents show **"Effective date: Pending approval"** until DTC sets `LEGAL
 - No box is ticked automatically. Opening or closing a document never changes the form or the boxes.
 - Each agreement, acknowledgment, and consent is stored in `policy_acknowledgments` with the document, version, time, IP address, and browser. Rows cannot be updated, so a new version creates new rows and older records are never overwritten.
 - Withdrawing consent (Privacy Notice section 4) is handled manually by the Registrar or DPO. The system has no self-service withdrawal yet.
+- **Saved progress (added November 12, 2026)**: each time the applicant selects Next, the answers in that section and earlier sections are sent to the server for checking. They are kept in the applicant's session (not in the applications table) so the form can be resumed. Files are not uploaded until final submission. The saved answers are deleted on submission and last no longer than the session (`SESSION_LIFETIME`, currently 120 minutes of inactivity). Privacy Notice section 11 describes this. Version 1.0 was revised in place because it has not been approved or put into effect yet.
 
 ## 4. Changing the documents
 

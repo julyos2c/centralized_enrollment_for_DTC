@@ -662,3 +662,139 @@ body.dtc-dark .app-wizard-page.app-form .wiz-school-change {
 .app-wizard-page.app-form .education-section > .wiz-grid {
     margin-top: 0;
 }
+
+/* ── Strict step navigation: step states, progress text, messages ─────── */
+.app-wizard-page.app-form .wiz-step-state {
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: #64748b;
+}
+.app-wizard-page.app-form .wiz-step[data-state="completed"] .wiz-step-state {
+    color: #15803d;
+}
+.app-wizard-page.app-form .wiz-step[aria-current="step"] .wiz-step-state {
+    color: #0f4cdb;
+    font-weight: 600;
+}
+.app-wizard-page.app-form .wiz-step.locked {
+    cursor: not-allowed;
+}
+.app-wizard-page.app-form .wiz-step.locked .wiz-step-dot {
+    border-style: dashed;
+    background: #f8fafc;
+    color: #94a3b8;
+}
+.app-wizard-page.app-form .wiz-step.locked .wiz-step-label,
+.app-wizard-page.app-form .wiz-step.locked .wiz-step-state {
+    color: #94a3b8;
+}
+.app-wizard-page.app-form .wiz-step:not(.locked):not([aria-current="step"]):hover .wiz-step-dot {
+    border-color: #0f4cdb;
+}
+.app-wizard-page.app-form .wiz-progress-text {
+    margin: -4px 0 10px;
+    color: #475569;
+    font-size: 12.5px;
+    text-align: center;
+}
+.app-wizard-page.app-form .wiz-step-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    line-height: 1.45;
+}
+.app-wizard-page.app-form .wiz-step-message[hidden] {
+    display: none;
+}
+.app-wizard-page.app-form .wiz-step-message--error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+}
+.app-wizard-page.app-form .wiz-step-message :is(i, svg) {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+}
+.app-wizard-page.app-form .wiz-step-alert {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #fecaca;
+    border-left: 3px solid #dc2626;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 13px;
+}
+.app-wizard-page.app-form .wiz-step-alert-title {
+    margin: 0 0 4px;
+    font-weight: 600;
+}
+.app-wizard-page.app-form .wiz-step-alert ul {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.app-wizard-page.app-form .wiz-step-alert-link {
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+.app-wizard-page.app-form .wiz-btn[aria-busy="true"] {
+    cursor: progress;
+    opacity: 0.75;
+}
+@media (max-width: 640px) {
+    /* The summary line below the tracker states the current step on phones. */
+    .app-wizard-page.app-form .wiz-step-state {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step-state,
+body.dtc-dark .app-wizard-page.app-form .wiz-progress-text {
+    color: #94a3b8;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step[data-state="completed"] .wiz-step-state {
+    color: #4ade80;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step[aria-current="step"] .wiz-step-state {
+    color: #93c5fd;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step.locked .wiz-step-dot {
+    border-color: #334155;
+    background: #0f172a;
+    color: #64748b;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step-message {
+    border-color: #1e3a8a;
+    background: #0b1a33;
+    color: #bfdbfe;
+}
+body.dtc-dark .app-wizard-page.app-form .wiz-step-message--error,
+body.dtc-dark .app-wizard-page.app-form .wiz-step-alert {
+    border-color: #7f1d1d;
+    background: #2a1215;
+    color: #fecaca;
+}

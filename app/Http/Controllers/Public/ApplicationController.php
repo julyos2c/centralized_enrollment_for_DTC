@@ -10,6 +10,8 @@ use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AdmissionDocumentService;
+use App\Services\ApplicationFormSteps;
+use App\Services\StepValidationException;
 use App\Services\NotificationService;
 use App\Support\ApplicationTextNormalizer;
 use Illuminate\Http\Request;
@@ -82,6 +84,115 @@ class ApplicationController extends Controller
             'academicYears' => \App\Support\AcademicYears::options(),
             'educationStatuses' => \App\Services\EducationBackground::STATUSES,
             'schoolSectors' => \App\Models\School::SECTORS,
+            'progress' => $this->progressForView($request),
+            'stepTitles' => ApplicationFormSteps::TITLES,
+        ]);
+    }
+
+    /**
+     * Saved progress for the wizard: the sections completed so far and their
+     * answers. After a failed submission, the section with the first error
+     * and every later section are no longer counted as complete.
+     */
+    private function progressForView(Request $request): array
+    {
+        $saved = $request->session()->get(ApplicationFormSteps::SESSION_KEY, []);
+        $completed = (int) ($saved['completed'] ?? 0);
+        $errorStep = $this->firstErrorStep($request);
+        if ($errorStep !== null) {
+            $completed = min($completed, $errorStep - 1);
+        }
+
+        return [
+            'completed' => max(0, min($completed, ApplicationFormSteps::DATA_STEPS)),
+            'error_step' => $errorStep,
+            'data' => $saved['data'] ?? (object) [],
+            'saved_at' => $saved['saved_at'] ?? null,
+        ];
+    }
+
+    /** Section holding the first validation error from the last submission, if any. */
+    private function firstErrorStep(Request $request): ?int
+    {
+        $errors = $request->session()->get('errors');
+        if (!$errors) {
+            return null;
+        }
+        foreach ($errors->getBag('default')->keys() as $key) {
+            if ($step = ApplicationFormSteps::stepFor($key)) {
+                return $step;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check one section of the form (with every section before it) and save
+     * the answers in the applicant's session. The wizard calls this when the
+     * applicant moves forward; it moves on only after this succeeds.
+     *
+     * Progress belongs to the browser session that holds the form's
+     * submission token. Nothing is written to the applications table until
+     * the final submission.
+     */
+    public function saveStep(Request $request, int $step)
+    {
+        abort_unless($step >= 1 && $step <= ApplicationFormSteps::DATA_STEPS, 404);
+
+        $submissionToken = $request->input('submission_token');
+        $sessionSubmissionToken = $request->session()->get('public_application_submission_token');
+        if (!is_string($submissionToken) || !is_string($sessionSubmissionToken) || !hash_equals($sessionSubmissionToken, $submissionToken)) {
+            return response()->json([
+                'message' => 'This form has expired. Reload the page to continue — your answers are kept in this browser.',
+                'expired' => true,
+            ], 419);
+        }
+
+        // Only text answers are checked and saved here; files are checked in
+        // the browser and uploaded on final submission.
+        $request->merge(ApplicationTextNormalizer::normalizeFields($request->all()));
+
+        $steps = app(ApplicationFormSteps::class);
+        $saved = $request->session()->get(ApplicationFormSteps::SESSION_KEY, []);
+        // Furthest section ever completed: after an earlier section is fixed,
+        // later sections that still pass count as complete again.
+        $reached = max((int) ($saved['completed'] ?? 0), (int) ($saved['reached'] ?? 0));
+        try {
+            [$completed, $validated] = $steps->completeThrough($request, $step, $reached);
+        } catch (StepValidationException $e) {
+            // An earlier section that no longer passes is no longer complete.
+            $stillCompleted = min((int) ($saved['completed'] ?? 0), $e->step - 1);
+            $request->session()->put(ApplicationFormSteps::SESSION_KEY, [
+                'completed' => $stillCompleted,
+                'reached' => $reached,
+                'data' => $saved['data'] ?? [],
+                'saved_at' => $saved['saved_at'] ?? null,
+            ]);
+
+            return response()->json([
+                'message' => $e->step < $step
+                    ? 'Complete "' . ApplicationFormSteps::TITLES[$e->step] . '" first.'
+                    : 'Some required information in this section is missing or invalid.',
+                'step' => $e->step,
+                'completed' => $stillCompleted,
+                'errors' => $e->errors,
+            ], 422);
+        }
+
+        $savedAt = now();
+        $request->session()->put(ApplicationFormSteps::SESSION_KEY, [
+            'completed' => $completed,
+            'reached' => max($reached, $completed),
+            // Answers of later sections saved earlier are kept until replaced.
+            'data' => array_merge($saved['data'] ?? [], ApplicationFormSteps::draftData($validated, $completed)),
+            'saved_at' => $savedAt->toIso8601String(),
+        ]);
+
+        return response()->json([
+            'completed' => $completed,
+            'next' => $step + 1,
+            'saved_at' => $savedAt->toIso8601String(),
         ]);
     }
 
@@ -148,279 +259,21 @@ class ApplicationController extends Controller
         // Normalize human-entered text before validation, review data, and storage.
         $request->merge(ApplicationTextNormalizer::normalizeFields($request->all()));
 
-        $regionCodes = array_column($locations->regions(), 'code');
-        $selectedRegion = (string) $request->input('region_code', '');
-        $selectedProvince = (string) $request->input('province_code', '');
-        $provinceCodes = array_column(array_values(array_filter(
-            $locations->areas($selectedRegion),
-            fn ($area) => $area['type'] === 'province'
-        )), 'code');
-        $cityOptions = $selectedProvince !== ''
-            ? $locations->cities($selectedProvince)
-            : array_values(array_filter(
-                $locations->areas($selectedRegion),
-                fn ($area) => $area['type'] === 'city'
-            ));
-
-        $rules = [
-            'submission_token' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
-            'academic_status' => [
-                'required',
-                Rule::in([
-                    'new_student',
-                    'transferee',
-                    'shiftee',
-                    'returnee',
-                    'cross_enrollee',
-                ]),
-            ],
-
-            'program_id' => [
-                'required',
-                'integer',
-                'exists:programs,id',
-            ],
-
-            'first_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'last_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'middle_name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'honorific' => ['nullable', 'string', 'max:20'],
-            'suffix' => ['nullable', 'string', 'max:20'],
-
-            'gender' => [
-                'required',
-                Rule::in(['male', 'female']),
-            ],
-
-            'birthdate' => [
-                'required',
-                'date',
-                'before_or_equal:today',
-            ],
-
-            'birth_place' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'religion' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'nationality' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'lrn' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'marital_status' => [
-                'nullable',
-                Rule::in([
-                    'single',
-                    'married',
-                    'divorced',
-                    'widowed',
-                ]),
-            ],
-
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-            ],
-
-            'phone' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
-
-            'current_address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'city' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'province' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'region' => ['nullable', 'string', 'max:255'],
-            'barangay' => ['nullable', 'string', 'max:255'],
-            'region_code' => ['nullable', 'string', Rule::in($regionCodes)],
-            'province_code' => ['nullable', 'string', Rule::in($provinceCodes)],
-            'city_code' => ['nullable', 'string', Rule::in(array_column($cityOptions, 'code'))],
-
-            'postal_code' => [
-                'nullable',
-                'string',
-                'max:20',
-            ],
-
-            'international_location' => ['nullable', 'string', 'max:255'],
-
-            'country' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'guardian_name' => ['nullable', 'string', 'max:255'],
-            'guardian_contact' => ['nullable', 'string', 'max:50'],
-
-            'father_name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'father_occupation' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'mother_name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'mother_occupation' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'parent_address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'parent_contact' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
-
-            'spouse_name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'occupation' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'disability' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'pwd_id' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            // Agreement to the Terms, acknowledgment of the Privacy Notice, and
-            // consent for optional sensitive details are separate (config/legal.php).
-            'ack_enrollment' => ['required', 'accepted'],
-            'acknowledge_privacy' => ['required', 'accepted'],
-            'consent_sensitive' => $this->providesSensitiveInformation($request) ? ['required', 'accepted'] : ['nullable'],
-            'education_level' => ['nullable', 'string', Rule::in(\App\Support\ApplicationEducation::levelsFor(is_string($request->input('academic_status')) ? $request->input('academic_status') : null))],
-            'education_status' => ['nullable', 'string', Rule::in(['Graduated', 'Currently attending', 'Not completed'])],
-            'most_recent_school' => ['nullable', 'string', 'max:255'],
-            'school_year_completed' => ['nullable', 'string', 'max:30'],
-            'school_location' => ['nullable', 'string', 'max:255'],
-
-            'documents' => [
-                'nullable',
-                'array',
-            ],
-        ];
+        // One set of rules for the whole form (App\Services\ApplicationFormSteps),
+        // shared with the section-by-section check behind the Next button.
+        $steps = app(ApplicationFormSteps::class);
+        $education = app(\App\Services\EducationBackground::class);
+        $validated = $request->validate($steps->rules($request), $steps->messages());
 
         // Digital documents are configured by the school (Admissions →
         // Requirements). Uploads here are optional: anything not uploaded
         // now can be added later in the applicant's admission portal.
-        $applicantType = is_string($request->input('academic_status')) ? $request->input('academic_status') : null;
-        $maritalStatus = is_string($request->input('marital_status')) ? $request->input('marital_status') : null;
+        $applicantType = $validated['academic_status'];
+        $maritalStatus = $validated['marital_status'] ?? null;
         $allRequirements = AdmissionRequirement::active()->ordered()->get();
         $allowedRequirements = $allRequirements
             ->filter(fn (AdmissionRequirement $requirement) => $requirement->appliesTo($applicantType, $maritalStatus))
             ->keyBy('code');
-        foreach ($allRequirements as $requirement) {
-            $rules['documents.' . $requirement->code] = $requirement->uploadRules();
-        }
-
-        $educationFieldsByType = [
-            'shs_strand' => ['new_student'],
-            'previous_program' => ['transferee', 'shiftee', 'returnee'],
-            'last_year_level' => ['transferee', 'shiftee', 'returnee', 'cross_enrollee'],
-            'home_institution' => ['cross_enrollee'],
-            'home_program' => ['cross_enrollee'],
-        ];
-        $academicStatus = $request->input('academic_status');
-        foreach ($educationFieldsByType as $field => $applicantTypes) {
-            $maxLength = in_array($field, ['shs_strand', 'last_year_level'], true) ? 100 : 255;
-            $rules[$field] = in_array($academicStatus, $applicantTypes, true)
-                ? ['nullable', 'string', 'max:' . $maxLength]
-                : ['exclude'];
-        }
-
-        $education = app(\App\Services\EducationBackground::class);
-        $rules = array_merge($rules, $education->rules($request));
-
-        $validated = $request->validate($rules, $education->messages() + [
-            'ack_enrollment.required' => 'Please agree to the Terms and Conditions to submit your application.',
-            'ack_enrollment.accepted' => 'Please agree to the Terms and Conditions to submit your application.',
-            'acknowledge_privacy.required' => 'Please confirm that you have read the Privacy Notice.',
-            'acknowledge_privacy.accepted' => 'Please confirm that you have read the Privacy Notice.',
-            'consent_sensitive.required' => 'You filled in optional sensitive details (religion, civil status, disability, or PWD ID). Give your consent, or clear those fields.',
-            'consent_sensitive.accepted' => 'You filled in optional sensitive details (religion, civil status, disability, or PWD ID). Give your consent, or clear those fields.',
-            'education_level.in' => 'Choose an education level that matches your applicant type.',
-            'birthdate.before_or_equal' => 'Enter a date of birth that is today or earlier.',
-            'region_code.in' => 'Select a valid region from the list.',
-            'province_code.in' => 'Select a province that belongs to the chosen region.',
-            'city_code.in' => 'Select a city or municipality that belongs to the chosen area.',
-        ]);
 
         // Structured education choices (school lookup, strand, years); also fills
         // the original text columns so existing views and reports stay correct.
@@ -598,7 +451,7 @@ class ApplicationController extends Controller
                 return [$application, $confirmationToken];
             });
             [$application, $confirmationToken] = $application;
-            $request->session()->forget('public_application_submission_token');
+            $request->session()->forget(['public_application_submission_token', ApplicationFormSteps::SESSION_KEY]);
 
             /*
              * Notify existing Registrar users.
@@ -750,23 +603,11 @@ class ApplicationController extends Controller
         return $grouped;
     }
 
-    /** Whether any optional field holding sensitive personal information was filled. */
-    private function providesSensitiveInformation(Request $request): bool
-    {
-        foreach (config('legal.sensitive_optional_fields', []) as $field) {
-            if (filled($request->input($field))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /** Append-only record of the policy versions this application agreed to. */
     private function recordPolicyAcknowledgments(Application $application, Request $request): void
     {
         $documents = ['terms', 'privacy'];
-        if ($request->boolean('consent_sensitive') && $this->providesSensitiveInformation($request)) {
+        if ($request->boolean('consent_sensitive') && app(ApplicationFormSteps::class)->providesSensitiveInformation($request)) {
             $documents[] = 'sensitive_consent';
         }
         foreach ($documents as $document) {

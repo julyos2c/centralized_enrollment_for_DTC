@@ -199,9 +199,15 @@
             el.schoolId.value = choice === "listed" && selected ? selected.id : "";
             if (el.choice) el.choice.value = shs ? choice : "";
             showCard(choice === "listed" ? selected : null);
-            el.school.required = false;
+            // A school that is not on the list must be named (checked on the server too).
+            el.school.required = shs && manual;
             if (shs && manual) {
-                el.nameField.querySelector("label").textContent = "Name of your Senior High School";
+                const label = el.nameField.querySelector("label");
+                label.textContent = "Name of your Senior High School ";
+                const mark = document.createElement("span");
+                mark.className = "req";
+                mark.textContent = "*";
+                label.appendChild(mark);
             }
         }
 

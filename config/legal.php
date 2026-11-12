@@ -26,9 +26,11 @@ return [
 
     'privacy' => [
         'title' => 'Privacy Notice — DTC Online Admission and Enrollment Portal',
+        // Still 1.0: not yet approved or in effect. Section 11 now also
+        // describes the progress saved when the applicant selects Next.
         'version' => '1.0',
         'effective_date' => env('LEGAL_PRIVACY_EFFECTIVE_DATE'),
-        'last_updated' => '2026-11-10',
+        'last_updated' => '2026-11-12',
     ],
 
     'sensitive_consent' => [
